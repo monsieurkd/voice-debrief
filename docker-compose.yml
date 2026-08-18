@@ -4,10 +4,12 @@ services:
     container_name: voicedebrief-db
     environment:
       POSTGRES_USER: voice
-      POSTGRES_PASSWORD: voice
+      # Local-only dev default; override for anything less ephemeral.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voice}
       POSTGRES_DB: voicedebrief
     ports:
-      - "5432:5432"
+      # Loopback only — never expose password-authed Postgres to the network.
+      - '127.0.0.1:5432:5432'
     volumes:
       - voicedebrief_pgdata:/var/lib/postgresql/data
     healthcheck:

@@ -53,7 +53,8 @@ npm install
 cp .env.example .env.local      # fill in YOUR LLM_API_KEY + provider
 ```
 
-One-time Postgres setup (run as a superuser):
+One-time Postgres setup (run as a superuser; local dev only — pick a real
+password for anything exposed beyond loopback):
 
 ```sql
 CREATE ROLE voice LOGIN PASSWORD 'voice';
@@ -68,7 +69,20 @@ npm run db:migrate && npm run db:seed && npm run dev   # http://localhost:3000
 
 `LLM_*` vars are provider-neutral — point them at OpenAI, Z.ai (GLM), Google
 Gemini (OpenAI-compatible endpoint), OpenRouter, or a local Ollama model. See
-[`.env.example`](.env.example).
+[`.env.example`](.env.example). Set `APP_TIMEZONE` (IANA name) to fix the
+zone dates are interpreted and rendered in — default is the server's local
+zone.
+
+## Testing & checks
+
+```bash
+npm test          # unit tests (node:test) — deterministic, no DB or API key needed
+npm run typecheck
+npm run lint
+npm run test:db   # DB-integration scripts — needs a migrated local Postgres
+```
+
+CI runs lint + typecheck + test + build on every push.
 
 ## How it works
 
