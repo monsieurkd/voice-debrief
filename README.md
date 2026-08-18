@@ -11,6 +11,18 @@ next milestone.
 
 ---
 
+## Screenshots
+
+**A day becomes a structured, editable doc — and tomorrow's plan.**
+
+![The structured, editable doc — every row fixable, movable, deletable](docs/screenshots/02-session-doc.png)
+
+![Home: tomorrow's plan with check-off, plus recent entries](docs/screenshots/04-home-plan.png)
+
+![The guided interview — small-model driver, deterministic checklist of what's covered](docs/screenshots/07-interview.png)
+
+---
+
 ## Why
 
 Journaling and life-management apps fail for one reason: after a long day,
@@ -83,6 +95,26 @@ npm run test:db   # DB-integration scripts — needs a migrated local Postgres
 ```
 
 CI runs lint + typecheck + test + build on every push.
+
+## Demo mode (no API key needed)
+
+Loading a sample stores a **pre-baked extraction through the same transactional
+pipeline** as a live run — real rows, tags, goals, `user_state` — with zero LLM
+calls: instant, and works with no `LLM_API_KEY` configured. Due dates are built
+relative to today, so samples always land in the plan window. Tests pin every
+pre-baked payload to the real extraction schema, so schema drift breaks CI
+instead of the demo.
+
+To regenerate the screenshots against a throwaway DB (your real journal is
+never captured):
+
+```bash
+createdb voicedebrief_demo && psql -d postgres -c "ALTER DATABASE voicedebrief_demo OWNER TO voice"
+DEMO_DB='postgres://voice:voice@localhost:5432/voicedebrief_demo'
+DATABASE_URL=$DEMO_DB npm run db:migrate && DATABASE_URL=$DEMO_DB npm run db:seed
+DATABASE_URL=$DEMO_DB npm run dev
+node scripts/demo-shots.mjs    # playwright-core + system Chrome → docs/screenshots/
+```
 
 ## How it works
 
