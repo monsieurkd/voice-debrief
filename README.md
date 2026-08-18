@@ -8,19 +8,21 @@
 > lets you correct anything — so a daily debrief compounds into a personal data
 > layer you can search and act on.
 
-**Status:** v1 is usable daily — text or a guided AI interview in → structured
-data out → an editable document → a next-steps plan. Real-time voice/STT is the
-next milestone.
+**Status:** usable daily, demo-ready — talk (live dictation) or type your day →
+structured, editable data → tomorrow's plan → **threads that connect your days**
+(the cross-day insight pass). Multi-user/auth is the next milestone.
 
 ---
 
 ## Screenshots
 
-**A day becomes a structured, editable doc — and tomorrow's plan.**
+**The journal that compounds: threads connect your days, the plan keeps you moving.**
 
-![The structured, editable doc — every row fixable, movable, deletable](docs/screenshots/02-session-doc.png)
+![Home with the week's threads, tomorrow's plan, and recent entries](docs/screenshots/02-home-lived-in.png)
 
-![Home: tomorrow's plan with check-off, plus recent entries](docs/screenshots/04-home-plan.png)
+![A day becomes a structured, editable doc — every row fixable, movable, deletable](docs/screenshots/03-session-doc.png)
+
+![Dictate instead of type — the browser transcribes live](docs/screenshots/06-new.png)
 
 ![The guided interview — small-model driver, deterministic checklist of what's covered](docs/screenshots/07-interview.png)
 
@@ -101,11 +103,13 @@ CI runs lint + typecheck + test + build on every push.
 
 ## Demo mode (no API key needed)
 
-Loading a sample stores a **pre-baked extraction through the same transactional
-pipeline** as a live run — real rows, tags, goals, `user_state` — with zero LLM
-calls: instant, and works with no `LLM_API_KEY` configured. Due dates are built
-relative to today, so samples always land in the plan window. Tests pin every
-pre-baked payload to the real extraction schema, so schema drift breaks CI
+**Load a demo week** seeds five backdated days of one story arc — three threads
+weaving through it (a launch clash that resolves, a deep-work habit forming, a
+colleague's migration risks finally written up) — through the same transactional
+pipeline as live runs, with zero LLM calls: instant, and works with no
+`LLM_API_KEY` configured. The cross-day threads are baked to match the arc, so
+the compounding payoff is visible keyless. (Single samples work too.) Tests pin
+every pre-baked payload and thread to the real schemas, so drift breaks CI
 instead of the demo.
 
 To regenerate the screenshots against a throwaway DB (your real journal is

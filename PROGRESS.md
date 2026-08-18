@@ -2,7 +2,7 @@
 
 A daily debrief tool, going from single-user v1 to **multi-user SaaS**. Type your day (voice lands in Phase 2) → LLM extracts structured rows → an editable doc → browse entries + check off tomorrow's plan. Design reference: `~/Documents/job/CV/voice-debrief-design-spec.md`.
 
-**Status (2026-08-18): Phase 0 (stabilize) COMPLETE — same day, 9 commits, 26 unit tests + 3 DB-integration suites green in CI. Next: Phase 1 (auth + tenancy).** Earlier 2026-08-18: vigorous 3-track review (correctness · security · product/market); target decided: **multi-user SaaS**. Review verdict: the extraction pipeline and data model are production-grade; everything around them was prototype-grade — (a) zero authorization, (b) silent failure handling, (c) the differentiator wasn't reachable. Phase 0 fixed (b) and the non-auth parts of (a); auth/tenancy is Phase 1.
+**Status (2026-08-19): Phase 0 (stabilize) ✅ + demo-refinement package ✅ — voice dictation, demo week, staged wait UX + visual pass, and Threads (the cross-day insight pass, spec slice 4 v1). 40 unit tests + 5 DB suites green. Live demo: https://voice-debrief.vercel.app (rate-limited, keyless-safe). Next: Phase 1 (auth + tenancy).** Earlier: 2026-08-18 vigorous 3-track review (correctness · security · product/market); target decided: **multi-user SaaS**. Review verdict: pipeline production-grade, shell prototype-grade — Phase 0 fixed the correctness/security-hygiene layer; the refinement package made the differentiator *visible* (the review's top product gaps).
 
 ## What works (verified live 2026-07-16; code re-read in review 2026-08-18)
 - **Write** (`/new`): transcript → dual-model LLM (strong extraction ‖ fast overview) → editable doc at `/session/[id]`.
@@ -73,15 +73,17 @@ Order rationale: **correctness first** (every later phase builds on these functi
 
 **Done when:** two accounts cannot see or mutate each other's data; anonymous curl is gated on every action and page; any user can export and delete all their data.
 
-### Phase 2 — The market slice (product) · ~2–3 wks
-1. **Voice input — the gate to charging**: MediaRecorder capture → batch STT (Whisper-class API) → feed the existing `runDebrief` transcript. UI + one API family; the pipeline needs no changes.
-2. **Extraction wait UX**: staged progress ("reading → extracting → writing your doc"), elapsed timer, cancel, and "safe to leave — it'll appear on Home" (the job already survives navigation; the user just isn't told).
-3. **Mobile pass**: always-visible edit/move/delete on touch (kill the hover-only `opacity-0 group-hover:opacity-100` controls), `group-focus-within` reveal for keyboard, auto-growing textarea in the interview (currently a one-line `<input>`), light-mode contrast to WCAG AA (zinc-500/600 for small text).
-4. **Onboarding**: empty-state hero explaining the pipeline (debrief → structured doc → tomorrow's plan) + one-tap sample debrief (samples exist but are only surfaced inside `/new`).
-5. **Interview resilience**: persist the chat to sessionStorage per turn — a refresh currently destroys the whole conversation.
-6. **Archive + search**: `/archive` with pagination + tag/date filter + Postgres full-text search (`tsvector`) — before embeddings/pgvector. Home currently caps at 20 cards with no way back in time.
-7. **Habit loop**: streak on Home (the data is already in `sessions`), daily reminder; weekly rollup later.
-8. **Polish**: `error.tsx`/`not-found.tsx`; `aria-live` on errors and the pending bubble; PWA manifest (add-to-homescreen for a daily-habit app); actually apply the Geist font (loaded but `globals.css` hardcodes Arial); undo fidelity (restore tag chips, `due_on`, `status` — not just text).
+### Phase 2 — The market slice (product) · partially done 2026-08-19
+1. **Voice input — ✅ v1 (browser dictation)**: Web Speech API mic on `/new` + interview (free, no backend, Chrome/Edge; hides where unsupported). Remaining for v2: server-side STT (Whisper-class) so Safari/Firefox and audio files work.
+2. **Extraction wait UX — ✅**: staged live progress + elapsed timer + "safe to leave" promise.
+3. **Mobile pass — still open**: touch-visible edit controls, auto-growing interview textarea. (Contrast + Geist + mood color + check-off motion ✅ 2026-08-19.)
+4. **Onboarding — ✅**: empty-state CTA + one-click **demo week** (5 backdated days, one arc, baked threads) + single samples.
+5. **Interview resilience — still open**: sessionStorage persistence per turn.
+6. **Archive + search — still open**: `/archive`, pagination, tag/date filter, PG FTS.
+7. **Habit loop — still open**: streak + reminders. **Cross-day insights — ✅ v1 as Threads** (see below).
+8. **Polish — partial**: aria-live ✅, Geist ✅, `error.tsx`/PWA manifest still open; undo fidelity still text-only.
+
+**Threads (2026-08-19, spec slice 4 v1):** strong model reads the newest ~6 sessions → 2–4 cross-day threads (pattern/progress/nudge, date-grounded) → `insights` table (latest-snapshot) → "Threads this week" panel on Home + explicit refresh; regenerates in the background (`after()`) once ≥3 sessions exist. Demo week ships baked threads for the keyless payoff.
 
 **Done when:** a new user on a phone can voice-journal, survive the wait, find an old entry, and come back on day two.
 

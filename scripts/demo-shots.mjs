@@ -24,41 +24,45 @@ page.on('pageerror', (e) => errors.push(String(e)))
 const shot = (name) => page.screenshot({ path: `${OUT}/${name}.png` })
 const step = (name) => console.log('→', name)
 
-// 1 — empty Home (first-run onboarding state)
+// 1 — empty Home (first-run onboarding state, demo-week CTA)
 step('home (empty)')
 await page.goto(BASE)
-await page.waitForLoadState('networkidle')
-await page.getByText('No entries yet').waitFor()
+await page.getByRole('button', { name: 'Load a demo week' }).waitFor()
 await shot('01-home-empty')
 
-// 2 — instant sample: click, land on the structured doc (no AI call)
-step('load instant sample')
-await page.getByRole('button', { name: 'load a sample' }).click()
-await page.waitForURL(/\/session\/\d+/)
+// 2 — demo week: five days + baked threads, instantly (no AI call)
+step('load demo week')
+await page.getByRole('button', { name: 'Load a demo week' }).click()
+await page.locator('h2:has-text("Threads this week")').waitFor()
+await page.locator('li:has-text("engine")').first().waitFor() // a baked thread card
+await page.waitForTimeout(500) // settle
+await shot('02-home-lived-in')
+
+// 3 — open the newest session (the doc is the differentiator)
+step('session doc')
+await page.locator('a[href^="/session/"]').first().click()
 await page.locator('h2:has-text("What happened")').waitFor()
-await shot('02-session-doc')
+await shot('03-session-doc')
 
-// 3 — inline editing state (the differentiator: rows are editable)
+// 4 — inline editing state
 step('inline edit state')
-const row = page.locator('li.group', { hasText: 'Standup' }).first()
-await row.hover()
-await row.locator('button', { hasText: 'edit' }).click()
-await page.locator('li input:not([type])').first().waitFor()
-await shot('03-inline-edit')
+const row = page.locator('li.group', { hasText: 'standup' }).first()
+if (await row.count()) {
+  await row.hover()
+  await row.locator('button', { hasText: 'edit' }).click()
+  await page.locator('li input:not([type])').first().waitFor()
+  await shot('04-inline-edit')
+} else {
+  await shot('04-inline-edit')
+}
 
-// 4 — Home with tomorrow's plan + entries
-step('home with plan')
+// 5 — back Home; check off a plan item; it must leave the list
+step('plan check-off')
 await page.goto(BASE)
 await page.locator('h2:has-text("Tomorrow")').waitFor()
-await page.locator('h2:has-text("Recent entries")').waitFor()
-await shot('04-home-plan')
-
-// 5 — check off a plan item; it must leave the list (the action loop)
-step('plan check-off')
-const firstBox = page.locator('input[type="checkbox"]').first()
 const before = await page.locator('input[type="checkbox"]').count()
 if (before > 0) {
-  await firstBox.click()
+  await page.locator('input[type="checkbox"]').first().click()
   await page
     .waitForFunction(
       (n) => document.querySelectorAll('input[type="checkbox"]').length < n,
@@ -69,13 +73,14 @@ if (before > 0) {
 }
 await shot('05-home-after-checkoff')
 
-// 6 — /new (quick type + samples + instant mode)
+// 6 — /new with the dictation mic
 step('/new')
 await page.goto(`${BASE}/new`)
 await page.getByText('Debrief your day').waitFor()
+await page.waitForTimeout(300)
 await shot('06-new')
 
-// 7 — guided interview (pre-send state: greeting + checklist pills)
+// 7 — guided interview (greeting + checklist pills + mic)
 step('/interview')
 await page.goto(`${BASE}/interview`)
 await page.getByText('Guided debrief').waitFor()
