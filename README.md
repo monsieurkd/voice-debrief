@@ -1,5 +1,8 @@
 # Voice Debrief
 
+[![Live demo](https://img.shields.io/badge/live-demo-2ea44f?style=flat-square)](#) <!-- replace # with the deployment URL — see DEPLOY.md -->
+[![CI](https://img.shields.io/github/actions/workflow/status/monsieurkd/voice-debrief/ci.yml?style=flat-square)](https://github.com/monsieurkd/voice-debrief/actions/workflows/ci.yml)
+
 > Talk (or type) through your day. A small AI interview captures it, a strong
 > model turns it into **structured, queryable data**, and an editable document
 > lets you correct anything — so a daily debrief compounds into a personal data
