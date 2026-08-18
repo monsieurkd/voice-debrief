@@ -3,6 +3,7 @@ import { listSessions, listOpenNextSteps } from '@/lib/queries'
 import { formatDate } from '@/lib/dates'
 import { PlanList } from '@/components/PlanList'
 import { MoodStrip } from '@/components/MoodStrip'
+import { LoadSampleButton } from '@/components/LoadSampleButton'
 
 // Home reads live journal data on every request. With the default 'auto',
 // this page is eligible for build-time prerendering: `next build` would
@@ -46,8 +47,12 @@ export default async function Home() {
             No entries yet.{' '}
             <Link href="/new" className="underline">
               Write your first debrief
-            </Link>
-            .
+            </Link>{' '}
+            — or{' '}
+            <LoadSampleButton className="text-zinc-600 underline underline-offset-2 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100">
+              load a sample
+            </LoadSampleButton>{' '}
+            to see how a day becomes a plan.
           </p>
         ) : (
           <ul className="flex flex-col gap-3">

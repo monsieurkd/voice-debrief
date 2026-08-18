@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { runDebrief } from '@/actions/debrief'
 import { sampleTranscripts } from '@/lib/sample-transcripts'
+import { LoadSampleButton } from '@/components/LoadSampleButton'
 
 export default function NewDebrief() {
   const router = useRouter()
@@ -78,6 +79,16 @@ export default function NewDebrief() {
             </button>
           ))}
         </div>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Chips fill the box for a real AI run —{' '}
+          <LoadSampleButton
+            sampleId={0}
+            className="font-medium text-zinc-700 underline underline-offset-2 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+          >
+            or load a sample instantly
+          </LoadSampleButton>{' '}
+          (demo mode: no AI call, same structured result).
+        </p>
       </div>
     </main>
   )

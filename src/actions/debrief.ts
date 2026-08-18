@@ -10,6 +10,8 @@ import { updateRowText, addRowText, deleteRowEntity, setNextStepStatus } from '@
 import { reclassifyRowEntity } from '@/lib/reclassify'
 import { parseArgs } from '@/lib/action-args'
 import { summarizeLlmError } from '@/lib/llm-errors'
+import { buildSampleSessions } from '@/lib/sample-sessions'
+import { sampleTranscripts } from '@/lib/sample-transcripts'
 import type { ExtractionPayload } from '@/lib/extraction-schema'
 import type { EntityType } from '@/lib/constants'
 
@@ -72,6 +74,28 @@ export async function runDebrief(transcriptInput: string): Promise<DebriefResult
     return { ok: false, error: 'Could not save the debrief — the database is unreachable. Try again in a moment.' }
   }
   revalidatePath('/') // a new session changes Home (entries + possibly the plan)
+  return { ok: true, sessionId }
+}
+
+/**
+ * Demo mode: store a pre-baked sample session — same transactional store as a
+ * real debrief, but no LLM call. Instant, and works with no API key configured.
+ */
+export async function runSampleDebrief(sampleIdInput: number): Promise<DebriefResult> {
+  const { sampleId } = parseArgs(
+    z.object({ sampleId: z.number().int().min(0).max(sampleTranscripts.length - 1) }),
+    { sampleId: sampleIdInput },
+    'runSampleDebrief',
+  )
+  const sample = buildSampleSessions()[sampleId]
+  let sessionId: number
+  try {
+    sessionId = await storeSession(sample.transcript, sample.payload, { overview: sample.payload.overview })
+  } catch (e) {
+    console.error('[runSampleDebrief] store failed:', e)
+    return { ok: false, error: 'Could not save the sample — the database is unreachable. Try again in a moment.' }
+  }
+  revalidatePath('/')
   return { ok: true, sessionId }
 }
 
