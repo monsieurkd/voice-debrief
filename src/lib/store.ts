@@ -67,7 +67,7 @@ async function resolveGoalId(tx: Tx, userId: number, title: string): Promise<num
 export async function storeSession(
   transcript: string,
   payload: ExtractionPayload,
-  opts: { userId?: number; overview?: string } = {},
+  opts: { userId?: number; overview?: string; startedAt?: Date } = {},
 ): Promise<number> {
   const userId = opts.userId ?? USER_ID
   return db.transaction(async (tx) => {
@@ -76,6 +76,7 @@ export async function storeSession(
       .values({
         user_id: userId,
         transcript,
+        started_at: opts.startedAt ?? new Date(),
         overview: opts.overview ?? payload.overview,
         mood: payload.mood ?? null,
         energy: payload.energy ?? null,

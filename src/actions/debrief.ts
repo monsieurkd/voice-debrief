@@ -11,6 +11,7 @@ import { reclassifyRowEntity } from '@/lib/reclassify'
 import { parseArgs } from '@/lib/action-args'
 import { summarizeLlmError } from '@/lib/llm-errors'
 import { buildSampleSessions } from '@/lib/sample-sessions'
+import { buildDemoWeek } from '@/lib/demo-week'
 import { sampleTranscripts } from '@/lib/sample-transcripts'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { clientIp } from '@/lib/client-ip'
@@ -112,6 +113,32 @@ export async function runSampleDebrief(sampleIdInput: number): Promise<DebriefRe
   }
   revalidatePath('/')
   return { ok: true, sessionId }
+}
+
+/**
+ * Demo week: seed five backdated days of one story arc (no LLM calls) so the
+ * journal opens looking lived-in — plans accumulating, threads forming.
+ * Lands on Home (not a session page): the reveal is the journal itself.
+ */
+export async function runDemoWeek(): Promise<DebriefResult> {
+  if (!(await checkRateLimit(`demoweek:${await clientIp()}`, 3, RATE_WINDOW_MS))) {
+    return { ok: false, error: 'Demo limit reached — the demo week can be loaded 3 times per hour. Come back later.' }
+  }
+  const week = buildDemoWeek() // oldest first
+  let lastId = 0
+  try {
+    for (const day of week) {
+      lastId = await storeSession(day.transcript, day.payload, {
+        overview: day.payload.overview,
+        startedAt: day.startedAt,
+      })
+    }
+  } catch (e) {
+    console.error('[runDemoWeek] store failed:', e)
+    return { ok: false, error: 'Could not save the demo week — the database is unreachable. Try again in a moment.' }
+  }
+  revalidatePath('/')
+  return { ok: true, sessionId: lastId }
 }
 
 /** Edit a block's text → UPDATE + source='user' + was_corrected=true. */

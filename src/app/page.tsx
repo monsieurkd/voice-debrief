@@ -3,7 +3,8 @@ import { listSessions, listOpenNextSteps } from '@/lib/queries'
 import { formatDate } from '@/lib/dates'
 import { PlanList } from '@/components/PlanList'
 import { MoodStrip } from '@/components/MoodStrip'
-import { LoadSampleButton } from '@/components/LoadSampleButton'
+import { DemoButton } from '@/components/DemoButton'
+import { runSampleDebrief, runDemoWeek } from '@/actions/debrief'
 
 // Home reads live journal data on every request. With the default 'auto',
 // this page is eligible for build-time prerendering: `next build` would
@@ -43,17 +44,33 @@ export default async function Home() {
           Recent entries
         </h2>
         {entries.length === 0 ? (
-          <p className="text-sm text-zinc-400">
-            No entries yet.{' '}
-            <Link href="/new" className="underline">
-              Write your first debrief
-            </Link>{' '}
-            — or{' '}
-            <LoadSampleButton className="text-zinc-600 underline underline-offset-2 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100">
-              load a sample
-            </LoadSampleButton>{' '}
-            to see how a day becomes a plan.
-          </p>
+          <div className="flex flex-col gap-3">
+            <p className="text-sm text-zinc-400">
+              No entries yet.{' '}
+              <Link href="/new" className="underline">
+                Write your first debrief
+              </Link>
+              .
+            </p>
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <DemoButton
+                action={runDemoWeek}
+                dest="/"
+                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+              >
+                Load a demo week
+              </DemoButton>
+              <span className="text-zinc-400">
+                5 days of a real story arc — or{' '}
+                <DemoButton
+                  action={runSampleDebrief.bind(null, 0)}
+                  className="text-zinc-600 underline underline-offset-2 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+                >
+                  just one sample
+                </DemoButton>
+              </span>
+            </div>
+          </div>
         ) : (
           <ul className="flex flex-col gap-3">
             {entries.map((e) => (

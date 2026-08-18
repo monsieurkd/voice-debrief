@@ -2,18 +2,22 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { runSampleDebrief } from '@/actions/debrief'
+import { runSampleDebrief, type DebriefResult } from '@/actions/debrief'
 
 /**
- * Demo mode: stores a pre-baked sample session through the SAME transactional
- * store as a real debrief — but with no LLM call, so it is instant and works
- * without an API key. Used by the empty Home state and /new.
+ * Runs a demo action (instant, no LLM) and navigates to the result. Used by the
+ * empty Home state and /new. The action comes in as a prop — server actions are
+ * serializable references, so server pages can pass theirs directly.
  */
-export function LoadSampleButton({
-  sampleId = 0,
+export function DemoButton({
+  action,
+  dest,
+  sampleId,
   className,
   children,
 }: {
+  action?: () => Promise<DebriefResult>
+  dest?: string
   sampleId?: number
   className?: string
   children: React.ReactNode
@@ -26,11 +30,11 @@ export function LoadSampleButton({
     setPending(true)
     setError(null)
     try {
-      const res = await runSampleDebrief(sampleId)
-      if (res.ok) router.push(`/session/${res.sessionId}`)
+      const res = action ? await action() : await runSampleDebrief(sampleId ?? 0)
+      if (res.ok) router.push(dest ?? `/session/${res.sessionId}`)
       else setError(res.error)
     } catch {
-      setError('Could not load the sample — try again.')
+      setError('Could not load the demo — try again.')
     } finally {
       setPending(false)
     }
@@ -39,7 +43,7 @@ export function LoadSampleButton({
   return (
     <>
       <button type="button" onClick={run} disabled={pending} className={className}>
-        {pending ? 'Loading sample…' : children}
+        {pending ? 'Loading…' : children}
       </button>
       {error && (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
