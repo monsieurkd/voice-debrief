@@ -4,6 +4,12 @@ import { formatDate } from '@/lib/dates'
 import { PlanList } from '@/components/PlanList'
 import { MoodStrip } from '@/components/MoodStrip'
 
+// Home reads live journal data on every request. With the default 'auto',
+// this page is eligible for build-time prerendering: `next build` would
+// execute the queries during the build and serve a stale snapshot — new
+// sessions wouldn't appear until an unrelated revalidation.
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
   const [entries, plan] = await Promise.all([listSessions(20), listOpenNextSteps(30)])
 

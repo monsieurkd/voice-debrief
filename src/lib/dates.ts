@@ -162,3 +162,8 @@ export function todayInAppTz(now = new Date()): string {
   const get = (type: string) => parts.find((p) => p.type === type)!.value
   return `${get('year')}-${get('month')}-${get('day')}`
 }
+
+/** Calendar-day arithmetic on 'YYYY-MM-DD' strings (timezone-free). */
+export function isoMinusDays(iso: string, days: number): string {
+  return new Date(Date.parse(`${iso}T00:00:00Z`) - days * 86400000).toISOString().slice(0, 10)
+}

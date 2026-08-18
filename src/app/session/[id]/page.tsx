@@ -7,7 +7,10 @@ import { MoodStrip } from '@/components/MoodStrip'
 
 export default async function SessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const data = await loadSession(Number(id))
+  const sessionId = Number(id)
+  // Non-numeric ids must 404, not reach Postgres as 'NaN' (a 500 on the DB bind).
+  if (!Number.isInteger(sessionId) || sessionId <= 0) notFound()
+  const data = await loadSession(sessionId)
   if (!data) notFound()
 
   return (

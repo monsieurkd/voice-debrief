@@ -1,7 +1,9 @@
 import { db } from '@/db/client'
 import { sessions, nextSteps, goals } from '@/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, and, or, isNull, gte } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { USER_ID } from '@/lib/constants'
+import { todayInAppTz, isoMinusDays } from '@/lib/dates'
 
 export interface SessionSummary {
   id: number
@@ -38,8 +40,15 @@ export async function listSessions(limit = 20): Promise<SessionSummary[]> {
     .limit(limit)
 }
 
-/** Open next_steps = "tomorrow's plan" (across all the user's sessions). */
+/**
+ * "Tomorrow's plan" = open next_steps from the last 7 days — dated steps by
+ * due_on, undated by creation. Without the window this became "every open
+ * step forever": a step checked open three weeks ago headlined the plan
+ * indefinitely and pushed fresh items past the limit. Older open steps stay
+ * visible on their session pages.
+ */
 export async function listOpenNextSteps(limit = 30): Promise<PlanItem[]> {
+  const cutoff = isoMinusDays(todayInAppTz(), 7)
   const rows = await db
     .select({
       id: nextSteps.id,
@@ -51,7 +60,15 @@ export async function listOpenNextSteps(limit = 30): Promise<PlanItem[]> {
     })
     .from(nextSteps)
     .leftJoin(goals, eq(nextSteps.goal_id, goals.id))
-    .where(eq(nextSteps.status, 'open'))
+    .where(
+      and(
+        eq(nextSteps.status, 'open'),
+        or(
+          gte(nextSteps.due_on, cutoff),
+          and(isNull(nextSteps.due_on), gte(nextSteps.created_at, sql`now() - interval '7 days'`)),
+        ),
+      ),
+    )
     .orderBy(desc(nextSteps.created_at))
     .limit(limit)
   return rows

@@ -9,7 +9,7 @@ process.env.APP_TIMEZONE = 'Asia/Ho_Chi_Minh' // UTC+7 — east of UTC, catches 
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parseDateOnly, parseTimestamp, formatDate, todayInAppTz, appTimezone } from '../src/lib/dates'
+import { parseDateOnly, parseTimestamp, formatDate, todayInAppTz, isoMinusDays, appTimezone } from '../src/lib/dates'
 
 // Fixed "now" so year-anchoring tests are deterministic: 2026-08-18T04:00:00Z.
 const NOW = new Date('2026-08-18T04:00:00Z')
@@ -92,4 +92,9 @@ test('todayInAppTz rolls over at app-TZ midnight, not UTC midnight', () => {
 
 test('appTimezone honors APP_TIMEZONE', () => {
   assert.equal(appTimezone(), 'Asia/Ho_Chi_Minh')
+})
+
+test('isoMinusDays does calendar-day arithmetic', () => {
+  assert.equal(isoMinusDays('2026-08-18', 7), '2026-08-11')
+  assert.equal(isoMinusDays('2026-03-01', 1), '2026-02-28') // crosses a non-leap February
 })

@@ -71,6 +71,7 @@ export async function runDebrief(transcriptInput: string): Promise<DebriefResult
     console.error('[runDebrief] store failed:', e)
     return { ok: false, error: 'Could not save the debrief — the database is unreachable. Try again in a moment.' }
   }
+  revalidatePath('/') // a new session changes Home (entries + possibly the plan)
   return { ok: true, sessionId }
 }
 
