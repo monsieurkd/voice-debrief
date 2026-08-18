@@ -14,7 +14,6 @@ export interface ViewBlock {
   entityType: EntityType
   id: number
   text: string
-  uncertain: boolean
   tags: ViewTag[]
   rationale?: string | null
   resolved?: boolean
@@ -78,15 +77,14 @@ export async function loadSession(sessionId: number): Promise<LoadedSession | nu
 
   const blocks: ViewBlock[] = []
   for (const r of evs)
-    blocks.push({ entityType: 'event', id: r.id, text: r.what, uncertain: false, tags: evTags.get(r.id) ?? [], occurredAt: r.occurred_at })
+    blocks.push({ entityType: 'event', id: r.id, text: r.what, tags: evTags.get(r.id) ?? [], occurredAt: r.occurred_at })
   for (const r of refs)
-    blocks.push({ entityType: 'reflection', id: r.id, text: r.content, uncertain: false, tags: refTags.get(r.id) ?? [], kind: r.kind })
+    blocks.push({ entityType: 'reflection', id: r.id, text: r.content, tags: refTags.get(r.id) ?? [], kind: r.kind })
   for (const r of decs)
     blocks.push({
       entityType: 'decision',
       id: r.id,
       text: r.summary,
-      uncertain: !r.resolved || !!r.rationale, // voiced doubt or still-open → ⚠
       tags: decTags.get(r.id) ?? [],
       rationale: r.rationale,
       resolved: r.resolved,
@@ -96,7 +94,6 @@ export async function loadSession(sessionId: number): Promise<LoadedSession | nu
       entityType: 'next_step',
       id: r.id,
       text: r.content,
-      uncertain: false,
       tags: stepTags.get(r.id) ?? [],
       status: r.status,
       dueOn: r.due_on,

@@ -10,7 +10,7 @@ const UNDO_MS = 6000
 /**
  * The editable doc — a projection over the structured rows. Each block binds 1:1
  * to a row via {entityType, id} held in React state (never rendered as text).
- * Verbs: edit (inline), add, delete (with client-side undo). Reclassify comes later.
+ * Verbs: edit (inline), add, delete (with client-side undo), reclassify (move).
  */
 export function DebriefDoc({ initial }: { initial: LoadedSession }) {
   const [blocks, setBlocks] = useState<ViewBlock[]>(initial.blocks)
@@ -51,7 +51,7 @@ export function DebriefDoc({ initial }: { initial: LoadedSession }) {
 
   function handleAddNew(et: EntityType) {
     const tempId = nextTempId.current--
-    setBlocks((bs) => [...bs, { entityType: et, id: tempId, text: '', uncertain: false, tags: [] }])
+    setBlocks((bs) => [...bs, { entityType: et, id: tempId, text: '', tags: [] }])
   }
 
   function handleCancelNew(et: EntityType, tempId: number) {
@@ -88,7 +88,6 @@ export function DebriefDoc({ initial }: { initial: LoadedSession }) {
                 ...b,
                 entityType: to,
                 id: newId,
-                uncertain: false,
                 rationale: undefined,
                 resolved: undefined,
                 status: undefined,

@@ -11,9 +11,11 @@ export function MoodStrip({ mood, energy }: { mood: string | null; energy: numbe
           ))}
         </span>
       )}
+      {/* label only what was actually captured — "high energy" with energy=null claimed data we never had */}
       <span>
-        {mood ? `${mood} ` : ''}
-        energy
+        {mood ? `${mood} mood` : ''}
+        {mood && energy != null ? ' · ' : ''}
+        {energy != null ? 'energy' : ''}
       </span>
     </div>
   )

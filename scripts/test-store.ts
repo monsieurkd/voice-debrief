@@ -1,8 +1,10 @@
 // Verify storeSession end-to-end against the DB with a hand-crafted payload.
 // No API key needed — this tests the transactional store, not extraction.
+// Asserts (exits non-zero on any failure). Needs a migrated local Postgres.
+import assert from 'node:assert/strict'
 import { storeSession } from '../src/lib/store'
 import { db } from '../src/db/client'
-import { sessions, events, reflections, decisions, nextSteps, goals, userState } from '../src/db/schema'
+import { sessions, events, reflections, decisions, nextSteps, goals, userState, tagLinks } from '../src/db/schema'
 import { eq } from 'drizzle-orm'
 import type { ExtractionPayload } from '../src/lib/extraction-schema'
 
@@ -26,10 +28,13 @@ const payload: ExtractionPayload = {
 
 async function main() {
   const sessionId = await storeSession('Dummy transcript for the store test.', payload)
-  console.log('stored session id:', sessionId)
 
   const [s] = await db.select().from(sessions).where(eq(sessions.id, sessionId))
-  console.log('session:', { id: s?.id, overview: s?.overview, mood: s?.mood, tone: s?.tone })
+  assert.ok(s, 'session row exists')
+  assert.equal(s.overview, payload.overview)
+  assert.equal(s.mood, 'low')
+  assert.equal(s.tone, 'frustrated')
+  assert.equal(s.transcript, 'Dummy transcript for the store test.')
 
   const [evs, refs, decs, steps] = await Promise.all([
     db.select().from(events).where(eq(events.session_id, sessionId)),
@@ -37,22 +42,41 @@ async function main() {
     db.select().from(decisions).where(eq(decisions.session_id, sessionId)),
     db.select().from(nextSteps).where(eq(nextSteps.session_id, sessionId)),
   ])
-  console.log('child rows:', { events: evs.length, reflections: refs.length, decisions: decs.length, next_steps: steps.length })
-  console.log('event quality flags:', evs[0] && { source: evs[0].source, was_corrected: evs[0].was_corrected })
-  console.log('decision:', decs[0] && { summary: decs[0].summary, resolved: decs[0].resolved, rationale: decs[0].rationale })
-  console.log('next_step goal_id:', steps[0]?.goal_id, '| status:', steps[0]?.status)
+  assert.equal(evs.length, 1, 'one event stored')
+  assert.equal(refs.length, 1, 'one reflection stored')
+  assert.equal(decs.length, 1, 'one decision stored')
+  assert.equal(steps.length, 1, 'one next_step stored')
 
-  const [us] = await db.select().from(userState).where(eq(userState.user_id, 1))
-  console.log('user_state:', { sessions_count: us?.sessions_count, last_session_id: us?.last_session_id, last_mood: us?.last_mood })
+  assert.equal(evs[0].source, 'ai', 'extracted rows are source=ai')
+  assert.equal(evs[0].was_corrected, false)
+  assert.equal(decs[0].resolved, true)
+  assert.equal(decs[0].rationale, 'not sure it is realistic')
+  assert.equal(steps[0].status, 'open')
 
+  // tags + polymorphic links landed for every kind of child row
+  const links = await db.select().from(tagLinks)
+  const byType = (t: string) => links.filter((l) => l.entity_type === t).length
+  assert.ok(byType('event') >= 2, 'event tag_links stored (person+project)')
+  assert.ok(byType('reflection') >= 1, 'reflection tag_links stored')
+  assert.ok(byType('next_step') >= 1, 'next_step tag_links stored')
+
+  // goal resolved by TITLE (created, not an id passthrough)
   const allGoals = await db.select().from(goals).where(eq(goals.user_id, 1))
-  console.log('goals:', allGoals.map((g) => g.title))
+  assert.ok(allGoals.some((g) => g.title === 'Launch'), "goal 'Launch' resolved/created by title")
+  assert.ok(steps[0].goal_id != null, 'next_step wired to goal_id')
 
-  console.log('\n✅ store verified — open /session/' + sessionId + ' once the viewer exists')
+  // user_state adapted for the next session
+  const [us] = await db.select().from(userState).where(eq(userState.user_id, 1))
+  assert.ok(us, 'user_state row exists')
+  assert.ok((us.sessions_count ?? 0) >= 1, 'sessions_count incremented')
+  assert.equal(us.last_session_id, sessionId, 'last_session_id points at the new session')
+  assert.equal(us.last_mood, 'low')
+
+  console.log(`✅ store verified — session ${sessionId}: 4 children, tags+links, goal, user_state`)
   process.exit(0)
 }
 
 main().catch((e) => {
-  console.error(e)
+  console.error('❌ store test failed:', e)
   process.exit(1)
 })

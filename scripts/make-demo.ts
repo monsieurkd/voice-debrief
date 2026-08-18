@@ -1,5 +1,6 @@
 // Create a real demo session via the full dual-model path (fast overview + strong
 // extraction → store), the same logic runDebrief uses (minus revalidatePath).
+import { env } from '../src/lib/env'
 import { generateOverview } from '../src/lib/overview'
 import { extractDebrief } from '../src/lib/extract'
 import { storeSession } from '../src/lib/store'
@@ -7,7 +8,7 @@ import { sampleTranscripts } from '../src/lib/sample-transcripts'
 
 async function main() {
   const transcript = sampleTranscripts[0].text
-  console.log('FAST overview (gemini-3.1-flash-lite) ‖ STRONG extraction (gemini-3.5-flash) — running concurrently…')
+  console.log(`FAST overview (${env.LLM_SMALL_MODEL}) ‖ STRONG extraction (${env.LLM_MODEL}) — running concurrently…`)
   const overviewP = generateOverview(transcript)
   const payload = await extractDebrief(transcript)
   const fastOverview = await overviewP

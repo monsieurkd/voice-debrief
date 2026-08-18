@@ -56,22 +56,25 @@ export async function addRowText(entityType: EntityType, sessionId: number, text
 
 export async function deleteRowEntity(entityType: EntityType, id: number) {
   // polymorphic tag_links has NO FK on entity_id → clean manually or we ship ghost tags.
-  await db.delete(tagLinks).where(and(eq(tagLinks.entity_type, entityType), eq(tagLinks.entity_id, id)))
-  const sec = SECTION_BY_ENTITY[entityType]
-  switch (sec.key) {
-    case 'events':
-      await db.delete(events).where(eq(events.id, id))
-      break
-    case 'reflections':
-      await db.delete(reflections).where(eq(reflections.id, id))
-      break
-    case 'decisions':
-      await db.delete(decisions).where(eq(decisions.id, id))
-      break
-    case 'next_steps':
-      await db.delete(nextSteps).where(eq(nextSteps.id, id))
-      break
-  }
+  // One transaction: if the row delete fails, the tag_links delete rolls back too —
+  // otherwise the row survived with its tags silently stripped.
+  await db.transaction(async (tx) => {
+    await tx.delete(tagLinks).where(and(eq(tagLinks.entity_type, entityType), eq(tagLinks.entity_id, id)))
+    switch (SECTION_BY_ENTITY[entityType].key) {
+      case 'events':
+        await tx.delete(events).where(eq(events.id, id))
+        break
+      case 'reflections':
+        await tx.delete(reflections).where(eq(reflections.id, id))
+        break
+      case 'decisions':
+        await tx.delete(decisions).where(eq(decisions.id, id))
+        break
+      case 'next_steps':
+        await tx.delete(nextSteps).where(eq(nextSteps.id, id))
+        break
+    }
+  })
 }
 
 /** Toggle a next_step's status (used by the plan check-off). */

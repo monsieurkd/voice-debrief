@@ -13,6 +13,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seed.ts",
     "db:check": "tsx scripts/db-check.ts",
+    "test:db": "tsx scripts/test-store.ts && tsx scripts/test-writeback.ts && tsx scripts/test-reclassify.ts",
+    "test:interview": "tsx scripts/test-interview.ts",
     "test:live": "tsx scripts/extract-standalone.ts"
   },
   "dependencies": {
