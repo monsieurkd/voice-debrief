@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: voicedebrief-db
+    environment:
+      POSTGRES_USER: voice
+      POSTGRES_PASSWORD: voice
+      POSTGRES_DB: voicedebrief
+    ports:
+      - "5432:5432"
+    volumes:
+      - voicedebrief_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voice -d voicedebrief"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  voicedebrief_pgdata:
