@@ -16,10 +16,15 @@ export default function NewDebrief() {
     e.preventDefault()
     setPending(true)
     setError(null)
-    const res = await runDebrief(text)
-    setPending(false)
-    if (res.ok) router.push(`/session/${res.sessionId}`)
-    else setError(res.error)
+    try {
+      const res = await runDebrief(text)
+      if (res.ok) router.push(`/session/${res.sessionId}`)
+      else setError(res.error)
+    } catch {
+      setError('Could not reach the server — check your connection and try again.')
+    } finally {
+      setPending(false)
+    }
   }
 
   return (
@@ -45,7 +50,11 @@ export default function NewDebrief() {
           className="min-h-48 w-full resize-y rounded-lg border border-zinc-300 p-4 text-sm leading-6 outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-100"
           disabled={pending}
         />
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && (
+          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            {error}
+          </p>
+        )}
         <button
           type="submit"
           disabled={pending || !text.trim()}

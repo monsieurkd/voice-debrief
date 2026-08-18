@@ -8,11 +8,18 @@ import type { PlanItem } from '@/lib/queries'
 /** The "tomorrow's plan" list — open next_steps with a check-off. */
 export function PlanList({ items }: { items: PlanItem[] }) {
   const [busy, setBusy] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   async function markDone(id: number) {
     setBusy(id)
-    await setStepStatus(id, 'done')
-    setBusy(null)
+    setError(null)
+    try {
+      await setStepStatus(id, 'done')
+    } catch {
+      setError('Could not mark it done — try again.')
+    } finally {
+      setBusy(null)
+    }
   }
 
   if (items.length === 0) {
@@ -28,7 +35,13 @@ export function PlanList({ items }: { items: PlanItem[] }) {
   }
 
   return (
-    <ul className="flex flex-col gap-1">
+    <>
+      {error && (
+        <p role="alert" className="mb-2 text-sm text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      )}
+      <ul className="flex flex-col gap-1">
       {items.map((p) => (
         <li
           key={p.id}
@@ -53,6 +66,7 @@ export function PlanList({ items }: { items: PlanItem[] }) {
           </div>
         </li>
       ))}
-    </ul>
+      </ul>
+    </>
   )
 }

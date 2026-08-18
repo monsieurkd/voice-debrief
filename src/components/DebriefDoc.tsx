@@ -15,6 +15,7 @@ const UNDO_MS = 6000
 export function DebriefDoc({ initial }: { initial: LoadedSession }) {
   const [blocks, setBlocks] = useState<ViewBlock[]>(initial.blocks)
   const [undo, setUndo] = useState<{ block: ViewBlock; before: ViewBlock[] } | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const nextTempId = useRef(-1)
 
   useEffect(() => {
@@ -26,15 +27,26 @@ export function DebriefDoc({ initial }: { initial: LoadedSession }) {
   const isBlock = (b: ViewBlock, et: EntityType, id: number) => b.entityType === et && b.id === id
 
   async function handleSaveEdit(et: EntityType, id: number, text: string) {
+    const prev = blocks.find((b) => isBlock(b, et, id))?.text ?? text
     setBlocks((bs) => bs.map((b) => (isBlock(b, et, id) ? { ...b, text } : b)))
-    await updateRow(et, id, text, initial.id)
+    try {
+      await updateRow(et, id, text, initial.id)
+    } catch {
+      setBlocks((bs) => bs.map((b) => (isBlock(b, et, id) ? { ...b, text: prev } : b)))
+      setError('Could not save that edit — the previous text is back. Try again.')
+    }
   }
 
   async function handleCreate(et: EntityType, tempId: number, text: string) {
     // optimistic: show the text immediately, then swap the temp id for the real one
     setBlocks((bs) => bs.map((b) => (isBlock(b, et, tempId) ? { ...b, text } : b)))
-    const { id } = await addRow(et, initial.id, text)
-    setBlocks((bs) => bs.map((b) => (isBlock(b, et, tempId) ? { ...b, id, text } : b)))
+    try {
+      const { id } = await addRow(et, initial.id, text)
+      setBlocks((bs) => bs.map((b) => (isBlock(b, et, tempId) ? { ...b, id, text } : b)))
+    } catch {
+      setBlocks((bs) => bs.filter((b) => !isBlock(b, et, tempId)))
+      setError('Could not add that row — it was removed. Try again.')
+    }
   }
 
   function handleAddNew(et: EntityType) {
@@ -47,48 +59,86 @@ export function DebriefDoc({ initial }: { initial: LoadedSession }) {
   }
 
   async function handleDelete(et: EntityType, id: number) {
-    const block = blocks.find((b) => isBlock(b, et, id))
-    if (!block) return
+    const index = blocks.findIndex((b) => isBlock(b, et, id))
+    if (index === -1) return
+    const block = blocks[index]
     const before = blocks
     setBlocks((bs) => bs.filter((b) => !isBlock(b, et, id)))
-    if (id > 0) {
-      setUndo({ block, before })
+    try {
       await deleteRow(et, id, initial.id)
+      setUndo({ block, before }) // offer undo only once the server delete confirmed
+    } catch {
+      setBlocks((bs) => {
+        const copy = [...bs]
+        copy.splice(Math.min(index, copy.length), 0, block)
+        return copy
+      })
+      setError('Could not delete that row — it is back. Try again.')
     }
   }
 
   async function handleReclassify(et: EntityType, id: number, to: EntityType) {
     if (et === to || id < 0) return
-    const { id: newId } = await reclassifyRow(et, id, to, initial.id)
-    setBlocks((bs) =>
-      bs.map((b) =>
-        isBlock(b, et, id)
-          ? {
-              ...b,
-              entityType: to,
-              id: newId,
-              uncertain: false,
-              rationale: undefined,
-              resolved: undefined,
-              status: undefined,
-              dueOn: undefined,
-              goalTitle: undefined,
-              kind: undefined,
-              occurredAt: undefined,
-            }
-          : b,
-      ),
-    )
+    try {
+      const { id: newId } = await reclassifyRow(et, id, to, initial.id)
+      setBlocks((bs) =>
+        bs.map((b) =>
+          isBlock(b, et, id)
+            ? {
+                ...b,
+                entityType: to,
+                id: newId,
+                uncertain: false,
+                rationale: undefined,
+                resolved: undefined,
+                status: undefined,
+                dueOn: undefined,
+                goalTitle: undefined,
+                kind: undefined,
+                occurredAt: undefined,
+              }
+            : b,
+        ),
+      )
+    } catch {
+      setError('Could not move that row — it stays where it was. Try again.')
+    }
   }
 
   async function handleUndo() {
     if (!undo) return
     const { block, before } = undo
-    setUndo(null)
-    // Re-insert the text as a fresh row. (Slice-1 limitation: tag chips on the
-    // undone block are not restored — only the text comes back.)
-    const { id } = await addRow(block.entityType, initial.id, block.text)
-    setBlocks(before.map((b) => (isBlock(b, block.entityType, block.id) ? { ...b, id } : b)))
+    try {
+      // Re-insert FIRST — if this fails the text must still exist somewhere
+      // (it was deleted server-side), so we keep the undo toast armed.
+      const { id } = await addRow(block.entityType, initial.id, block.text)
+      const at = before.findIndex((b) => isBlock(b, block.entityType, block.id))
+      setBlocks((bs) => {
+        // Splice into the CURRENT blocks, not the 6s-old `before` snapshot —
+        // restoring the snapshot would clobber edits made during the window.
+        // (Slice-1 limitation: only the text returns; tag chips and
+        // type-specific extras do not.)
+        const restored: ViewBlock = {
+          ...block,
+          id,
+          tags: [],
+          rationale: undefined,
+          resolved: undefined,
+          status: undefined,
+          dueOn: undefined,
+          goalTitle: undefined,
+          kind: undefined,
+          occurredAt: undefined,
+        }
+        const copy = [...bs]
+        copy.splice(Math.min(Math.max(at, 0), copy.length), 0, restored)
+        return copy
+      })
+      setUndo(null)
+    } catch {
+      setError('Undo failed — try again.')
+      setUndo({ block, before }) // new object → the retry window re-arms
+    }
   }
 
   const tags = Array.from(
@@ -134,6 +184,18 @@ export function DebriefDoc({ initial }: { initial: LoadedSession }) {
       </div>
 
       {tags.length > 0 && <p className="mt-8 text-sm text-zinc-500">{tags.map((t) => t.name).join(' · ')}</p>}
+
+      {error && (
+        <p
+          role="alert"
+          className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+        >
+          {error}{' '}
+          <button onClick={() => setError(null)} className="underline">
+            dismiss
+          </button>
+        </p>
+      )}
 
       {undo && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900">

@@ -58,10 +58,15 @@ export default function InterviewPage() {
       return
     }
     setFinishing(true)
-    const res = await runDebrief(transcript)
-    setFinishing(false)
-    if (res.ok) router.push(`/session/${res.sessionId}`)
-    else setError(res.error)
+    try {
+      const res = await runDebrief(transcript)
+      if (res.ok) router.push(`/session/${res.sessionId}`)
+      else setError(res.error)
+    } catch {
+      setError('Could not reach the server — try Finish again; your conversation is still here.')
+    } finally {
+      setFinishing(false)
+    }
   }
 
   return (
@@ -96,7 +101,7 @@ export default function InterviewPage() {
           </div>
         ))}
         {pending && (
-          <div className="max-w-[80%] rounded-2xl bg-zinc-100 px-4 py-2 text-sm text-zinc-400 dark:bg-zinc-800">
+          <div role="status" className="max-w-[80%] rounded-2xl bg-zinc-100 px-4 py-2 text-sm text-zinc-400 dark:bg-zinc-800">
             …
           </div>
         )}
@@ -112,7 +117,11 @@ export default function InterviewPage() {
         )}
       </div>
 
-      {error && <p className="mb-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && (
+        <p role="alert" className="mb-2 text-sm text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      )}
 
       <form onSubmit={send} className="flex gap-2">
         <input
