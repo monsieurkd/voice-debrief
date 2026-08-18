@@ -1,4 +1,6 @@
 import type { ExtractionPayload } from './extraction-schema'
+import type { Thread } from './threads'
+import { dayLabel } from './threads'
 import { todayInAppTz, isoMinusDays, parseTimestamp } from './dates'
 
 /**
@@ -173,4 +175,37 @@ Keeping the morning block. That's the lesson of this week: mornings make the day
   ]
 
   return days.map((day): DemoDay => ({ ...day, startedAt: evening(day.dayOffset) }))
+}
+
+/**
+ * Threads matching the week's arc, baked so the cross-day payoff is visible
+ * in the keyless demo. Date labels use the same "Mon 17" format the live
+ * pass emits, derived from the actual seeded days.
+ */
+export function bakedDemoWeekThreads(now = new Date()): Thread[] {
+  const week = buildDemoWeek(now)
+  const label = (k: number) => dayLabel(week.find((d) => d.dayOffset === k)!.startedAt)
+  return [
+    {
+      title: 'Launch: clash → merged in five days',
+      kind: 'progress',
+      detail:
+        "The launch went from a tense standup clash to a merged scope doc in five days. The scope-down with Sarah — cutting the migration tool — is what unblocked it; when scope crept back on " +
+        `${label(1)}, the doc settled it without a fight.`,
+      dates: [label(4), label(3), label(1), label(0)],
+    },
+    {
+      title: 'The 9–11 block is the week’s engine',
+      kind: 'pattern',
+      detail:
+        'The day the morning block was protected, the data-model diagram shipped; the day it was given away to an unnecessary meeting, the day drained. "Mornings make the days" is now the standing rule.',
+      dates: [label(2), label(1), label(0)],
+    },
+    {
+      title: 'Priya’s migration risks: said → written',
+      kind: 'nudge',
+      detail: `The cutover risks lived in their head until the ${label(2)} talk, then became one written paragraph in the ${label(0)} block. Priya has it in writing now — keep the thread warm until the cutover plan is agreed.`,
+      dates: [label(2), label(0)],
+    },
+  ]
 }

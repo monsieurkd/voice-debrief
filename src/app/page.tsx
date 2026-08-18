@@ -1,8 +1,12 @@
 import Link from 'next/link'
 import { listSessions, listOpenNextSteps } from '@/lib/queries'
+import { listThreads } from '@/lib/threads'
+import { env } from '@/lib/env'
+import { USER_ID } from '@/lib/constants'
 import { formatDate } from '@/lib/dates'
 import { PlanList } from '@/components/PlanList'
 import { MoodStrip } from '@/components/MoodStrip'
+import { ThreadsPanel } from '@/components/ThreadsPanel'
 import { DemoButton } from '@/components/DemoButton'
 import { runSampleDebrief, runDemoWeek } from '@/actions/debrief'
 
@@ -13,7 +17,7 @@ import { runSampleDebrief, runDemoWeek } from '@/actions/debrief'
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-  const [entries, plan] = await Promise.all([listSessions(20), listOpenNextSteps(30)])
+  const [entries, plan, threads] = await Promise.all([listSessions(20), listOpenNextSteps(30), listThreads(USER_ID)])
 
   return (
     <main className="mx-auto min-h-dvh w-full max-w-2xl px-6 py-12">
@@ -38,6 +42,8 @@ export default async function Home() {
         </h2>
         <PlanList items={plan} />
       </section>
+
+      <ThreadsPanel threads={threads} canRefresh={!!env.LLM_API_KEY} />
 
       <section>
         <h2 className="mb-3 border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 dark:border-zinc-800">

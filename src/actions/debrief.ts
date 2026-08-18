@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 import { z } from 'zod'
 import { env } from '@/lib/env'
 import { extractDebrief, ExtractionError } from '@/lib/extract'
@@ -11,11 +12,12 @@ import { reclassifyRowEntity } from '@/lib/reclassify'
 import { parseArgs } from '@/lib/action-args'
 import { summarizeLlmError } from '@/lib/llm-errors'
 import { buildSampleSessions } from '@/lib/sample-sessions'
-import { buildDemoWeek } from '@/lib/demo-week'
+import { buildDemoWeek, bakedDemoWeekThreads } from '@/lib/demo-week'
 import { sampleTranscripts } from '@/lib/sample-transcripts'
+import { generateThreads, loadThreadSessions, storeThreads } from '@/lib/threads'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { clientIp } from '@/lib/client-ip'
-import { DEMO_LIMITS, RATE_WINDOW_MS } from '@/lib/constants'
+import { USER_ID, DEMO_LIMITS, RATE_WINDOW_MS } from '@/lib/constants'
 import type { ExtractionPayload } from '@/lib/extraction-schema'
 import type { EntityType } from '@/lib/constants'
 
@@ -86,6 +88,23 @@ export async function runDebrief(transcriptInput: string): Promise<DebriefResult
     return { ok: false, error: 'Could not save the debrief — the database is unreachable. Try again in a moment.' }
   }
   revalidatePath('/') // a new session changes Home (entries + possibly the plan)
+
+  // Cross-day threads regenerate in the background once there is a week to
+  // read — never blocks the redirect, and failure is logged, not shown.
+  if (env.LLM_API_KEY) {
+    after(async () => {
+      try {
+        const inputs = await loadThreadSessions(USER_ID)
+        if (inputs.length >= 3) {
+          const threads = await generateThreads(inputs)
+          await storeThreads(USER_ID, inputs[inputs.length - 1]!.id, threads)
+          revalidatePath('/')
+        }
+      } catch (e) {
+        console.error('[runDebrief] background thread refresh failed:', e)
+      }
+    })
+  }
   return { ok: true, sessionId }
 }
 
@@ -133,12 +152,37 @@ export async function runDemoWeek(): Promise<DebriefResult> {
         startedAt: day.startedAt,
       })
     }
+    // bake the cross-day threads so the compounding is visible without a key
+    await storeThreads(USER_ID, lastId, bakedDemoWeekThreads())
   } catch (e) {
     console.error('[runDemoWeek] store failed:', e)
     return { ok: false, error: 'Could not save the demo week — the database is unreachable. Try again in a moment.' }
   }
   revalidatePath('/')
   return { ok: true, sessionId: lastId }
+}
+
+/** Re-run the cross-day threads pass over the newest sessions (explicit refresh). */
+export async function refreshThreads(): Promise<{ ok: boolean; error?: string }> {
+  if (!(await checkRateLimit(`threads:${await clientIp()}`, 5, RATE_WINDOW_MS))) {
+    return { ok: false, error: 'Demo limit reached — thread refreshes are capped at 5/hour. Try again later.' }
+  }
+  if (!env.LLM_API_KEY) {
+    return { ok: false, error: 'Threads need an API key — this demo is running keyless (instant samples still work).' }
+  }
+  try {
+    const inputs = await loadThreadSessions(USER_ID)
+    if (inputs.length < 2) {
+      return { ok: false, error: 'Threads need at least two debriefs to connect — write another day first.' }
+    }
+    const threads = await generateThreads(inputs)
+    await storeThreads(USER_ID, inputs[inputs.length - 1]!.id, threads)
+  } catch (e) {
+    console.error('[refreshThreads] failed:', e)
+    return { ok: false, error: `Could not refresh threads — ${summarizeLlmError(e)}. Try again in a minute.` }
+  }
+  revalidatePath('/')
+  return { ok: true }
 }
 
 /** Edit a block's text → UPDATE + source='user' + was_corrected=true. */
