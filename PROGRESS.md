@@ -2,7 +2,7 @@
 
 A daily debrief tool, going from single-user v1 to **multi-user SaaS**. Type your day (voice lands in Phase 2) → LLM extracts structured rows → an editable doc → browse entries + check off tomorrow's plan. Design reference: `~/Documents/job/CV/voice-debrief-design-spec.md`.
 
-**Status (2026-08-18): v1 works single-user; vigorous 3-track review done (correctness · security · product/market); not market-ready yet.** Review verdict: the extraction pipeline and data model are production-grade; everything around them is prototype-grade. Three systemic gaps: (a) **zero authorization** — deploying today would leak the entire journal via `/session/1..N` and expose unmetered LLM spend, (b) **silent failure handling** — LLM/DB failures collapse into empty sessions or stuck buttons, and (c) **the differentiator isn't reachable** — a product named Voice Debrief has no voice, and its editable doc is invisible on touch devices. Target decided 2026-08-18: multi-user SaaS. Roadmap below.
+**Status (2026-08-18): Phase 0 (stabilize) COMPLETE — same day, 9 commits, 26 unit tests + 3 DB-integration suites green in CI. Next: Phase 1 (auth + tenancy).** Earlier 2026-08-18: vigorous 3-track review (correctness · security · product/market); target decided: **multi-user SaaS**. Review verdict: the extraction pipeline and data model are production-grade; everything around them was prototype-grade — (a) zero authorization, (b) silent failure handling, (c) the differentiator wasn't reachable. Phase 0 fixed (b) and the non-auth parts of (a); auth/tenancy is Phase 1.
 
 ## What works (verified live 2026-07-16; code re-read in review 2026-08-18)
 - **Write** (`/new`): transcript → dual-model LLM (strong extraction ‖ fast overview) → editable doc at `/session/[id]`.
@@ -50,7 +50,7 @@ Provider-neutral `LLM_*` env. Currently the **Z.ai Coding Plan** endpoint: `LLM_
 
 Order rationale: **correctness first** (every later phase builds on these functions; silent failures are refund generators), **then auth + tenancy** (structural gate for billing, per-user limits, GDPR; doing it before new features avoids re-threading `userId` through them), **then the product slice** that makes it sellable, **then commercial launch**. Rough total: 6–9 weeks solo.
 
-### Phase 0 — Stabilize the core (correctness + security hygiene) · ~1 wk
+### Phase 0 — Stabilize the core (correctness + security hygiene) · ✅ DONE 2026-08-18
 1. **Wire real tests**: add `npm test` running `extract-selftest` (the only script that actually asserts); convert `test-store/-writeback/-reclassify/-interview` to assert + exit non-zero (they print and exit 0 today — they cannot fail CI); add unit tests for `dates.ts` (highest bug density, zero coverage).
 2. **Fix `dates.ts` timezone bugs**: human dates ("August 19, 2026") shift a day early in any TZ east of UTC via a local-midnight→UTC round trip ("Aug 19" even parses as year 2001); `toLocaleDateString` in Server Components renders in the *server's* TZ (an 11pm Vietnam debrief labels as the previous day on a UTC deploy). Make parsing timezone-explicit; render in the user's TZ.
 3. **Stop swallowing extraction failures**: fail fast on invalid/missing API key *before* storing; for transient failures keep the persist-anyway behavior but return the failure cause and display it on the session page (today every failure mode is an identical silent empty session).
