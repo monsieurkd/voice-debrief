@@ -13,7 +13,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seed.ts",
     "db:check": "tsx scripts/db-check.ts",
-    "extract:test": "tsx scripts/extract-standalone.ts"
+    "test:live": "tsx scripts/extract-standalone.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
