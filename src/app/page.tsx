@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { listSessions, listOpenNextSteps } from '@/lib/queries'
+import { formatDate } from '@/lib/dates'
 import { PlanList } from '@/components/PlanList'
 import { MoodStrip } from '@/components/MoodStrip'
 
@@ -52,7 +53,7 @@ export default async function Home() {
                 >
                   <div className="mb-1 flex items-center justify-between">
                     <time className="text-xs text-zinc-400">
-                      {e.startedAt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                      {formatDate(e.startedAt, { weekday: 'short', month: 'short', day: 'numeric' })}
                     </time>
                     <MoodStrip mood={e.mood} energy={e.energy} />
                   </div>

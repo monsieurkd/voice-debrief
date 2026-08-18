@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { loadSession } from '@/lib/session'
+import { formatDate } from '@/lib/dates'
 import { DebriefDoc } from '@/components/DebriefDoc'
 import { MoodStrip } from '@/components/MoodStrip'
 
@@ -14,7 +15,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
       {/* date + mood/energy strip */}
       <header className="mb-8 flex items-center justify-between">
         <h1 className="text-lg font-medium">
-          {data.startedAt.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+          {formatDate(data.startedAt, { weekday: 'long', month: 'long', day: 'numeric' })}
         </h1>
         <MoodStrip mood={data.mood} energy={data.energy} />
       </header>
