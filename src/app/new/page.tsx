@@ -7,6 +7,7 @@ import { runDebrief } from '@/actions/debrief'
 import { sampleTranscripts } from '@/lib/sample-transcripts'
 import { DemoButton } from '@/components/DemoButton'
 import { MicButton } from '@/components/MicButton'
+import { ExtractionProgress } from '@/components/ExtractionProgress'
 
 export default function NewDebrief() {
   const router = useRouter()
@@ -63,6 +64,7 @@ export default function NewDebrief() {
             {error}
           </p>
         )}
+        {pending && <ExtractionProgress />}
         <button
           type="submit"
           disabled={pending || !text.trim()}

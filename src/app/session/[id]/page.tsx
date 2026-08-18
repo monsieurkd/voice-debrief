@@ -32,7 +32,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
       {/* goals in play */}
       {data.goals.length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-3 border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:border-zinc-800">
+          <h2 className="mb-3 border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 dark:border-zinc-800">
             Goals in play
           </h2>
           <ul className="flex flex-wrap gap-2">

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { interviewTurnAction, type ChatMsg } from '@/actions/interview'
 import { runDebrief } from '@/actions/debrief'
 import { MicButton } from '@/components/MicButton'
+import { ExtractionProgress } from '@/components/ExtractionProgress'
 
 type Checklist = { events: boolean; decisions: boolean; next_steps: boolean }
 const EMPTY: Checklist = { events: false, decisions: false, next_steps: false }
@@ -127,6 +128,7 @@ export default function InterviewPage() {
           {error}
         </p>
       )}
+      <div className="mb-2">{finishing && <ExtractionProgress />}</div>
 
       <form onSubmit={send} className="flex items-center gap-2">
         <MicButton

@@ -33,14 +33,14 @@ export default async function Home() {
       </header>
 
       <section className="mb-10">
-        <h2 className="mb-3 border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:border-zinc-800">
+        <h2 className="mb-3 border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 dark:border-zinc-800">
           Tomorrow&apos;s plan
         </h2>
         <PlanList items={plan} />
       </section>
 
       <section>
-        <h2 className="mb-3 border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:border-zinc-800">
+        <h2 className="mb-3 border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 dark:border-zinc-800">
           Recent entries
         </h2>
         {entries.length === 0 ? (

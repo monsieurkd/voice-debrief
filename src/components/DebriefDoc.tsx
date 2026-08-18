@@ -151,12 +151,12 @@ export function DebriefDoc({ initial }: { initial: LoadedSession }) {
           const items = blocks.filter((b) => b.entityType === sec.entityType)
           return (
             <section key={sec.title}>
-              <h2 className="mb-3 flex items-center gap-1.5 border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:border-zinc-800">
+              <h2 className="mb-3 flex items-center gap-1.5 border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 dark:border-zinc-800">
                 <SectionIcon entityType={sec.entityType} className="h-3.5 w-3.5" />
                 {sec.title}
               </h2>
               <ul className="flex flex-col gap-1">
-                {items.length === 0 && <li className="px-2 py-1 text-sm text-zinc-400">Nothing here yet.</li>}
+                {items.length === 0 && <li className="px-2 py-1 text-sm text-zinc-500 dark:text-zinc-400">Nothing here yet.</li>}
                 {items.map((b) => (
                   <EditableBlock
                     key={b.id}

@@ -9,13 +9,16 @@ import type { PlanItem } from '@/lib/queries'
 export function PlanList({ items }: { items: PlanItem[] }) {
   const [busy, setBusy] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [justDone, setJustDone] = useState<number | null>(null)
 
   async function markDone(id: number) {
     setBusy(id)
     setError(null)
     try {
+      setJustDone(id) // instant feedback; the server re-render then removes it
       await setStepStatus(id, 'done')
     } catch {
+      setJustDone(null)
       setError('Could not mark it done — try again.')
     } finally {
       setBusy(null)
@@ -45,7 +48,9 @@ export function PlanList({ items }: { items: PlanItem[] }) {
       {items.map((p) => (
         <li
           key={p.id}
-          className="group flex items-start gap-2 rounded-md px-2 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+          className={`group flex items-start gap-2 rounded-md px-2 py-1.5 transition duration-500 hover:bg-zinc-50 dark:hover:bg-zinc-900 ${
+            justDone === p.id ? 'opacity-0' : 'opacity-100'
+          }`}
         >
           <input
             type="checkbox"
@@ -55,8 +60,14 @@ export function PlanList({ items }: { items: PlanItem[] }) {
             className="mt-1 h-4 w-4 accent-zinc-900 dark:accent-zinc-100"
           />
           <div className="flex flex-col">
-            <span className="text-sm leading-6 text-zinc-800 dark:text-zinc-200">{p.content}</span>
-            <span className="text-xs text-zinc-400">
+            <span
+              className={`text-sm leading-6 text-zinc-800 transition dark:text-zinc-200 ${
+                justDone === p.id ? '-rotate-1 text-zinc-400 line-through dark:text-zinc-500' : ''
+              }`}
+            >
+              {p.content}
+            </span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
               {p.goalTitle && <>→ {p.goalTitle} </>}
               {p.dueOn && <>· due {p.dueOn} </>}
               <Link href={`/session/${p.sessionId}`} className="underline">
