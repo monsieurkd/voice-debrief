@@ -55,8 +55,39 @@ Replace the `#` URL in the badge line at the top of `README.md`:
 From Neon's SQL editor (or psql): `DELETE FROM sessions;` then re-run step 2's
 `db:seed` if you removed the user row too.
 
+## Enabling the live AI path (comprehensive demo)
+
+The keyless deploy only allows instant samples. To let visitors run **real**
+debriefs and the guided interview, add an LLM key — but the key choice is the
+whole security story pre-auth, because every server action is a public HTTP
+endpoint:
+
+- **Use a dedicated free-tier key** (Google AI Studio). Provider-side rate caps
+  bound the worst case at ~$0. Never expose a paid key (e.g. the Z.ai plan) —
+  there is no provider ceiling and no auth yet.
+- **Keep the rate limits** already built in: per-IP fixed windows on
+  `runDebrief` (5/hour), `interviewTurnAction` (20/hour), and samples
+  (30/hour), shared across serverless instances via the `rate_limits` table.
+
+**To add or swap the key at any time** (this is the "easy edit" — there is no
+in-app key editor on purpose: pre-auth, anyone on the internet could point the
+demo at an arbitrary key):
+
+1. Vercel → your project → **Settings → Environment Variables**.
+2. Set (Production + Preview):
+
+   | Variable | Value |
+   |---|---|
+   | `LLM_API_KEY` | your dedicated free-tier key |
+   | `LLM_BASE_URL` | `https://generativelanguage.googleapis.com/v1beta/openai/` |
+   | `LLM_MODEL` | `gemini-3.5-flash` |
+   | `LLM_SMALL_MODEL` | `gemini-3.1-flash-lite` |
+
+3. **Deployments → … → Redeploy** (env changes need a redeploy).
+   Swapping provider later (OpenRouter, OpenAI, Z.ai, Ollama) is the same
+   three vars — the code is provider-neutral.
+
 ## When Phase 1 (auth) lands
 
-Revisit this: with real auth + per-user limits you can add `LLM_API_KEY` and
-open the live debrief path publicly. Until then, keep the key out of the
-demo deployment.
+Revisit this: with real auth + per-user limits you can add a paid key and
+open the live path without the demo guardrails.

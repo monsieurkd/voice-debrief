@@ -12,6 +12,9 @@ import { parseArgs } from '@/lib/action-args'
 import { summarizeLlmError } from '@/lib/llm-errors'
 import { buildSampleSessions } from '@/lib/sample-sessions'
 import { sampleTranscripts } from '@/lib/sample-transcripts'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { clientIp } from '@/lib/client-ip'
+import { DEMO_LIMITS, RATE_WINDOW_MS } from '@/lib/constants'
 import type { ExtractionPayload } from '@/lib/extraction-schema'
 import type { EntityType } from '@/lib/constants'
 
@@ -32,6 +35,14 @@ const idSchema = z.number().int().positive()
  */
 export async function runDebrief(transcriptInput: string): Promise<DebriefResult> {
   const { transcript } = parseArgs(z.object({ transcript: z.string().trim().min(1).max(20000) }), { transcript: transcriptInput }, 'runDebrief')
+
+  // Public-demo guardrail: the live AI path costs money per call.
+  if (!(await checkRateLimit(`debrief:${await clientIp()}`, DEMO_LIMITS.debriefsPerHour, RATE_WINDOW_MS))) {
+    return {
+      ok: false,
+      error: `Demo limit reached — live debriefs are capped at ${DEMO_LIMITS.debriefsPerHour}/hour. Try the instant sample instead.`,
+    }
+  }
 
   // Config errors can never succeed — fail fast, store nothing.
   if (!env.LLM_API_KEY) {
@@ -87,6 +98,10 @@ export async function runSampleDebrief(sampleIdInput: number): Promise<DebriefRe
     { sampleId: sampleIdInput },
     'runSampleDebrief',
   )
+  // No LLM cost, but still per-IP capped so the demo DB can't be filled by a loop.
+  if (!(await checkRateLimit(`sample:${await clientIp()}`, DEMO_LIMITS.samplesPerHour, RATE_WINDOW_MS))) {
+    return { ok: false, error: `Demo limit reached — samples are capped at ${DEMO_LIMITS.samplesPerHour}/hour. Come back later.` }
+  }
   const sample = buildSampleSessions()[sampleId]
   let sessionId: number
   try {

@@ -1,6 +1,14 @@
 // Single-user v1 (spec §11): hardcode the seeded user.
 export const USER_ID = 1
 
+// Public-demo guardrails (per IP, rolling fixed windows) until auth lands (Phase 1).
+export const DEMO_LIMITS = {
+  debriefsPerHour: 5,
+  interviewTurnsPerHour: 20,
+  samplesPerHour: 30,
+} as const
+export const RATE_WINDOW_MS = 60 * 60 * 1000
+
 export type SectionKey = 'events' | 'decisions' | 'reflections' | 'next_steps'
 export type EntityType = 'event' | 'decision' | 'reflection' | 'next_step'
 

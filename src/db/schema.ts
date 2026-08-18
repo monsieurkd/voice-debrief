@@ -148,6 +148,20 @@ export const userState = pgTable('user_state', {
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+// ── rate_limits — fixed-window counters for the public demo (per IP + action).
+// Pre-auth abuse control: DB-backed so all serverless instances share state.
+// Phase 1 replaces this with per-user limits.
+export const rateLimits = pgTable(
+  'rate_limits',
+  {
+    bucket: text('bucket').notNull(),
+    window_start: timestamp('window_start', { withTimezone: true }).notNull(),
+    count: integer('count').notNull().default(0),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.bucket, t.window_start] }), index('rate_limits_bucket_idx').on(t.bucket)],
+)
+
 // ── insights — conditional; stored so the most-recent is preloadable ──
 export const insights = pgTable(
   'insights',

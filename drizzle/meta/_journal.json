@@ -8,6 +8,13 @@
       "when": 1784101185191,
       "tag": "0000_steep_metal_master",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787063383742,
+      "tag": "0001_wonderful_the_anarchist",
+      "breakpoints": true
     }
   ]
 }

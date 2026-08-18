@@ -38,6 +38,10 @@ export default function InterviewPage() {
     setPending(true)
     try {
       const res = await interviewTurnAction({ history, checklist })
+      if (res.error) {
+        setError(res.error) // e.g. demo rate limit — surface why, keep the user's message
+        return
+      }
       setMessages((h) => [...h, { role: 'assistant', content: res.reply }])
       setChecklist(res.checklist)
     } catch {
