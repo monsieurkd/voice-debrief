@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { interviewTurnAction, type ChatMsg } from '@/actions/interview'
 import { runDebrief } from '@/actions/debrief'
+import { MicButton } from '@/components/MicButton'
 
 type Checklist = { events: boolean; decisions: boolean; next_steps: boolean }
 const EMPTY: Checklist = { events: false, decisions: false, next_steps: false }
@@ -127,12 +128,17 @@ export default function InterviewPage() {
         </p>
       )}
 
-      <form onSubmit={send} className="flex gap-2">
+      <form onSubmit={send} className="flex items-center gap-2">
+        <MicButton
+          compact
+          disabled={pending || finishing}
+          onFinal={(chunk) => setInput((v) => (v ? `${v} ${chunk}` : chunk))}
+        />
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your reply…"
-          className="flex-1 rounded-lg border border-zinc-300 px-4 py-2.5 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900"
+          placeholder="Type your reply — or dictate…"
+          className="min-w-0 flex-1 rounded-lg border border-zinc-300 px-4 py-2.5 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900"
           disabled={pending || finishing}
         />
         <button

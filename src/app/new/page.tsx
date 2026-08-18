@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { runDebrief } from '@/actions/debrief'
 import { sampleTranscripts } from '@/lib/sample-transcripts'
 import { DemoButton } from '@/components/DemoButton'
+import { MicButton } from '@/components/MicButton'
 
 export default function NewDebrief() {
   const router = useRouter()
@@ -44,6 +45,12 @@ export default function NewDebrief() {
       </header>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+            Type it — or click the mic and just talk.
+          </span>
+          <MicButton disabled={pending} onFinal={(chunk) => setText((t) => (t ? `${t} ${chunk}` : chunk))} />
+        </div>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
