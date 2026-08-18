@@ -7,7 +7,7 @@ import { ne, eq } from 'drizzle-orm'
 async function main() {
   await db.update(userState).set({ last_session_id: 1, sessions_count: 1 }).where(eq(userState.user_id, 1))
   const deleted = await db.delete(sessions).where(ne(sessions.id, 1))
-  console.log('reset user_state → session 1; removed non-demo sessions:', (deleted as any).rowCount ?? '?')
+  console.log('reset user_state → session 1; removed non-demo sessions:', deleted.rowCount ?? '?')
   process.exit(0)
 }
 main().catch((e) => {
