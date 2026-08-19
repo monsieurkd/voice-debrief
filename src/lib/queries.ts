@@ -167,3 +167,23 @@ export async function listUserTagNames(limit = 30): Promise<string[]> {
     .limit(limit)
   return rows.map((r) => r.name)
 }
+
+/**
+ * Distinct journaling days ('YYYY-MM-DD' in the app timezone), newest first —
+ * the input for the Home streak badge. Multiple sessions a day collapse to
+ * one day; bounded to the newest `limit` sessions (a year of daily use).
+ */
+export async function listSessionDays(limit = 400): Promise<string[]> {
+  const rows = await db
+    .select({ startedAt: sessions.started_at })
+    .from(sessions)
+    .where(eq(sessions.user_id, USER_ID))
+    .orderBy(desc(sessions.started_at))
+    .limit(limit)
+  const seen: string[] = []
+  for (const r of rows) {
+    const day = todayInAppTz(r.startedAt)
+    if (seen[seen.length - 1] !== day) seen.push(day) // rows are newest-first, so days come grouped
+  }
+  return seen
+}

@@ -1,9 +1,10 @@
 import Link from 'next/link'
-import { listSessions, listOpenNextSteps } from '@/lib/queries'
+import { listSessions, listOpenNextSteps, listSessionDays } from '@/lib/queries'
 import { listThreads } from '@/lib/threads'
 import { env } from '@/lib/env'
 import { USER_ID } from '@/lib/constants'
 import { formatDate } from '@/lib/dates'
+import { computeStreak } from '@/lib/streak'
 import { PlanList } from '@/components/PlanList'
 import { MoodStrip } from '@/components/MoodStrip'
 import { ThreadsPanel } from '@/components/ThreadsPanel'
@@ -17,12 +18,26 @@ import { runSampleDebrief, runDemoWeek } from '@/actions/debrief'
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-  const [entries, plan, threads] = await Promise.all([listSessions(20), listOpenNextSteps(30), listThreads(USER_ID)])
+  const [entries, plan, threads, days] = await Promise.all([
+    listSessions(20),
+    listOpenNextSteps(30),
+    listThreads(USER_ID),
+    listSessionDays(),
+  ])
+  // From 2 on: a "1-day streak" is just "you used the app today".
+  const streak = computeStreak(days)
 
   return (
     <main className="mx-auto min-h-dvh w-full max-w-2xl px-6 py-12">
       <header className="mb-10 flex items-center justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">Voice Debrief</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-semibold tracking-tight">Voice Debrief</h1>
+          {streak >= 2 && (
+            <span className="rounded-full border border-zinc-200 px-2.5 py-1 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+              {streak}-day streak
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-4">
           <Link href="/new" className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
             quick type
