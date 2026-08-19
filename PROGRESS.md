@@ -2,7 +2,7 @@
 
 A daily debrief tool, going from single-user v1 to **multi-user SaaS**. Type your day (voice lands in Phase 2) → LLM extracts structured rows → an editable doc → browse entries + check off tomorrow's plan. Design reference: `~/Documents/job/CV/voice-debrief-design-spec.md`.
 
-**Status (2026-08-19): Phase 0 (stabilize) ✅ + demo-refinement package ✅ — voice dictation, demo week, staged wait UX + visual pass, and Threads (the cross-day insight pass, spec slice 4 v1). 40 unit tests + 5 DB suites green. Live demo: https://voice-debrief.vercel.app (rate-limited, keyless-safe). Next: Phase 1 (auth + tenancy).** Earlier: 2026-08-18 vigorous 3-track review (correctness · security · product/market); target decided: **multi-user SaaS**. Review verdict: pipeline production-grade, shell prototype-grade — Phase 0 fixed the correctness/security-hygiene layer; the refinement package made the differentiator *visible* (the review's top product gaps).
+**Status (2026-08-19): Phase 1 (auth + tenancy) ✅ + Phase 2 market slice ✅ — built concurrently by two parallel worktree swarms, integrated on main (`2221a77`). 65 unit tests + 6 DB suites green, production build green, proxy auth gate active. Next: Phase 3 (commercial launch: billing, legal, beta) with the Phase-2 leftovers below.** Earlier: 2026-08-18 vigorous 3-track review (correctness · security · product/market); target decided: **multi-user SaaS**. Phase 0 fixed the correctness/security-hygiene layer; the refinement package made the differentiator visible; Phase 1+2 now close the review's top blockers (auth, tenancy, voice, wait UX, archive/search, streak).
 
 ## What works (verified live 2026-07-16; code re-read in review 2026-08-18)
 - **Write** (`/new`): transcript → dual-model LLM (strong extraction ‖ fast overview) → editable doc at `/session/[id]`.
@@ -63,29 +63,27 @@ Order rationale: **correctness first** (every later phase builds on these functi
 
 **Done when:** `npm test` fails on real regressions; a forced LLM failure shows a readable cause; no known path loses user text; `next build && next start` shows fresh data on Home.
 
-### Phase 1 — Multi-user foundation (auth + tenancy + limits) · ~2–3 wks
-1. **Auth**: Auth.js (or Clerk) + email verification; `src/proxy.ts` route gate (Next 16's renamed middleware) **plus** a `requireUser()` check at the top of every server action — an optimistic redirect is not authorization; actions must self-authorize.
-2. **Tenancy**: thread `userId` through `queries/session/mutations/reclassify/store` (~10 functions — the schema already has `user_id` on core tables, so the cut is the query layer, not a rebuild); scope `listOpenNextSteps` by user (join via `sessions` or add `user_id` to `next_steps`); guard polymorphic `tag_links` against cross-user `entity_id` (app-level check or PG row-level security backstop); unique constraint on `goals(user_id, title)`.
-3. **DB hardening**: add indexes on child tables' `session_id` (Postgres does not auto-index FK columns; `loadSession` filters all four per view); migrate `user_state.last_session_id` FK to `ON DELETE SET NULL`.
-4. **Abuse & spend caps**: per-user rate limits on `runDebrief`/`interviewTurnAction` (each debrief call can burn ~24k output tokens; interview history is unbounded and role-unvalidated at runtime); daily per-user spend budget; cap transcript length; fix hardcoded `HTTP-Referer: localhost`; add `/api/health`.
-5. **Data rights**: whole-session delete + per-session and bulk JSON/Markdown export (GDPR erasure + portability — also the only backup story; journal data is maximally sensitive).
-6. **Ops**: Sentry (no error tracking exists); hosted Postgres with pooled endpoint + `sslmode=require`; backup/restore runbook; provider-side spend alerts.
+### Phase 1 — Multi-user foundation (auth + tenancy + limits) · ✅ DONE 2026-08-19
+1. **Auth — ✅**: scrypt password hashing + jose-signed session cookies (30-day TTL, HttpOnly/SameSite=Lax, Secure in prod); `/signup` / `/login` / logout; `src/proxy.ts` route gate **plus** `requireUser()` at the top of every server action (self-authorization — the proxy is optimistic only). Seeded account: `you@example.com` / `SEED_PASSWORD` (default `devpassword`).
+2. **Tenancy — ✅**: userId threaded through `queries/session/mutations/reclassify/store` — every write fails closed via `.returning()`-authz or ownership checks (`RowOwnershipError`); `listOpenNextSteps` user-scoped via `sessions` join; tag_links reads guarded; unique index on `goals(user_id, lower(title))` — `resolveGoalId` is now insert-first atomic (fixes the create-duplicate race). Archive/FTS queries user-scoped at merge time (they were phase-2 additions phase-1 never saw).
+3. **DB hardening — ✅**: `session_id` indexes on the four child tables; `user_state.last_session_id` → `ON DELETE SET NULL`.
+4. **Abuse & spend caps — ✅ per-user rate limits**: debrief 5/h, interview turns 20/h, samples 30/h, threads 5/h, demo week 3/h — keyed by user id, DB-backed. Open: daily spend budget, `/api/health`, Referer fix (still localhost — cosmetic for non-OpenRouter providers).
+5. **Data rights — ✅**: whole-session delete (transactional, tag_links cleaned) + per-session JSON export (route handler, self-authorizing). Open: bulk export.
+6. **Ops — still open**: Sentry, backup runbook, provider spend alerts.
 
-**Done when:** two accounts cannot see or mutate each other's data; anonymous curl is gated on every action and page; any user can export and delete all their data.
+**Done when: ✅** — tenancy suite proves cross-user reads/writes are rejected; every action re-checks the session; export/delete per session.
 
-### Phase 2 — The market slice (product) · partially done 2026-08-19
-1. **Voice input — ✅ v1 (browser dictation)**: Web Speech API mic on `/new` + interview (free, no backend, Chrome/Edge; hides where unsupported). Remaining for v2: server-side STT (Whisper-class) so Safari/Firefox and audio files work.
-2. **Extraction wait UX — ✅**: staged live progress + elapsed timer + "safe to leave" promise.
-3. **Mobile pass — still open**: touch-visible edit controls, auto-growing interview textarea. (Contrast + Geist + mood color + check-off motion ✅ 2026-08-19.)
-4. **Onboarding — ✅**: empty-state CTA + one-click **demo week** (5 backdated days, one arc, baked threads) + single samples.
-5. **Interview resilience — still open**: sessionStorage persistence per turn.
-6. **Archive + search — still open**: `/archive`, pagination, tag/date filter, PG FTS.
-7. **Habit loop — still open**: streak + reminders. **Cross-day insights — ✅ v1 as Threads** (see below).
-8. **Polish — partial**: aria-live ✅, Geist ✅, `error.tsx`/PWA manifest still open; undo fidelity still text-only.
+### Phase 2 — The market slice (product) · ✅ DONE 2026-08-19 (minus noted leftovers)
+1. **Voice input — ✅ v1**: Web Speech API mic on `/new` + interview. Leftover: server-side STT (Safari/Firefox, audio files).
+2. **Extraction wait UX — ✅**: staged progress + timer + "safe to leave".
+3. **Mobile pass — ✅**: touch-visible (`@media(hover:none)`) + `group-focus-within` edit controls, auto-growing interview composer (Enter sends / Shift+Enter newlines).
+4. **Onboarding — ✅**: demo week + single samples, baked threads.
+5. **Interview resilience — ✅**: sessionStorage draft per turn, restored on mount, capped at 60 messages, cleared on Finish.
+6. **Archive + search — ✅**: `/archive` (pagination, tag chips, PG FTS on `search_tsv` generated column + GIN, ILIKE fallback for stopword-only queries).
+7. **Habit loop — ✅ streak**: Home badge (app-TZ aware, unit-tested). Leftover: reminders, weekly rollup. **Threads — ✅** (cross-day insights v1).
+8. **Polish — ✅**: error.tsx + not-found.tsx, undo fidelity (extras ride along). Leftover: PWA manifest; tag chips still not restored on undo (polymorphic tag_links).
 
 **Threads (2026-08-19, spec slice 4 v1):** strong model reads the newest ~6 sessions → 2–4 cross-day threads (pattern/progress/nudge, date-grounded) → `insights` table (latest-snapshot) → "Threads this week" panel on Home + explicit refresh; regenerates in the background (`after()`) once ≥3 sessions exist. Demo week ships baked threads for the keyless payoff.
-
-**Done when:** a new user on a phone can voice-journal, survive the wait, find an old entry, and come back on day two.
 
 ### Phase 3 — Commercial launch · ~1–2 wks + beta waiting
 1. **Billing**: Stripe — free tier + paid (~$5–10/mo, anchored under Rosebud's $12.99); per-plan LLM caps enforcing Phase 1's budgets.
