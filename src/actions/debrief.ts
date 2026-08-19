@@ -196,18 +196,36 @@ export async function updateRow(entityType: EntityType, id: number, text: string
   revalidatePath(`/session/${a.sessionId}`)
 }
 
+// Optional add-row extras (undo fidelity): everything a delete→undo should
+// restore beyond text. Nullable fields accept explicit null ("known absent").
+const addExtrasSchema = z.object({
+  status: z.enum(['open', 'done', 'skipped']).optional(),
+  dueOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
+  goalTitle: z.string().trim().min(1).max(200).nullish(),
+  rationale: z.string().trim().max(2000).nullish(),
+  resolved: z.boolean().optional(),
+  kind: z.string().trim().max(200).nullish(),
+  occurredAt: z.date().nullish(),
+})
+
 /** Add a new block → INSERT source='user'; returns the new binding. */
 export async function addRow(
   entityType: EntityType,
   sessionId: number,
   text: string,
+  extrasInput?: z.infer<typeof addExtrasSchema>,
 ): Promise<{ entityType: EntityType; id: number }> {
   const a = parseArgs(
-    z.object({ entityType: entityTypeSchema, sessionId: idSchema, text: textSchema }),
-    { entityType, sessionId, text },
+    z.object({
+      entityType: entityTypeSchema,
+      sessionId: idSchema,
+      text: textSchema,
+      extras: addExtrasSchema.default({}),
+    }),
+    { entityType, sessionId, text, extras: extrasInput },
     'addRow',
   )
-  const id = await addRowText(a.entityType, a.sessionId, a.text)
+  const id = await addRowText(a.entityType, a.sessionId, a.text, a.extras)
   revalidatePath(`/session/${a.sessionId}`)
   return { entityType: a.entityType, id }
 }

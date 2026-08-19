@@ -1,7 +1,8 @@
 import { db } from '@/db/client'
 import { events, reflections, decisions, nextSteps, tagLinks } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { SECTION_BY_ENTITY, type EntityType } from '@/lib/constants'
+import { SECTION_BY_ENTITY, USER_ID, type EntityType } from '@/lib/constants'
+import { resolveGoalId } from '@/lib/store'
 
 // Pure DB mutations — no Next runtime deps, so they're testable from scripts.
 // The server-action wrappers in actions/debrief.ts add revalidatePath on top.
@@ -26,27 +27,74 @@ export async function updateRowText(entityType: EntityType, id: number, text: st
   }
 }
 
-export async function addRowText(entityType: EntityType, sessionId: number, text: string): Promise<number> {
+/**
+ * Type-specific extras an add can restore (undo fidelity: delete → undo should
+ * bring the row back as it was, not as bare text). All optional and validated
+ * by the action layer before reaching here. Tag chips are NOT restorable here
+ * (tag_links are polymorphic and cleaned on delete) — still a known gap.
+ */
+export interface AddRowExtras {
+  status?: 'open' | 'done' | 'skipped'
+  dueOn?: string | null
+  goalTitle?: string | null
+  rationale?: string | null
+  resolved?: boolean
+  kind?: string | null
+  occurredAt?: Date | null
+}
+
+export async function addRowText(
+  entityType: EntityType,
+  sessionId: number,
+  text: string,
+  extras: AddRowExtras = {},
+): Promise<number> {
   const sec = SECTION_BY_ENTITY[entityType]
   let id = 0
   switch (sec.key) {
     case 'events': {
-      const [r] = await db.insert(events).values({ session_id: sessionId, what: text, source: 'user' }).returning({ id: events.id })
+      const [r] = await db
+        .insert(events)
+        .values({ session_id: sessionId, what: text, source: 'user', occurred_at: extras.occurredAt ?? null })
+        .returning({ id: events.id })
       id = r!.id
       break
     }
     case 'reflections': {
-      const [r] = await db.insert(reflections).values({ session_id: sessionId, content: text, source: 'user' }).returning({ id: reflections.id })
+      const [r] = await db
+        .insert(reflections)
+        .values({ session_id: sessionId, content: text, source: 'user', kind: extras.kind ?? null })
+        .returning({ id: reflections.id })
       id = r!.id
       break
     }
     case 'decisions': {
-      const [r] = await db.insert(decisions).values({ session_id: sessionId, summary: text, source: 'user' }).returning({ id: decisions.id })
+      const [r] = await db
+        .insert(decisions)
+        .values({
+          session_id: sessionId,
+          summary: text,
+          source: 'user',
+          rationale: extras.rationale ?? null,
+          resolved: extras.resolved ?? false,
+        })
+        .returning({ id: decisions.id })
       id = r!.id
       break
     }
     case 'next_steps': {
-      const [r] = await db.insert(nextSteps).values({ session_id: sessionId, content: text, source: 'user' }).returning({ id: nextSteps.id })
+      const goalId = extras.goalTitle ? await resolveGoalId(db, USER_ID, extras.goalTitle) : null
+      const [r] = await db
+        .insert(nextSteps)
+        .values({
+          session_id: sessionId,
+          content: text,
+          source: 'user',
+          status: extras.status ?? 'open',
+          due_on: extras.dueOn ?? null,
+          goal_id: goalId,
+        })
+        .returning({ id: nextSteps.id })
       id = r!.id
       break
     }

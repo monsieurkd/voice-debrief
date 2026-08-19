@@ -110,25 +110,23 @@ export function DebriefDoc({ initial }: { initial: LoadedSession }) {
     try {
       // Re-insert FIRST — if this fails the text must still exist somewhere
       // (it was deleted server-side), so we keep the undo toast armed.
-      const { id } = await addRow(block.entityType, initial.id, block.text)
+      // Extras (dueOn/status/goal/rationale/kind/occurredAt) ride along, so
+      // the row comes back as it was. Tag chips are still not restorable —
+      // their tag_links are cleaned on delete.
+      const { id } = await addRow(block.entityType, initial.id, block.text, {
+        status: block.status as 'open' | 'done' | 'skipped' | undefined,
+        dueOn: block.dueOn ?? undefined,
+        goalTitle: block.goalTitle ?? undefined,
+        rationale: block.rationale ?? undefined,
+        resolved: block.resolved,
+        kind: block.kind ?? undefined,
+        occurredAt: block.occurredAt ?? undefined,
+      })
       const at = before.findIndex((b) => isBlock(b, block.entityType, block.id))
       setBlocks((bs) => {
         // Splice into the CURRENT blocks, not the 6s-old `before` snapshot —
         // restoring the snapshot would clobber edits made during the window.
-        // (Slice-1 limitation: only the text returns; tag chips and
-        // type-specific extras do not.)
-        const restored: ViewBlock = {
-          ...block,
-          id,
-          tags: [],
-          rationale: undefined,
-          resolved: undefined,
-          status: undefined,
-          dueOn: undefined,
-          goalTitle: undefined,
-          kind: undefined,
-          occurredAt: undefined,
-        }
+        const restored: ViewBlock = { ...block, id, tags: [] }
         const copy = [...bs]
         copy.splice(Math.min(Math.max(at, 0), copy.length), 0, restored)
         return copy

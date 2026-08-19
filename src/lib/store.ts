@@ -17,6 +17,10 @@ import { USER_ID } from '@/lib/constants'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
+// Accepts the pool db OR a transaction handle — resolveGoalId only needs
+// select/insert, and single-row lookups need no wider transaction.
+type DbOrTx = Pick<typeof db, 'select' | 'insert'>
+
 /** Upsert a tag by (user_id, kind, name) and return its id (inserted or existing). */
 async function getTagId(tx: Tx, userId: number, ref: TagRef): Promise<number> {
   const [t] = await tx
@@ -48,7 +52,7 @@ async function linkTags(
 }
 
 /** Resolve a goal TITLE (case-insensitive) to an id, creating the goal if new. */
-async function resolveGoalId(tx: Tx, userId: number, title: string): Promise<number> {
+export async function resolveGoalId(tx: DbOrTx, userId: number, title: string): Promise<number> {
   const [existing] = await tx
     .select({ id: goals.id })
     .from(goals)
