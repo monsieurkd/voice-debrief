@@ -21,16 +21,25 @@ export default function InterviewPage() {
   const [finishing, setFinishing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, pending])
 
+  // Auto-grow the composer to its content (capped), so long replies stay
+  // visible instead of scrolling inside a one-line input.
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`
+  }, [input])
+
   const userTurns = messages.filter((m) => m.role === 'user').length
   const allCovered = checklist.events && checklist.decisions && checklist.next_steps
 
-  async function send(e: React.FormEvent) {
-    e.preventDefault()
+  async function submit() {
     const text = input.trim()
     if (!text || pending || finishing) return
     setError(null)
@@ -130,17 +139,34 @@ export default function InterviewPage() {
       )}
       <div className="mb-2">{finishing && <ExtractionProgress />}</div>
 
-      <form onSubmit={send} className="flex items-center gap-2">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          submit()
+        }}
+        className="flex items-end gap-2"
+      >
         <MicButton
           compact
           disabled={pending || finishing}
           onFinal={(chunk) => setInput((v) => (v ? `${v} ${chunk}` : chunk))}
         />
-        <input
+        <textarea
+          ref={inputRef}
           value={input}
+          rows={1}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            // Enter sends, Shift+Enter inserts a newline (chat convention).
+            // isComposing guards IME users (e.g. Vietnamese) — their Enter
+            // confirms the composition, not the message.
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault()
+              submit()
+            }
+          }}
           placeholder="Type your reply — or dictate…"
-          className="min-w-0 flex-1 rounded-lg border border-zinc-300 px-4 py-2.5 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900"
+          className="max-h-40 min-w-0 flex-1 resize-none rounded-lg border border-zinc-300 px-4 py-2.5 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900"
           disabled={pending || finishing}
         />
         <button
