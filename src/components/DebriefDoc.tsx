@@ -265,10 +265,16 @@ function EditableBlock({
           }}
           className="w-full rounded border border-zinc-300 bg-white px-2 py-1 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900"
         />
-        <button onClick={save} className="text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100">
+        <button
+          onClick={save}
+          className="min-h-7 rounded px-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+        >
           Save
         </button>
-        <button onClick={cancel} className="text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200">
+        <button
+          onClick={cancel}
+          className="min-h-7 rounded px-1.5 text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+        >
           Cancel
         </button>
       </li>
@@ -279,13 +285,18 @@ function EditableBlock({
     <li className="group flex flex-col gap-0.5 rounded-md px-2 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-900">
       <div className="flex items-start gap-2">
         <span className="flex-1 text-sm leading-6 text-zinc-800 dark:text-zinc-200">{block.text}</span>
-        <div className="flex items-center gap-2 opacity-0 transition group-hover:opacity-100">
+        {/* Hover reveals the controls on pointer devices; on touch there is no
+            hover to reveal them (they'd be invisible forever) and keyboard users
+            tab into them unseen — so always show them when hover is unavailable
+            or when anything inside the row holds focus. min-h-7 keeps every
+            control at a ~28px tap target. */}
+        <div className="flex items-center gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
           <button
             onClick={() => {
               setDraft(block.text)
               setEditing(true)
             }}
-            className="text-xs text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+            className="min-h-7 rounded px-1.5 text-xs text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
           >
             edit
           </button>
@@ -294,7 +305,8 @@ function EditableBlock({
               value={block.entityType}
               onChange={(e) => onReclassify(e.target.value as EntityType)}
               title="Move to another section"
-              className="bg-transparent text-xs text-zinc-400 outline-none hover:text-zinc-900 dark:hover:text-zinc-100"
+              aria-label="Move to another section"
+              className="min-h-7 bg-transparent px-1 text-xs text-zinc-400 outline-none hover:text-zinc-900 dark:hover:text-zinc-100"
             >
               {SECTIONS.map((s) => (
                 <option key={s.entityType} value={s.entityType}>
@@ -303,7 +315,11 @@ function EditableBlock({
               ))}
             </select>
           )}
-          <button onClick={onDelete} className="text-xs text-zinc-400 hover:text-red-600">
+          <button
+            onClick={onDelete}
+            aria-label="Delete row"
+            className="min-h-7 min-w-7 rounded px-1.5 text-xs text-zinc-400 hover:text-red-600"
+          >
             ✕
           </button>
         </div>
