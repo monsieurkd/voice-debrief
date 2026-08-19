@@ -46,8 +46,14 @@ export default async function Home() {
       <ThreadsPanel threads={threads} canRefresh={!!env.LLM_API_KEY} />
 
       <section>
-        <h2 className="mb-3 border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 dark:border-zinc-800">
+        <h2 className="mb-3 flex items-center justify-between border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
           Recent entries
+          <Link
+            href="/archive"
+            className="text-xs font-medium normal-case text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+          >
+            All entries →
+          </Link>
         </h2>
         {entries.length === 0 ? (
           <div className="flex flex-col gap-3">
