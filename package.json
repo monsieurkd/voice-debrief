@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
+    "jose": "^6.2.9",
     "next": "^16.2.12",
     "openai": "^6.47.0",
     "pg": "^8.22.0",
