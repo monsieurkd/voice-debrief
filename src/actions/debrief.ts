@@ -6,7 +6,7 @@ import { env } from '@/lib/env'
 import { extractDebrief, ExtractionError } from '@/lib/extract'
 import { generateOverview } from '@/lib/overview'
 import { storeSession } from '@/lib/store'
-import { updateRowText, addRowText, deleteRowEntity, setNextStepStatus } from '@/lib/mutations'
+import { updateRowText, addRowText, deleteRowEntity, setNextStepStatus, deleteSession } from '@/lib/mutations'
 import { reclassifyRowEntity } from '@/lib/reclassify'
 import { parseArgs } from '@/lib/action-args'
 import { summarizeLlmError } from '@/lib/llm-errors'
@@ -191,4 +191,16 @@ export async function setStepStatus(id: number, status: 'open' | 'done' | 'skipp
   )
   await setNextStepStatus(a.id, a.status, user.id)
   revalidatePath('/')
+}
+
+/**
+ * Delete a whole session + children (GDPR erasure unit). The doc is gone, so
+ * this revalidates Home and the (now-404) session path. Throws on foreign ids.
+ */
+export async function deleteSessionRow(sessionIdInput: number) {
+  const user = await requireUser()
+  const a = parseArgs(z.object({ sessionId: idSchema }), { sessionId: sessionIdInput }, 'deleteSessionRow')
+  await deleteSession(a.sessionId, user.id)
+  revalidatePath('/')
+  revalidatePath(`/session/${a.sessionId}`)
 }

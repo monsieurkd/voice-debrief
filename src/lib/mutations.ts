@@ -174,3 +174,34 @@ export async function setNextStepStatus(id: number, status: 'open' | 'done' | 's
     .returning({ id: nextSteps.id })
   if (rows.length === 0) throw new RowOwnershipError()
 }
+
+/**
+ * Delete a whole session (GDPR erasure unit): children cascade via FK, but
+ * polymorphic tag_links have NO FK on entity_id — their rows for each child
+ * id are removed first, all in one transaction with the ownership check.
+ * user_state.last_session_id self-nulls (ON DELETE SET NULL).
+ */
+export async function deleteSession(sessionId: number, userId: number): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [session] = await tx
+      .select({ id: sessions.id })
+      .from(sessions)
+      .where(and(eq(sessions.id, sessionId), eq(sessions.user_id, userId)))
+    if (!session) throw new RowOwnershipError()
+
+    const childIds = [
+      [await tx.select({ id: events.id }).from(events).where(eq(events.session_id, sessionId)), 'event'],
+      [await tx.select({ id: reflections.id }).from(reflections).where(eq(reflections.session_id, sessionId)), 'reflection'],
+      [await tx.select({ id: decisions.id }).from(decisions).where(eq(decisions.session_id, sessionId)), 'decision'],
+      [await tx.select({ id: nextSteps.id }).from(nextSteps).where(eq(nextSteps.session_id, sessionId)), 'next_step'],
+    ] as const
+    for (const [ids, entityType] of childIds) {
+      if (ids.length > 0) {
+        await tx
+          .delete(tagLinks)
+          .where(and(eq(tagLinks.entity_type, entityType), inArray(tagLinks.entity_id, ids.map((r) => r.id))))
+      }
+    }
+    await tx.delete(sessions).where(eq(sessions.id, sessionId))
+  })
+}

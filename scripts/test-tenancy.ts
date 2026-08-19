@@ -8,7 +8,7 @@ import assert from 'node:assert/strict'
 import { storeSession } from '../src/lib/store'
 import { loadSession } from '../src/lib/session'
 import { listSessions, listOpenNextSteps } from '../src/lib/queries'
-import { updateRowText, addRowText, deleteRowEntity, setNextStepStatus, RowOwnershipError } from '../src/lib/mutations'
+import { updateRowText, addRowText, deleteRowEntity, setNextStepStatus, deleteSession, RowOwnershipError } from '../src/lib/mutations'
 import { reclassifyRowEntity } from '../src/lib/reclassify'
 import { db } from '../src/db/client'
 import { users, sessions, events, nextSteps, goals } from '../src/db/schema'
@@ -81,10 +81,19 @@ async function main() {
     const [nowDone] = await db.select().from(nextSteps).where(eq(nextSteps.id, bStep.id))
     assert.equal(nowDone.status, 'done', 'B can mutate their own step')
 
+    // ── whole-session delete: foreign attempt rejected; own delete cleans up ──
+    await expectOwnershipError(() => deleteSession(bSession, A), 'deleteSession')
+    const [survivor] = await db.select().from(sessions).where(eq(sessions.id, bSession))
+    assert.ok(survivor, "B's session survived A's delete attempt")
+
     // ── goals: same title stored twice for B → exactly one row (conflict path) ──
     await storeSession('tenant B transcript 2', { ...payload, events: [], next_steps: [{ content: 'again', status: 'open', goal: 'B-private goal', tags: [] }] }, { userId: B })
     const bGoals = await db.select().from(goals).where(eq(goals.user_id, B))
     assert.equal(bGoals.filter((g) => g.title === 'B-private goal').length, 1, 'goal dedup via unique(lower(title)) conflict')
+
+    // session delete cascades children + cleans their tag_links (no FK on entity_id)
+    await deleteSession(bSession, B)
+    assert.equal((await db.select().from(events).where(eq(events.session_id, bSession))).length, 0, 'children gone with session')
   } finally {
     // cascade removes B's sessions/rows/goals/tags/user_state
     await db.delete(users).where(eq(users.id, B))
