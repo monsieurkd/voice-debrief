@@ -18,7 +18,7 @@ export default async function Home() {
   // Page-level check (the proxy gate is optimistic only); userId scopes every query below.
   const user = await getCurrentUser()
   if (!user) redirect('/login')
-  const [entries, plan] = await Promise.all([listSessions(20), listOpenNextSteps(30)])
+  const [entries, plan] = await Promise.all([listSessions(user.id, 20), listOpenNextSteps(user.id, 30)])
 
   return (
     <main className="mx-auto min-h-dvh w-full max-w-2xl px-6 py-12">

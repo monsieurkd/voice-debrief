@@ -38,14 +38,19 @@ export interface LoadedSession {
   goals: { id: number; title: string; horizon: string | null; status: string }[]
 }
 
-async function tagsForEntities(entityType: EntityType, ids: number[]): Promise<Map<number, ViewTag[]>> {
+/**
+ * Tags for a set of entity ids. tag_links is polymorphic (no FK on entity_id),
+ * so a cross-user id in `ids` would otherwise resolve to that user's tag rows —
+ * the tags.user_id filter keeps reads tenant-scoped even if ids leak in.
+ */
+async function tagsForEntities(entityType: EntityType, ids: number[], userId: number): Promise<Map<number, ViewTag[]>> {
   const m = new Map<number, ViewTag[]>()
   if (ids.length === 0) return m
   const rows = await db
     .select({ entity_id: tagLinks.entity_id, kind: tags.kind, name: tags.name })
     .from(tagLinks)
     .innerJoin(tags, eq(tagLinks.tag_id, tags.id))
-    .where(and(eq(tagLinks.entity_type, entityType), inArray(tagLinks.entity_id, ids)))
+    .where(and(eq(tags.user_id, userId), eq(tagLinks.entity_type, entityType), inArray(tagLinks.entity_id, ids)))
   for (const r of rows) {
     const arr = m.get(r.entity_id) ?? []
     arr.push({ kind: r.kind, name: r.name })
@@ -54,8 +59,12 @@ async function tagsForEntities(entityType: EntityType, ids: number[]): Promise<M
   return m
 }
 
-export async function loadSession(sessionId: number): Promise<LoadedSession | null> {
-  const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId))
+/** Load one session FOR A USER: another user's session id behaves as 404. */
+export async function loadSession(sessionId: number, userId: number): Promise<LoadedSession | null> {
+  const [session] = await db
+    .select()
+    .from(sessions)
+    .where(and(eq(sessions.id, sessionId), eq(sessions.user_id, userId)))
   if (!session) return null
 
   const [evs, refs, decs, steps, goalRows] = await Promise.all([
@@ -67,10 +76,10 @@ export async function loadSession(sessionId: number): Promise<LoadedSession | nu
   ])
 
   const [evTags, refTags, decTags, stepTags] = await Promise.all([
-    tagsForEntities('event', evs.map((r) => r.id)),
-    tagsForEntities('reflection', refs.map((r) => r.id)),
-    tagsForEntities('decision', decs.map((r) => r.id)),
-    tagsForEntities('next_step', steps.map((r) => r.id)),
+    tagsForEntities('event', evs.map((r) => r.id), userId),
+    tagsForEntities('reflection', refs.map((r) => r.id), userId),
+    tagsForEntities('decision', decs.map((r) => r.id), userId),
+    tagsForEntities('next_step', steps.map((r) => r.id), userId),
   ])
 
   const goalTitleById = new Map(goalRows.map((g) => [g.id, g.title]))

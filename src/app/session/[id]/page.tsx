@@ -14,7 +14,8 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
   const sessionId = Number(id)
   // Non-numeric ids must 404, not reach Postgres as 'NaN' (a 500 on the DB bind).
   if (!Number.isInteger(sessionId) || sessionId <= 0) notFound()
-  const data = await loadSession(sessionId)
+  // Ownership is part of the load: another user's session id is simply a 404.
+  const data = await loadSession(sessionId, user.id)
   if (!data) notFound()
 
   return (

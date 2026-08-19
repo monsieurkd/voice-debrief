@@ -6,8 +6,9 @@ import assert from 'node:assert/strict'
 import { storeSession } from '../src/lib/store'
 import { reclassifyRowEntity } from '../src/lib/reclassify'
 import { db } from '../src/db/client'
-import { events, reflections, tagLinks, sessions, userState } from '../src/db/schema'
+import { events, reflections, tagLinks, sessions } from '../src/db/schema'
 import { eq, and } from 'drizzle-orm'
+import { USER_ID } from '../src/lib/constants'
 import type { ExtractionPayload } from '../src/lib/extraction-schema'
 
 const payload: ExtractionPayload = {
@@ -19,13 +20,13 @@ const payload: ExtractionPayload = {
 }
 
 async function main() {
-  const sid = await storeSession('reclassify test transcript', payload)
+  const sid = await storeSession('reclassify test transcript', payload, { userId: USER_ID })
   const [ev] = await db.select().from(events).where(eq(events.session_id, sid))
   assert.ok(ev, 'source event stored')
   const before = await db.select().from(tagLinks).where(and(eq(tagLinks.entity_type, 'event'), eq(tagLinks.entity_id, ev.id)))
   assert.equal(before.length, 1, 'event has its tag link')
 
-  const newId = await reclassifyRowEntity('event', ev.id, 'reflection')
+  const newId = await reclassifyRowEntity('event', ev.id, 'reflection', USER_ID)
   assert.notEqual(newId, ev.id, 'reclassify returns a NEW row id')
 
   const evGone = await db.select().from(events).where(eq(events.id, ev.id))
@@ -42,9 +43,8 @@ async function main() {
   assert.equal(after.length, before.length, 'tag_links rewritten to the new entity')
   assert.equal(stray.length, 0, 'no stray tag_links on the old entity')
 
-  // cleanup the throwaway session. user_state.last_session_id references it via a
-  // NO-ACTION FK, so clear that first, then delete (cascade removes rows + tag_links).
-  await db.update(userState).set({ last_session_id: null }).where(eq(userState.user_id, 1))
+  // cleanup the throwaway session (cascade removes rows; tag_links go with
+  // the test tag via its user cascade; user_state.last_session_id now SETs NULL).
   await db.delete(sessions).where(eq(sessions.id, sid))
 
   console.log('✅ reclassify verified: moved, tags rewritten, no strays, throwaway session cleaned')

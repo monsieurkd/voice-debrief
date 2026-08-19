@@ -5,6 +5,7 @@ import { generateOverview } from '../src/lib/overview'
 import { extractDebrief } from '../src/lib/extract'
 import { storeSession } from '../src/lib/store'
 import { sampleTranscripts } from '../src/lib/sample-transcripts'
+import { USER_ID } from '../src/lib/constants'
 
 async function main() {
   const transcript = sampleTranscripts[0].text
@@ -13,7 +14,7 @@ async function main() {
   const payload = await extractDebrief(transcript)
   const fastOverview = await overviewP
   const overview = fastOverview ?? payload.overview
-  const sid = await storeSession(transcript, payload, { overview })
+  const sid = await storeSession(transcript, payload, { userId: USER_ID, overview })
   console.log('\n— FAST model overview —\n' + overview)
   console.log('\n— STRONG model rows —')
   console.log('events:', payload.events.length, '| reflections:', payload.reflections.length, '| decisions:', payload.decisions.length, '| next_steps:', payload.next_steps.length)

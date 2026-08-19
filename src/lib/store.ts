@@ -13,7 +13,6 @@ import {
 import { sql, and, eq } from 'drizzle-orm'
 import type { ExtractionPayload, TagRef } from '@/lib/extraction-schema'
 import { parseDateOnly, parseTimestamp } from '@/lib/dates'
-import { USER_ID } from '@/lib/constants'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
@@ -47,16 +46,27 @@ async function linkTags(
   }
 }
 
-/** Resolve a goal TITLE (case-insensitive) to an id, creating the goal if new. */
+/**
+ * Resolve a goal TITLE (case-insensitive) to an id, creating the goal if new.
+ * Insert-first + on-conflict fallback: the unique index on (user_id, lower(title))
+ * makes this atomic — the old select-then-insert had a create-duplicate race
+ * (two concurrent sessions extracting the same goal title). On conflict the
+ * unique index guarantees exactly one row matches, so the fallback select is
+ * race-free. First-seen casing wins, matching the old behavior.
+ */
 async function resolveGoalId(tx: Tx, userId: number, title: string): Promise<number> {
+  const [inserted] = await tx
+    .insert(goals)
+    .values({ user_id: userId, title })
+    .onConflictDoNothing() // any conflict (PK or the lower(title) index) → select the survivor
+    .returning({ id: goals.id })
+  if (inserted) return inserted.id
   const [existing] = await tx
     .select({ id: goals.id })
     .from(goals)
     .where(and(eq(goals.user_id, userId), sql`lower(${goals.title}) = ${title.toLowerCase()}`))
     .limit(1)
-  if (existing) return existing.id
-  const [g] = await tx.insert(goals).values({ user_id: userId, title }).returning({ id: goals.id })
-  return g!.id
+  return existing!.id
 }
 
 /**
@@ -67,9 +77,9 @@ async function resolveGoalId(tx: Tx, userId: number, title: string): Promise<num
 export async function storeSession(
   transcript: string,
   payload: ExtractionPayload,
-  opts: { userId?: number; overview?: string } = {},
+  opts: { userId: number; overview?: string },
 ): Promise<number> {
-  const userId = opts.userId ?? USER_ID
+  const userId = opts.userId
   return db.transaction(async (tx) => {
     const [session] = await tx
       .insert(sessions)

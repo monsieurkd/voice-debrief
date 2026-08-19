@@ -13,7 +13,7 @@ import { summarizeLlmError } from '@/lib/llm-errors'
 import { buildSampleSessions } from '@/lib/sample-sessions'
 import { sampleTranscripts } from '@/lib/sample-transcripts'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { clientIp } from '@/lib/client-ip'
+import { requireUser } from '@/lib/auth'
 import { DEMO_LIMITS, RATE_WINDOW_MS } from '@/lib/constants'
 import type { ExtractionPayload } from '@/lib/extraction-schema'
 import type { EntityType } from '@/lib/constants'
@@ -34,10 +34,16 @@ const idSchema = z.number().int().positive()
  * hand — the transcript is never lost, and the failure is never silent.
  */
 export async function runDebrief(transcriptInput: string): Promise<DebriefResult> {
+  // Self-authorize: server actions are directly-callable HTTP endpoints and
+  // the proxy gate is optimistic only. Result-shaped actions map the miss to
+  // a friendly error; void actions let UnauthorizedError reject the call.
+  const user = await requireUser().catch(() => null)
+  if (!user) return { ok: false, error: 'Your session has expired — please sign in again.' }
   const { transcript } = parseArgs(z.object({ transcript: z.string().trim().min(1).max(20000) }), { transcript: transcriptInput }, 'runDebrief')
 
-  // Public-demo guardrail: the live AI path costs money per call.
-  if (!(await checkRateLimit(`debrief:${await clientIp()}`, DEMO_LIMITS.debriefsPerHour, RATE_WINDOW_MS))) {
+  // Spend guardrail, keyed to the signed-in user (shared per-user windows
+  // across serverless instances): the live AI path costs money per call.
+  if (!(await checkRateLimit(`debrief:u:${user.id}`, DEMO_LIMITS.debriefsPerHour, RATE_WINDOW_MS))) {
     return {
       ok: false,
       error: `Demo limit reached — live debriefs are capped at ${DEMO_LIMITS.debriefsPerHour}/hour. Try the instant sample instead.`,
@@ -78,7 +84,7 @@ export async function runDebrief(transcriptInput: string): Promise<DebriefResult
     sessionId = await storeSession(
       transcript,
       payload ?? { overview, events: [], reflections: [], decisions: [], next_steps: [] },
-      { overview },
+      { userId: user.id, overview },
     )
   } catch (e) {
     console.error('[runDebrief] store failed:', e)
@@ -93,19 +99,21 @@ export async function runDebrief(transcriptInput: string): Promise<DebriefResult
  * real debrief, but no LLM call. Instant, and works with no API key configured.
  */
 export async function runSampleDebrief(sampleIdInput: number): Promise<DebriefResult> {
+  const user = await requireUser().catch(() => null)
+  if (!user) return { ok: false, error: 'Your session has expired — please sign in again.' }
   const { sampleId } = parseArgs(
     z.object({ sampleId: z.number().int().min(0).max(sampleTranscripts.length - 1) }),
     { sampleId: sampleIdInput },
     'runSampleDebrief',
   )
-  // No LLM cost, but still per-IP capped so the demo DB can't be filled by a loop.
-  if (!(await checkRateLimit(`sample:${await clientIp()}`, DEMO_LIMITS.samplesPerHour, RATE_WINDOW_MS))) {
+  // No LLM cost, but still capped per user so the demo DB can't be filled by a loop.
+  if (!(await checkRateLimit(`sample:u:${user.id}`, DEMO_LIMITS.samplesPerHour, RATE_WINDOW_MS))) {
     return { ok: false, error: `Demo limit reached — samples are capped at ${DEMO_LIMITS.samplesPerHour}/hour. Come back later.` }
   }
   const sample = buildSampleSessions()[sampleId]
   let sessionId: number
   try {
-    sessionId = await storeSession(sample.transcript, sample.payload, { overview: sample.payload.overview })
+    sessionId = await storeSession(sample.transcript, sample.payload, { userId: user.id, overview: sample.payload.overview })
   } catch (e) {
     console.error('[runSampleDebrief] store failed:', e)
     return { ok: false, error: 'Could not save the sample — the database is unreachable. Try again in a moment.' }
@@ -116,12 +124,13 @@ export async function runSampleDebrief(sampleIdInput: number): Promise<DebriefRe
 
 /** Edit a block's text → UPDATE + source='user' + was_corrected=true. */
 export async function updateRow(entityType: EntityType, id: number, text: string, sessionId: number) {
+  const user = await requireUser()
   const a = parseArgs(
     z.object({ entityType: entityTypeSchema, id: idSchema, text: textSchema, sessionId: idSchema }),
     { entityType, id, text, sessionId },
     'updateRow',
   )
-  await updateRowText(a.entityType, a.id, a.text)
+  await updateRowText(a.entityType, a.id, a.text, user.id)
   revalidatePath(`/session/${a.sessionId}`)
 }
 
@@ -131,24 +140,26 @@ export async function addRow(
   sessionId: number,
   text: string,
 ): Promise<{ entityType: EntityType; id: number }> {
+  const user = await requireUser()
   const a = parseArgs(
     z.object({ entityType: entityTypeSchema, sessionId: idSchema, text: textSchema }),
     { entityType, sessionId, text },
     'addRow',
   )
-  const id = await addRowText(a.entityType, a.sessionId, a.text)
+  const id = await addRowText(a.entityType, a.sessionId, a.text, user.id)
   revalidatePath(`/session/${a.sessionId}`)
   return { entityType: a.entityType, id }
 }
 
 /** Delete a block → clean its tag_links, then delete the row. */
 export async function deleteRow(entityType: EntityType, id: number, sessionId: number) {
+  const user = await requireUser()
   const a = parseArgs(
     z.object({ entityType: entityTypeSchema, id: idSchema, sessionId: idSchema }),
     { entityType, id, sessionId },
     'deleteRow',
   )
-  await deleteRowEntity(a.entityType, a.id)
+  await deleteRowEntity(a.entityType, a.id, user.id)
   revalidatePath(`/session/${a.sessionId}`)
 }
 
@@ -159,23 +170,25 @@ export async function reclassifyRow(
   to: EntityType,
   sessionId: number,
 ): Promise<{ entityType: EntityType; id: number }> {
+  const user = await requireUser()
   const a = parseArgs(
     z.object({ from: entityTypeSchema, id: idSchema, to: entityTypeSchema, sessionId: idSchema }),
     { from, id, to, sessionId },
     'reclassifyRow',
   )
-  const newId = await reclassifyRowEntity(a.from, a.id, a.to)
+  const newId = await reclassifyRowEntity(a.from, a.id, a.to, user.id)
   revalidatePath(`/session/${a.sessionId}`)
   return { entityType: a.to, id: newId }
 }
 
 /** Mark a next_step open/done/skipped (the plan check-off). Revalidates Home. */
 export async function setStepStatus(id: number, status: 'open' | 'done' | 'skipped') {
+  const user = await requireUser()
   const a = parseArgs(
     z.object({ id: idSchema, status: z.enum(['open', 'done', 'skipped']) }),
     { id, status },
     'setStepStatus',
   )
-  await setNextStepStatus(a.id, a.status)
+  await setNextStepStatus(a.id, a.status, user.id)
   revalidatePath('/')
 }

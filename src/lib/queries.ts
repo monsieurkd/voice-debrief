@@ -2,7 +2,6 @@ import { db } from '@/db/client'
 import { sessions, nextSteps, goals } from '@/db/schema'
 import { eq, desc, and, or, isNull, gte } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
-import { USER_ID } from '@/lib/constants'
 import { todayInAppTz, isoMinusDays } from '@/lib/dates'
 
 export interface SessionSummary {
@@ -24,7 +23,7 @@ export interface PlanItem {
 }
 
 /** Recent debriefs for the journal/review list, newest first. */
-export async function listSessions(limit = 20): Promise<SessionSummary[]> {
+export async function listSessions(userId: number, limit = 20): Promise<SessionSummary[]> {
   return db
     .select({
       id: sessions.id,
@@ -35,7 +34,7 @@ export async function listSessions(limit = 20): Promise<SessionSummary[]> {
       tone: sessions.tone,
     })
     .from(sessions)
-    .where(eq(sessions.user_id, USER_ID))
+    .where(eq(sessions.user_id, userId))
     .orderBy(desc(sessions.started_at))
     .limit(limit)
 }
@@ -46,8 +45,11 @@ export async function listSessions(limit = 20): Promise<SessionSummary[]> {
  * step forever": a step checked open three weeks ago headlined the plan
  * indefinitely and pushed fresh items past the limit. Older open steps stay
  * visible on their session pages.
+ *
+ * next_steps has no user_id — scoped by joining sessions (the normalized
+ * owner), which the new next_steps_session_id_idx keeps cheap.
  */
-export async function listOpenNextSteps(limit = 30): Promise<PlanItem[]> {
+export async function listOpenNextSteps(userId: number, limit = 30): Promise<PlanItem[]> {
   const cutoff = isoMinusDays(todayInAppTz(), 7)
   const rows = await db
     .select({
@@ -59,9 +61,11 @@ export async function listOpenNextSteps(limit = 30): Promise<PlanItem[]> {
       createdAt: nextSteps.created_at,
     })
     .from(nextSteps)
+    .innerJoin(sessions, eq(nextSteps.session_id, sessions.id))
     .leftJoin(goals, eq(nextSteps.goal_id, goals.id))
     .where(
       and(
+        eq(sessions.user_id, userId),
         eq(nextSteps.status, 'open'),
         or(
           gte(nextSteps.due_on, cutoff),

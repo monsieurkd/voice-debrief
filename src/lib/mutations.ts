@@ -1,32 +1,75 @@
 import { db } from '@/db/client'
-import { events, reflections, decisions, nextSteps, tagLinks } from '@/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { sessions, events, reflections, decisions, nextSteps, tagLinks } from '@/db/schema'
+import { eq, and, inArray } from 'drizzle-orm'
 import { SECTION_BY_ENTITY, type EntityType } from '@/lib/constants'
 
 // Pure DB mutations — no Next runtime deps, so they're testable from scripts.
 // The server-action wrappers in actions/debrief.ts add revalidatePath on top.
 // source='user' + was_corrected=true is the editable-viewer data-quality loop.
+//
+// TENANCY: every function takes userId and scopes the write to rows whose
+// session belongs to that user — an id from another account fails loudly
+// (RowOwnershipError), never a silent cross-tenant write.
 
-export async function updateRowText(entityType: EntityType, id: number, text: string) {
-  const sec = SECTION_BY_ENTITY[entityType]
-  const patch = { source: 'user' as const, was_corrected: true }
-  switch (sec.key) {
-    case 'events':
-      await db.update(events).set({ what: text, ...patch }).where(eq(events.id, id))
-      break
-    case 'reflections':
-      await db.update(reflections).set({ content: text, ...patch }).where(eq(reflections.id, id))
-      break
-    case 'decisions':
-      await db.update(decisions).set({ summary: text, ...patch }).where(eq(decisions.id, id))
-      break
-    case 'next_steps':
-      await db.update(nextSteps).set({ content: text, ...patch }).where(eq(nextSteps.id, id))
-      break
+/** Thrown when the target row/session belongs to a different user (or is gone). */
+export class RowOwnershipError extends Error {
+  constructor() {
+    super('Row not found for this user')
+    this.name = 'RowOwnershipError'
   }
 }
 
-export async function addRowText(entityType: EntityType, sessionId: number, text: string): Promise<number> {
+/** Subquery: session ids owned by `userId` — composable into any WHERE. */
+export function ownedSessionIds(userId: number) {
+  return db.select({ id: sessions.id }).from(sessions).where(eq(sessions.user_id, userId))
+}
+
+export async function updateRowText(entityType: EntityType, id: number, text: string, userId: number) {
+  const sec = SECTION_BY_ENTITY[entityType]
+  const patch = { source: 'user' as const, was_corrected: true }
+  // .returning() is the authz check: 0 rows = the id belongs to another user.
+  let rows: { id: number }[]
+  switch (sec.key) {
+    case 'events':
+      rows = await db
+        .update(events)
+        .set({ what: text, ...patch })
+        .where(and(eq(events.id, id), inArray(events.session_id, ownedSessionIds(userId))))
+        .returning({ id: events.id })
+      break
+    case 'reflections':
+      rows = await db
+        .update(reflections)
+        .set({ content: text, ...patch })
+        .where(and(eq(reflections.id, id), inArray(reflections.session_id, ownedSessionIds(userId))))
+        .returning({ id: reflections.id })
+      break
+    case 'decisions':
+      rows = await db
+        .update(decisions)
+        .set({ summary: text, ...patch })
+        .where(and(eq(decisions.id, id), inArray(decisions.session_id, ownedSessionIds(userId))))
+        .returning({ id: decisions.id })
+      break
+    case 'next_steps':
+      rows = await db
+        .update(nextSteps)
+        .set({ content: text, ...patch })
+        .where(and(eq(nextSteps.id, id), inArray(nextSteps.session_id, ownedSessionIds(userId))))
+        .returning({ id: nextSteps.id })
+      break
+  }
+  if (!rows || rows.length === 0) throw new RowOwnershipError()
+}
+
+export async function addRowText(entityType: EntityType, sessionId: number, text: string, userId: number): Promise<number> {
+  // Writing into someone else's session is a cross-tenant row — refuse first.
+  const [session] = await db
+    .select({ id: sessions.id })
+    .from(sessions)
+    .where(and(eq(sessions.id, sessionId), eq(sessions.user_id, userId)))
+  if (!session) throw new RowOwnershipError()
+
   const sec = SECTION_BY_ENTITY[entityType]
   let id = 0
   switch (sec.key) {
@@ -54,11 +97,56 @@ export async function addRowText(entityType: EntityType, sessionId: number, text
   return id
 }
 
-export async function deleteRowEntity(entityType: EntityType, id: number) {
+/** session.user_id behind a child row, via the child table's session_id. */
+export async function rowOwner(
+  tx: typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0],
+  entityType: EntityType,
+  id: number,
+): Promise<number | null> {
+  switch (entityType) {
+    case 'event': {
+      const [r] = await tx
+        .select({ owner: sessions.user_id })
+        .from(events)
+        .innerJoin(sessions, eq(events.session_id, sessions.id))
+        .where(eq(events.id, id))
+      return r?.owner ?? null
+    }
+    case 'reflection': {
+      const [r] = await tx
+        .select({ owner: sessions.user_id })
+        .from(reflections)
+        .innerJoin(sessions, eq(reflections.session_id, sessions.id))
+        .where(eq(reflections.id, id))
+      return r?.owner ?? null
+    }
+    case 'decision': {
+      const [r] = await tx
+        .select({ owner: sessions.user_id })
+        .from(decisions)
+        .innerJoin(sessions, eq(decisions.session_id, sessions.id))
+        .where(eq(decisions.id, id))
+      return r?.owner ?? null
+    }
+    case 'next_step': {
+      const [r] = await tx
+        .select({ owner: sessions.user_id })
+        .from(nextSteps)
+        .innerJoin(sessions, eq(nextSteps.session_id, sessions.id))
+        .where(eq(nextSteps.id, id))
+      return r?.owner ?? null
+    }
+  }
+}
+
+export async function deleteRowEntity(entityType: EntityType, id: number, userId: number) {
   // polymorphic tag_links has NO FK on entity_id → clean manually or we ship ghost tags.
-  // One transaction: if the row delete fails, the tag_links delete rolls back too —
-  // otherwise the row survived with its tags silently stripped.
+  // One transaction: the ownership check, tag cleanup and row delete commit or
+  // roll back together — a foreign id can never strip another user's tags.
   await db.transaction(async (tx) => {
+    const owner = await rowOwner(tx, entityType, id)
+    if (owner !== userId) throw new RowOwnershipError()
+
     await tx.delete(tagLinks).where(and(eq(tagLinks.entity_type, entityType), eq(tagLinks.entity_id, id)))
     switch (SECTION_BY_ENTITY[entityType].key) {
       case 'events':
@@ -78,6 +166,11 @@ export async function deleteRowEntity(entityType: EntityType, id: number) {
 }
 
 /** Toggle a next_step's status (used by the plan check-off). */
-export async function setNextStepStatus(id: number, status: 'open' | 'done' | 'skipped') {
-  await db.update(nextSteps).set({ status }).where(eq(nextSteps.id, id))
+export async function setNextStepStatus(id: number, status: 'open' | 'done' | 'skipped', userId: number) {
+  const rows = await db
+    .update(nextSteps)
+    .set({ status })
+    .where(and(eq(nextSteps.id, id), inArray(nextSteps.session_id, ownedSessionIds(userId))))
+    .returning({ id: nextSteps.id })
+  if (rows.length === 0) throw new RowOwnershipError()
 }
