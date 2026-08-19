@@ -11,8 +11,14 @@ import {
   uniqueIndex,
   index,
   primaryKey,
+  customType,
 } from 'drizzle-orm/pg-core'
 import { sql, relations } from 'drizzle-orm'
+
+// Postgres tsvector has no first-class drizzle column — declare the type so a
+// generated search column can live in the schema. Search-only: never selected
+// into app code, always written by the database itself.
+const tsvector = customType<{ data: string }>({ dataType: () => 'tsvector' })
 
 // Spec §5 uses `text` with documented allowed values (no PG enum types), so we
 // keep text columns and layer TS unions on top via .$type<>().
@@ -49,8 +55,18 @@ export const sessions = pgTable(
     transcript: text('transcript'),
     // embedding vector(1536) — DEFERRED (pgvector). Uncomment when enabled.
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    // Archive full-text search source: overview + transcript, English config.
+    // STORED generated → always in sync with the row (no trigger), computed
+    // for existing rows by the migration's table rewrite; the GIN index below
+    // makes `search_tsv @@ websearch_to_tsquery(...)` index-backed.
+    search_tsv: tsvector('search_tsv').generatedAlwaysAs(
+      sql`to_tsvector('english', coalesce(overview, '') || ' ' || coalesce(transcript, ''))`,
+    ),
   },
-  (t) => [index('sessions_user_id_started_at_idx').on(t.user_id, t.started_at.desc())],
+  (t) => [
+    index('sessions_user_id_started_at_idx').on(t.user_id, t.started_at.desc()),
+    index('sessions_search_tsv_idx').using('gin', t.search_tsv),
+  ],
 )
 
 // ── goals — long-lived; next_steps roll up to them ─────────────

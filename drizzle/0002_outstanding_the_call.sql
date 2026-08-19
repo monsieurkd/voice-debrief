@@ -1,0 +1,2 @@
+ALTER TABLE "sessions" ADD COLUMN "search_tsv" "tsvector" GENERATED ALWAYS AS (to_tsvector('english', coalesce(overview, '') || ' ' || coalesce(transcript, ''))) STORED;--> statement-breakpoint
+CREATE INDEX "sessions_search_tsv_idx" ON "sessions" USING gin ("search_tsv");
