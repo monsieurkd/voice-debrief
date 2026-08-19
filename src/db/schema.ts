@@ -29,6 +29,9 @@ export type EntityType = 'event' | 'reflection' | 'decision' | 'next_step'
 export const users = pgTable('users', {
   id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
   email: text('email').unique(),
+  // scrypt:<salt>:<hash> — null only for the pre-auth seeded user until a
+  // password is set (npm run db:seed assigns one). Login refuses null hashes.
+  password_hash: text('password_hash'),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -54,45 +57,66 @@ export const sessions = pgTable(
 )
 
 // ── goals — long-lived; next_steps roll up to them ─────────────
-export const goals = pgTable('goals', {
-  id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
-  user_id: bigint('user_id', { mode: 'number' }).notNull().references(() => users.id, { onDelete: 'cascade' }),
-  title: text('title').notNull(),
-  horizon: text('horizon').$type<Horizon>(),
-  status: text('status').notNull().$type<GoalStatus>().default('active'),
-  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+// Unique per user on lower(title): resolveGoalId looks goals up by
+// lower(title) and used to have a select-then-insert create-duplicate race —
+// the constraint turns that race into a conflict we can absorb.
+export const goals = pgTable(
+  'goals',
+  {
+    id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+    user_id: bigint('user_id', { mode: 'number' }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    horizon: text('horizon').$type<Horizon>(),
+    status: text('status').notNull().$type<GoalStatus>().default('active'),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('goals_user_id_lower_title_uniq').on(t.user_id, sql`lower(${t.title})`)],
+)
 
 // ── events ─────────────────────────────────────────────────────
-export const events = pgTable('events', {
-  id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
-  session_id: bigint('session_id', { mode: 'number' }).notNull().references(() => sessions.id, { onDelete: 'cascade' }),
-  what: text('what').notNull(),
-  occurred_at: timestamp('occurred_at', { withTimezone: true }),
-  source: text('source').notNull().$type<Source>().default('ai'),
-  was_corrected: boolean('was_corrected').notNull().default(false),
-})
+// session_id indexes: Postgres does NOT auto-index FK columns, and every
+// session view filters all four child tables by session_id.
+export const events = pgTable(
+  'events',
+  {
+    id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+    session_id: bigint('session_id', { mode: 'number' }).notNull().references(() => sessions.id, { onDelete: 'cascade' }),
+    what: text('what').notNull(),
+    occurred_at: timestamp('occurred_at', { withTimezone: true }),
+    source: text('source').notNull().$type<Source>().default('ai'),
+    was_corrected: boolean('was_corrected').notNull().default(false),
+  },
+  (t) => [index('events_session_id_idx').on(t.session_id)],
+)
 
 // ── reflections — a thought / worry / idea (NOT an action) ─────
-export const reflections = pgTable('reflections', {
-  id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
-  session_id: bigint('session_id', { mode: 'number' }).notNull().references(() => sessions.id, { onDelete: 'cascade' }),
-  content: text('content').notNull(),
-  kind: text('kind'),
-  source: text('source').notNull().$type<Source>().default('ai'),
-  was_corrected: boolean('was_corrected').notNull().default(false),
-})
+export const reflections = pgTable(
+  'reflections',
+  {
+    id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+    session_id: bigint('session_id', { mode: 'number' }).notNull().references(() => sessions.id, { onDelete: 'cascade' }),
+    content: text('content').notNull(),
+    kind: text('kind'),
+    source: text('source').notNull().$type<Source>().default('ai'),
+    was_corrected: boolean('was_corrected').notNull().default(false),
+  },
+  (t) => [index('reflections_session_id_idx').on(t.session_id)],
+)
 
 // ── decisions ──────────────────────────────────────────────────
-export const decisions = pgTable('decisions', {
-  id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
-  session_id: bigint('session_id', { mode: 'number' }).notNull().references(() => sessions.id, { onDelete: 'cascade' }),
-  summary: text('summary').notNull(),
-  rationale: text('rationale'),
-  resolved: boolean('resolved').notNull().default(false),
-  source: text('source').notNull().$type<Source>().default('ai'),
-  was_corrected: boolean('was_corrected').notNull().default(false),
-})
+export const decisions = pgTable(
+  'decisions',
+  {
+    id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+    session_id: bigint('session_id', { mode: 'number' }).notNull().references(() => sessions.id, { onDelete: 'cascade' }),
+    summary: text('summary').notNull(),
+    rationale: text('rationale'),
+    resolved: boolean('resolved').notNull().default(false),
+    source: text('source').notNull().$type<Source>().default('ai'),
+    was_corrected: boolean('was_corrected').notNull().default(false),
+  },
+  (t) => [index('decisions_session_id_idx').on(t.session_id)],
+)
 
 // ── next_steps ─────────────────────────────────────────────────
 export const nextSteps = pgTable(
@@ -108,7 +132,11 @@ export const nextSteps = pgTable(
     was_corrected: boolean('was_corrected').notNull().default(false),
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('next_steps_status_idx').on(t.status), index('next_steps_goal_id_idx').on(t.goal_id)],
+  (t) => [
+    index('next_steps_status_idx').on(t.status),
+    index('next_steps_goal_id_idx').on(t.goal_id),
+    index('next_steps_session_id_idx').on(t.session_id),
+  ],
 )
 
 // ── tags + tag_links (polymorphic; app-enforced, NO FK on entity_id) ──
@@ -139,7 +167,8 @@ export const tagLinks = pgTable(
 // ── user_state — single row per user; overwritten each session ──
 export const userState = pgTable('user_state', {
   user_id: bigint('user_id', { mode: 'number' }).primaryKey().references(() => users.id, { onDelete: 'cascade' }),
-  last_session_id: bigint('last_session_id', { mode: 'number' }).references(() => sessions.id),
+  // SET NULL: deleting a session must not be blocked by the "last session" pointer.
+  last_session_id: bigint('last_session_id', { mode: 'number' }).references(() => sessions.id, { onDelete: 'set null' }),
   last_mood: text('last_mood').$type<Mood>(),
   last_engagement: smallint('last_engagement'),
   preferred_pace: text('preferred_pace').$type<Pace>(),
