@@ -18,7 +18,7 @@ const payload: ExtractionPayload = {
 }
 
 async function main() {
-  const sid = await storeSession('threads test transcript', payload)
+  const sid = await storeSession('threads test transcript', payload, { userId: 1 })
 
   const batch1 = [
     { title: 'First thread', detail: 'detail one', kind: 'pattern' as const, dates: ['Mon 17'] },

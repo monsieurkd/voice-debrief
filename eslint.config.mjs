@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local Claude Code artifacts (parallel-agent worktrees hold their own
+    // node_modules/.next trees — their generated JS is not ours to lint).
+    ".claude/**",
   ]),
 ]);
 

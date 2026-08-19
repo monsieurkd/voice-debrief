@@ -91,3 +91,19 @@ demo at an arbitrary key):
 
 Revisit this: with real auth + per-user limits you can add a paid key and
 open the live path without the demo guardrails.
+
+> **Update (Phase 1, auth + tenancy):** this has landed. The app now requires
+> an account — anonymous visitors are redirected to `/signup`. Required env
+> additions for any deploy (demo included):
+>
+> | Variable | Value |
+> |---|---|
+> | `AUTH_SECRET` | a random 32-byte secret: `openssl rand -base64 32` — signs session cookies; rotating it logs everyone out |
+>
+> The seeded account (`you@example.com` / `SEED_PASSWORD`, default
+> `devpassword`) still exists after `db:seed`; on a public deploy either set a
+> strong `SEED_PASSWORD` or delete that row after migrating (`DELETE FROM users
+> WHERE email = 'you@example.com'`). Per-user spend windows (5 debriefs / 20
+> interview turns / 30 samples per hour) now key on the signed-in user, so a
+> paid `LLM_API_KEY` is no longer an all-you-can-eat endpoint — still use a
+> capped key until per-user daily budgets land.

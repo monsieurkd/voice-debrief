@@ -8,9 +8,10 @@
 > lets you correct anything — so a daily debrief compounds into a personal data
 > layer you can search and act on.
 
-**Status:** usable daily, demo-ready — talk (live dictation) or type your day →
+**Status:** multi-user and demo-ready — talk (live dictation) or type your day →
 structured, editable data → tomorrow's plan → **threads that connect your days**
-(the cross-day insight pass). Multi-user/auth is the next milestone.
+— with per-user accounts, per-session export/delete, archive + full-text search,
+and a streak. Email+password auth; every query scoped by owner.
 
 ---
 
@@ -55,6 +56,11 @@ most: **making LLM systems reliable enough to depend on.**
 - **Human-in-the-loop data quality.** Every extracted row is editable, and each
   correction is written back (`source = user`, `was_corrected = true`), so
   extraction errors are surfaced and fixed instead of accumulating.
+- **Multi-user with self-authorizing actions.** A signed session cookie
+  (scrypt passwords, JWT via jose) gates routes via `src/proxy.ts` — but every
+  server action *re-checks* the user itself, and every query/mutation scopes by
+  the owner, so the gate is defense-in-depth, not the boundary. Cross-user ids
+  fail closed (404 / rejected write), never leak data.
 
 ## Tech stack
 
@@ -67,7 +73,8 @@ OpenAI-compatible LLM SDK — **bring your own key and provider.**
 git clone https://github.com/monsieurkd/voice-debrief.git
 cd voice-debrief
 npm install
-cp .env.example .env.local      # fill in YOUR LLM_API_KEY + provider
+cp .env.example .env.local      # fill in LLM_API_KEY + provider, and AUTH_SECRET:
+openssl rand -base64 32         # ← paste the output as AUTH_SECRET
 ```
 
 One-time Postgres setup (run as a superuser; local dev only — pick a real
@@ -84,11 +91,24 @@ Then:
 npm run db:migrate && npm run db:seed && npm run dev   # http://localhost:3000
 ```
 
+The app is multi-user: sign up at `/signup`, or log in as the seeded account
+`you@example.com` / `devpassword` (override with `SEED_PASSWORD` before
+`db:seed`; re-seeding never clobbers a changed password).
+
+### Environment variables
+
+| Variable | Required | Notes |
+|---|---|---|
+| `DATABASE_URL` | yes | Postgres connection string |
+| `AUTH_SECRET` | yes | signs session cookies — generate with `openssl rand -base64 32`; rotating it logs everyone out |
+| `LLM_API_KEY` | no | without it, live debriefs/interview fail fast; instant samples still work |
+| `LLM_BASE_URL` / `LLM_MODEL` / `LLM_SMALL_MODEL` | no | provider-neutral (Z.ai GLM by default) |
+| `APP_TIMEZONE` | no | IANA name; the zone dates are interpreted and rendered in |
+| `SEED_PASSWORD` | no | password for the seeded account (default `devpassword`) |
+
 `LLM_*` vars are provider-neutral — point them at OpenAI, Z.ai (GLM), Google
 Gemini (OpenAI-compatible endpoint), OpenRouter, or a local Ollama model. See
-[`.env.example`](.env.example). Set `APP_TIMEZONE` (IANA name) to fix the
-zone dates are interpreted and rendered in — default is the server's local
-zone.
+[`.env.example`](.env.example).
 
 ## Testing & checks
 
@@ -144,8 +164,12 @@ Home page: tomorrow's plan (checkable next steps) + recent entries
 validation/retry · editable structured doc with write-back · next-steps plan ·
 cross-session adaptation (`user_state`).
 
+**Done (Phase 1):** multi-user auth (scrypt + signed session cookies) ·
+per-user data isolation end-to-end · per-user rate limits · session JSON
+export + delete.
+
 **Next:** voice/STT (batch, then streaming) · cross-day insight rollup ·
-embeddings/pgvector for fuzzy thread-connection · multi-user/auth.
+embeddings/pgvector for fuzzy thread-connection.
 
 See [`PROGRESS.md`](PROGRESS.md) for the detailed build log.
 

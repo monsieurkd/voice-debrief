@@ -1,14 +1,16 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { getCurrentUser } from '@/lib/auth'
 import { listSessions, listOpenNextSteps, listSessionDays } from '@/lib/queries'
 import { listThreads } from '@/lib/threads'
 import { env } from '@/lib/env'
-import { USER_ID } from '@/lib/constants'
 import { formatDate } from '@/lib/dates'
 import { computeStreak } from '@/lib/streak'
 import { PlanList } from '@/components/PlanList'
 import { MoodStrip } from '@/components/MoodStrip'
 import { ThreadsPanel } from '@/components/ThreadsPanel'
 import { DemoButton } from '@/components/DemoButton'
+import { LogoutButton } from '@/components/LogoutButton'
 import { runSampleDebrief, runDemoWeek } from '@/actions/debrief'
 
 // Home reads live journal data on every request. With the default 'auto',
@@ -18,11 +20,14 @@ import { runSampleDebrief, runDemoWeek } from '@/actions/debrief'
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
+  // Page-level check (the proxy gate is optimistic only); userId scopes every query below.
+  const user = await getCurrentUser()
+  if (!user) redirect('/login')
   const [entries, plan, threads, days] = await Promise.all([
-    listSessions(20),
-    listOpenNextSteps(30),
-    listThreads(USER_ID),
-    listSessionDays(),
+    listSessions(user.id, 20),
+    listOpenNextSteps(user.id, 30),
+    listThreads(user.id),
+    listSessionDays(user.id),
   ])
   // From 2 on: a "1-day streak" is just "you used the app today".
   const streak = computeStreak(days)
@@ -48,6 +53,7 @@ export default async function Home() {
           >
             ＋ Guided debrief
           </Link>
+          <LogoutButton />
         </div>
       </header>
 

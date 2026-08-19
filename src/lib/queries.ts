@@ -2,7 +2,6 @@ import { db } from '@/db/client'
 import { sessions, nextSteps, goals, tags } from '@/db/schema'
 import { eq, desc, and, or, isNull, gte, asc } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
-import { USER_ID } from '@/lib/constants'
 import { todayInAppTz, isoMinusDays } from '@/lib/dates'
 
 export interface SessionSummary {
@@ -24,7 +23,7 @@ export interface PlanItem {
 }
 
 /** Recent debriefs for the journal/review list, newest first. */
-export async function listSessions(limit = 20): Promise<SessionSummary[]> {
+export async function listSessions(userId: number, limit = 20): Promise<SessionSummary[]> {
   return db
     .select({
       id: sessions.id,
@@ -35,7 +34,7 @@ export async function listSessions(limit = 20): Promise<SessionSummary[]> {
       tone: sessions.tone,
     })
     .from(sessions)
-    .where(eq(sessions.user_id, USER_ID))
+    .where(eq(sessions.user_id, userId))
     .orderBy(desc(sessions.started_at))
     .limit(limit)
 }
@@ -46,8 +45,11 @@ export async function listSessions(limit = 20): Promise<SessionSummary[]> {
  * step forever": a step checked open three weeks ago headlined the plan
  * indefinitely and pushed fresh items past the limit. Older open steps stay
  * visible on their session pages.
+ *
+ * next_steps has no user_id — scoped by joining sessions (the normalized
+ * owner), which the new next_steps_session_id_idx keeps cheap.
  */
-export async function listOpenNextSteps(limit = 30): Promise<PlanItem[]> {
+export async function listOpenNextSteps(userId: number, limit = 30): Promise<PlanItem[]> {
   const cutoff = isoMinusDays(todayInAppTz(), 7)
   const rows = await db
     .select({
@@ -59,9 +61,11 @@ export async function listOpenNextSteps(limit = 30): Promise<PlanItem[]> {
       createdAt: nextSteps.created_at,
     })
     .from(nextSteps)
+    .innerJoin(sessions, eq(nextSteps.session_id, sessions.id))
     .leftJoin(goals, eq(nextSteps.goal_id, goals.id))
     .where(
       and(
+        eq(sessions.user_id, userId),
         eq(nextSteps.status, 'open'),
         or(
           gte(nextSteps.due_on, cutoff),
@@ -93,8 +97,8 @@ export interface ArchiveResult {
 // A session "has tag X" = any of its four row tables carries a tag_link to X.
 // tag_links is polymorphic (entity_id has no FK), so this is a UNION across
 // the four children — one fragment, resolved inside the query.
-function sessionsWithTag(tag: string) {
-  const tagId = sql`(SELECT id FROM tags WHERE user_id = ${USER_ID} AND name = ${tag})`
+function sessionsWithTag(tag: string, userId: number) {
+  const tagId = sql`(SELECT id FROM tags WHERE user_id = ${userId} AND name = ${tag})`
   return sql`${sessions.id} IN (
     SELECT e.session_id FROM tag_links tl JOIN events e
       ON tl.entity_type = 'event' AND tl.entity_id = e.id WHERE tl.tag_id = ${tagId}
@@ -116,13 +120,13 @@ function sessionsWithTag(tag: string) {
  * column. An empty tsquery (blank query, or stopwords only) matches nothing —
  * those queries fall back to ILIKE, which for '' degenerates to "no filter".
  */
-export async function listArchiveSessions(filters: ArchiveFilters = {}): Promise<ArchiveResult> {
+export async function listArchiveSessions(filters: ArchiveFilters, userId: number): Promise<ArchiveResult> {
   const page = Math.max(1, filters.page ?? 1)
   const pageSize = Math.min(100, Math.max(1, filters.pageSize ?? 20))
   const q = filters.q?.trim() ?? ''
   const tag = filters.tag?.trim() ?? ''
 
-  const conditions = [eq(sessions.user_id, USER_ID)]
+  const conditions = [eq(sessions.user_id, userId)]
   if (q) {
     conditions.push(sql`(
       ${sessions.search_tsv} @@ websearch_to_tsquery('english', ${q})
@@ -132,7 +136,7 @@ export async function listArchiveSessions(filters: ArchiveFilters = {}): Promise
       )
     )`)
   }
-  if (tag) conditions.push(sessionsWithTag(tag))
+  if (tag) conditions.push(sessionsWithTag(tag, userId))
   const where = and(...conditions)
 
   const summary = {
@@ -157,11 +161,11 @@ export async function listArchiveSessions(filters: ArchiveFilters = {}): Promise
 }
 
 /** Chip source for the archive tag filter: the user's tag names, deduped. */
-export async function listUserTagNames(limit = 30): Promise<string[]> {
+export async function listUserTagNames(userId: number, limit = 30): Promise<string[]> {
   const rows = await db
     .select({ name: tags.name })
     .from(tags)
-    .where(eq(tags.user_id, USER_ID))
+    .where(eq(tags.user_id, userId))
     .groupBy(tags.name)
     .orderBy(asc(tags.name))
     .limit(limit)
@@ -173,11 +177,11 @@ export async function listUserTagNames(limit = 30): Promise<string[]> {
  * the input for the Home streak badge. Multiple sessions a day collapse to
  * one day; bounded to the newest `limit` sessions (a year of daily use).
  */
-export async function listSessionDays(limit = 400): Promise<string[]> {
+export async function listSessionDays(userId: number, limit = 400): Promise<string[]> {
   const rows = await db
     .select({ startedAt: sessions.started_at })
     .from(sessions)
-    .where(eq(sessions.user_id, USER_ID))
+    .where(eq(sessions.user_id, userId))
     .orderBy(desc(sessions.started_at))
     .limit(limit)
   const seen: string[] = []

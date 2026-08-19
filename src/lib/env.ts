@@ -8,6 +8,9 @@ import { z } from 'zod'
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
+  // Signs session cookies (see lib/session-token.ts). Optional here so DB-only
+  // scripts/tests can boot without it — using auth without it fails loudly.
+  AUTH_SECRET: z.string().default(''),
   LLM_API_KEY: z.string().default(''),
   LLM_BASE_URL: z.string().default('https://api.z.ai/api/coding/paas/v4'),
   // strong model for the precision extraction task

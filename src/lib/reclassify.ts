@@ -2,6 +2,7 @@ import { db } from '@/db/client'
 import { events, reflections, decisions, nextSteps, tagLinks } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import type { EntityType } from '@/lib/constants'
+import { RowOwnershipError, rowOwner } from '@/lib/mutations'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
@@ -73,9 +74,16 @@ async function deleteSource(tx: Tx, et: EntityType, id: number): Promise<void> {
 }
 
 /** Move a row from one entity type to another. Returns the new row's id. */
-export async function reclassifyRowEntity(from: EntityType, id: number, to: EntityType): Promise<number> {
-  if (from === to) return id
+export async function reclassifyRowEntity(from: EntityType, id: number, to: EntityType, userId: number): Promise<number> {
+  if (from === to) {
+    // Still must own it — a no-op must not confirm the existence of another user's row.
+    const owner = await rowOwner(db, from, id)
+    if (owner !== userId) throw new RowOwnershipError()
+    return id
+  }
   return db.transaction(async (tx) => {
+    const owner = await rowOwner(tx, from, id)
+    if (owner !== userId) throw new RowOwnershipError()
     const { text, sessionId } = await readSource(tx, from, id)
     const newId = await insertTarget(tx, to, sessionId, text)
 

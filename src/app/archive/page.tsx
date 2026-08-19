@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { getCurrentUser } from '@/lib/auth'
 import { listArchiveSessions, listUserTagNames } from '@/lib/queries'
 import { formatDate } from '@/lib/dates'
 import { MoodStrip } from '@/components/MoodStrip'
@@ -18,6 +20,9 @@ export default async function ArchivePage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const sp = await searchParams
+  // Page-level auth (the proxy gate is optimistic only); scopes every query below.
+  const user = await getCurrentUser()
+  if (!user) redirect('/login')
   // Untrusted query params: bounded before they reach the query layer.
   const q = first(sp.q).trim().slice(0, 200)
   const tag = first(sp.tag).trim().slice(0, 100)
@@ -25,8 +30,8 @@ export default async function ArchivePage({
   const page = Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1
 
   const [{ rows, total }, tagNames] = await Promise.all([
-    listArchiveSessions({ q, tag, page, pageSize: PAGE_SIZE }),
-    listUserTagNames(),
+    listArchiveSessions({ q, tag, page, pageSize: PAGE_SIZE }, user.id),
+    listUserTagNames(user.id),
   ])
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const filtering = q !== '' || tag !== ''

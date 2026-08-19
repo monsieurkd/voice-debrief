@@ -6,6 +6,7 @@ import { storeSession } from '../src/lib/store'
 import { db } from '../src/db/client'
 import { sessions, events, reflections, decisions, nextSteps, goals, userState, tagLinks } from '../src/db/schema'
 import { eq } from 'drizzle-orm'
+import { USER_ID } from '../src/lib/constants'
 import type { ExtractionPayload } from '../src/lib/extraction-schema'
 
 const payload: ExtractionPayload = {
@@ -27,7 +28,7 @@ const payload: ExtractionPayload = {
 }
 
 async function main() {
-  const sessionId = await storeSession('Dummy transcript for the store test.', payload)
+  const sessionId = await storeSession('Dummy transcript for the store test.', payload, { userId: USER_ID })
 
   const [s] = await db.select().from(sessions).where(eq(sessions.id, sessionId))
   assert.ok(s, 'session row exists')
@@ -61,12 +62,12 @@ async function main() {
   assert.ok(byType('next_step') >= 1, 'next_step tag_links stored')
 
   // goal resolved by TITLE (created, not an id passthrough)
-  const allGoals = await db.select().from(goals).where(eq(goals.user_id, 1))
+  const allGoals = await db.select().from(goals).where(eq(goals.user_id, USER_ID))
   assert.ok(allGoals.some((g) => g.title === 'Launch'), "goal 'Launch' resolved/created by title")
   assert.ok(steps[0].goal_id != null, 'next_step wired to goal_id')
 
   // user_state adapted for the next session
-  const [us] = await db.select().from(userState).where(eq(userState.user_id, 1))
+  const [us] = await db.select().from(userState).where(eq(userState.user_id, USER_ID))
   assert.ok(us, 'user_state row exists')
   assert.ok((us.sessions_count ?? 0) >= 1, 'sessions_count incremented')
   assert.equal(us.last_session_id, sessionId, 'last_session_id points at the new session')

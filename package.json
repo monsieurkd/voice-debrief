@@ -13,12 +13,13 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seed.ts",
     "db:check": "tsx scripts/db-check.ts",
-    "test:db": "tsx scripts/test-store.ts && tsx scripts/test-writeback.ts && tsx scripts/test-reclassify.ts && tsx scripts/test-ratelimit.ts && tsx scripts/test-threads.ts",
+    "test:db": "tsx scripts/test-store.ts && tsx scripts/test-writeback.ts && tsx scripts/test-reclassify.ts && tsx scripts/test-tenancy.ts && tsx scripts/test-ratelimit.ts && tsx scripts/test-threads.ts",
     "test:interview": "tsx scripts/test-interview.ts",
     "test:live": "tsx scripts/extract-standalone.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
+    "jose": "^6.2.9",
     "next": "^16.2.12",
     "openai": "^6.47.0",
     "pg": "^8.22.0",

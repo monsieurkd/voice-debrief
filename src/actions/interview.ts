@@ -4,10 +4,10 @@ import { z } from 'zod'
 import { eq } from 'drizzle-orm'
 import { db } from '@/db/client'
 import { userState } from '@/db/schema'
-import { USER_ID, DEMO_LIMITS, RATE_WINDOW_MS } from '@/lib/constants'
+import { DEMO_LIMITS, RATE_WINDOW_MS } from '@/lib/constants'
 import { parseArgs } from '@/lib/action-args'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { clientIp } from '@/lib/client-ip'
+import { requireUser } from '@/lib/auth'
 import { runInterviewTurn, type Checklist, type InterviewHints } from '@/lib/interview'
 
 export type ChatMsg = { role: 'user' | 'assistant'; content: string }
@@ -33,10 +33,17 @@ export async function interviewTurnAction(args: {
   history: ChatMsg[]
   checklist: Checklist
 }): Promise<{ reply: string; checklist: Checklist; error?: string }> {
+  // Self-authorize (the proxy gate is optimistic only). On a miss return a
+  // neutral checklist — unvalidated args must not be echoed back; the client
+  // keeps its own state and only surfaces the error.
+  const user = await requireUser().catch(() => null)
+  if (!user) {
+    return { reply: '', checklist: { events: false, decisions: false, next_steps: false }, error: 'Your session has expired — please sign in again.' }
+  }
   const input = parseArgs(turnArgsSchema, args, 'interviewTurn')
 
-  // Public-demo guardrail: the interview driver costs money per turn.
-  if (!(await checkRateLimit(`interview:${await clientIp()}`, DEMO_LIMITS.interviewTurnsPerHour, RATE_WINDOW_MS))) {
+  // Spend guardrail, keyed to the signed-in user: the driver costs money per turn.
+  if (!(await checkRateLimit(`interview:u:${user.id}`, DEMO_LIMITS.interviewTurnsPerHour, RATE_WINDOW_MS))) {
     return {
       reply: '',
       checklist: input.checklist,
@@ -44,7 +51,7 @@ export async function interviewTurnAction(args: {
     }
   }
 
-  const [us] = await db.select().from(userState).where(eq(userState.user_id, USER_ID))
+  const [us] = await db.select().from(userState).where(eq(userState.user_id, user.id))
   const hints: InterviewHints = {
     mood: us?.last_mood ?? null,
     engagement: us?.last_engagement ?? null,

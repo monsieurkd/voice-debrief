@@ -1,16 +1,22 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
+import { getCurrentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/session'
 import { formatDate } from '@/lib/dates'
 import { DebriefDoc } from '@/components/DebriefDoc'
 import { MoodStrip } from '@/components/MoodStrip'
+import { DeleteSessionButton } from '@/components/DeleteSessionButton'
 
 export default async function SessionPage({ params }: { params: Promise<{ id: string }> }) {
+  // Page-level check (the proxy gate is optimistic only).
+  const user = await getCurrentUser()
+  if (!user) redirect('/login')
   const { id } = await params
   const sessionId = Number(id)
   // Non-numeric ids must 404, not reach Postgres as 'NaN' (a 500 on the DB bind).
   if (!Number.isInteger(sessionId) || sessionId <= 0) notFound()
-  const data = await loadSession(sessionId)
+  // Ownership is part of the load: another user's session id is simply a 404.
+  const data = await loadSession(sessionId, user.id)
   if (!data) notFound()
 
   return (
@@ -56,10 +62,20 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
         </details>
       )}
 
-      <div className="mt-10">
+      <div className="mt-10 flex items-center justify-between">
         <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
           ← Home
         </Link>
+        <div className="flex items-center gap-4">
+          {/* data rights: portability + erasure */}
+          <a
+            href={`/session/${data.id}/export`}
+            className="text-xs text-zinc-400 transition hover:text-zinc-700 dark:hover:text-zinc-200"
+          >
+            export JSON
+          </a>
+          <DeleteSessionButton sessionId={data.id} />
+        </div>
       </div>
     </main>
   )

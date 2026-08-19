@@ -1,7 +1,10 @@
-// Single-user v1 (spec §11): hardcode the seeded user.
+// The seeded single-user account (spec §11). NEVER use in request data paths —
+// server code gets the real user from lib/auth (getCurrentUser/requireUser).
+// Kept for scripts/ (db tests, demo data) that run outside a request.
 export const USER_ID = 1
 
-// Public-demo guardrails (per IP, rolling fixed windows) until auth lands (Phase 1).
+// Spend guardrails (fixed windows, DB-backed so serverless instances share
+// them). Authenticated actions key by user id; the auth pages key by IP.
 export const DEMO_LIMITS = {
   debriefsPerHour: 5,
   interviewTurnsPerHour: 20,
