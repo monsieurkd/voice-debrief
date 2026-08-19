@@ -1,11 +1,15 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
+import { getCurrentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/session'
 import { formatDate } from '@/lib/dates'
 import { DebriefDoc } from '@/components/DebriefDoc'
 import { MoodStrip } from '@/components/MoodStrip'
 
 export default async function SessionPage({ params }: { params: Promise<{ id: string }> }) {
+  // Page-level check (the proxy gate is optimistic only).
+  const user = await getCurrentUser()
+  if (!user) redirect('/login')
   const { id } = await params
   const sessionId = Number(id)
   // Non-numeric ids must 404, not reach Postgres as 'NaN' (a 500 on the DB bind).

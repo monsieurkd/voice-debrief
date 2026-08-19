@@ -1,9 +1,12 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { getCurrentUser } from '@/lib/auth'
 import { listSessions, listOpenNextSteps } from '@/lib/queries'
 import { formatDate } from '@/lib/dates'
 import { PlanList } from '@/components/PlanList'
 import { MoodStrip } from '@/components/MoodStrip'
 import { LoadSampleButton } from '@/components/LoadSampleButton'
+import { LogoutButton } from '@/components/LogoutButton'
 
 // Home reads live journal data on every request. With the default 'auto',
 // this page is eligible for build-time prerendering: `next build` would
@@ -12,6 +15,9 @@ import { LoadSampleButton } from '@/components/LoadSampleButton'
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
+  // Page-level check (the proxy gate is optimistic only); userId scopes every query below.
+  const user = await getCurrentUser()
+  if (!user) redirect('/login')
   const [entries, plan] = await Promise.all([listSessions(20), listOpenNextSteps(30)])
 
   return (
@@ -28,6 +34,7 @@ export default async function Home() {
           >
             ＋ Guided debrief
           </Link>
+          <LogoutButton />
         </div>
       </header>
 

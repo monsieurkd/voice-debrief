@@ -10,7 +10,9 @@ import { SignJWT, jwtVerify } from 'jose'
 
 export const SESSION_COOKIE = 'vd_session'
 export const SESSION_TTL_DAYS = 30
-const ISSUER = 'voice-debrief'
+// Exported for src/proxy.ts, which re-verifies tokens and must stay decoupled
+// from app modules (per the proxy docs) — this pure module is its one exception.
+export const SESSION_ISSUER = 'voice-debrief'
 
 export interface SessionUser {
   id: number
@@ -36,7 +38,7 @@ export async function signSessionToken(user: SessionUser): Promise<string> {
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(String(user.id))
     .setIssuedAt()
-    .setIssuer(ISSUER)
+    .setIssuer(SESSION_ISSUER)
     .setExpirationTime(`${SESSION_TTL_DAYS}d`)
     .sign(key())
 }
@@ -49,7 +51,7 @@ export async function signSessionToken(user: SessionUser): Promise<string> {
 export async function verifySessionToken(token: string | undefined | null): Promise<SessionUser | null> {
   if (!token) return null
   try {
-    const { payload } = await jwtVerify(token, key(), { algorithms: ['HS256'], issuer: ISSUER })
+    const { payload } = await jwtVerify(token, key(), { algorithms: ['HS256'], issuer: SESSION_ISSUER })
     const id = Number(payload.sub)
     if (!Number.isInteger(id) || id <= 0 || typeof payload.email !== 'string') return null
     return { id, email: payload.email }
