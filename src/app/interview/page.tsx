@@ -1,21 +1,36 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { interviewTurnAction, type ChatMsg } from '@/actions/interview'
 import { runDebrief } from '@/actions/debrief'
 import { MicButton } from '@/components/MicButton'
 import { ExtractionProgress } from '@/components/ExtractionProgress'
+import { getInitialDraft, saveDraft, clearDraft, type InterviewChecklist } from '@/lib/interview-draft'
 
-type Checklist = { events: boolean; decisions: boolean; next_steps: boolean }
-const EMPTY: Checklist = { events: false, decisions: false, next_steps: false }
+const EMPTY: InterviewChecklist = { events: false, decisions: false, next_steps: false }
 const GREETING = "Hey — how'd today go? Start wherever; I'll listen."
+const GREETING_MSG: ChatMsg = { role: 'assistant', content: GREETING }
+
+// Same SSR-safe pattern as use-speech.ts: read client-only storage through
+// useSyncExternalStore (server snapshot is null → no hydration mismatch).
+const emptySubscribe = () => () => {}
 
 export default function InterviewPage() {
   const router = useRouter()
-  const [messages, setMessages] = useState<ChatMsg[]>([{ role: 'assistant', content: GREETING }])
-  const [checklist, setChecklist] = useState<Checklist>(EMPTY)
+  // Survive an accidental refresh: the conversation restores from
+  // sessionStorage (draft) until the user's first turn moves it into state.
+  const draft = useSyncExternalStore(emptySubscribe, getInitialDraft, () => null)
+  const [liveMessages, setLiveMessages] = useState<ChatMsg[] | null>(null)
+  const [liveChecklist, setLiveChecklist] = useState<InterviewChecklist | null>(null)
+  // Memoized: these feed effect deps below — raw logical expressions would
+  // mint a new [] every render and re-run the save effect forever.
+  const messages = useMemo<ChatMsg[]>(() => liveMessages ?? draft?.messages ?? [GREETING_MSG], [liveMessages, draft])
+  const checklist = useMemo<InterviewChecklist>(
+    () => liveChecklist ?? draft?.checklist ?? EMPTY,
+    [liveChecklist, draft],
+  )
   const [input, setInput] = useState('')
   const [pending, setPending] = useState(false)
   const [finishing, setFinishing] = useState(false)
@@ -23,9 +38,12 @@ export default function InterviewPage() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  // Keep the draft in sync every turn — but never overwrite a real draft with
+  // the pristine greeting (the pre-first-turn render).
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, pending])
+    if (messages.length === 1 && messages[0].content === GREETING) return
+    saveDraft(messages, checklist)
+  }, [messages, checklist])
 
   // Auto-grow the composer to its content (capped), so long replies stay
   // visible instead of scrolling inside a one-line input.
@@ -44,7 +62,7 @@ export default function InterviewPage() {
     if (!text || pending || finishing) return
     setError(null)
     const history: ChatMsg[] = [...messages, { role: 'user', content: text }]
-    setMessages(history)
+    setLiveMessages(history)
     setInput('')
     setPending(true)
     try {
@@ -53,8 +71,8 @@ export default function InterviewPage() {
         setError(res.error) // e.g. demo rate limit — surface why, keep the user's message
         return
       }
-      setMessages((h) => [...h, { role: 'assistant', content: res.reply }])
-      setChecklist(res.checklist)
+      setLiveMessages([...history, { role: 'assistant', content: res.reply }])
+      setLiveChecklist(res.checklist)
     } catch {
       setError('Hiccup reaching the model — try again, or hit Finish to wrap up.')
     } finally {
@@ -75,8 +93,12 @@ export default function InterviewPage() {
     setFinishing(true)
     try {
       const res = await runDebrief(transcript)
-      if (res.ok) router.push(`/session/${res.sessionId}`)
-      else setError(res.error)
+      if (res.ok) {
+        clearDraft() // the conversation became a session — a revisit starts fresh
+        router.push(`/session/${res.sessionId}`)
+      } else {
+        setError(res.error)
+      }
     } catch {
       setError('Could not reach the server — try Finish again; your conversation is still here.')
     } finally {
