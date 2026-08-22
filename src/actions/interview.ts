@@ -7,7 +7,7 @@ import { userState } from '@/db/schema'
 import { DEMO_LIMITS, RATE_WINDOW_MS } from '@/lib/constants'
 import { parseArgs } from '@/lib/action-args'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { requireUser } from '@/lib/auth'
+import { currentUserOrGuest } from '@/lib/auth'
 import { runInterviewTurn, type Checklist, type InterviewHints } from '@/lib/interview'
 
 export type ChatMsg = { role: 'user' | 'assistant'; content: string }
@@ -33,13 +33,10 @@ export async function interviewTurnAction(args: {
   history: ChatMsg[]
   checklist: Checklist
 }): Promise<{ reply: string; checklist: Checklist; error?: string }> {
-  // Self-authorize (the proxy gate is optimistic only). On a miss return a
-  // neutral checklist — unvalidated args must not be echoed back; the client
-  // keeps its own state and only surfaces the error.
-  const user = await requireUser().catch(() => null)
-  if (!user) {
-    return { reply: '', checklist: { events: false, decisions: false, next_steps: false }, error: 'Your session has expired — please sign in again.' }
-  }
+  // Debrief-first: a visitor interviews as a guest; their session adopts onto
+  // an account if they sign up later. currentUserOrGuest never fails (a guest
+  // user is minted on first turn), so per-date rate limiting keys on that id.
+  const user = await currentUserOrGuest()
   const input = parseArgs(turnArgsSchema, args, 'interviewTurn')
 
   // Spend guardrail, keyed to the signed-in user: the driver costs money per turn.

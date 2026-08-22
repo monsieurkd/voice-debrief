@@ -8,7 +8,8 @@ import { users } from '@/db/schema'
 import { env } from '@/lib/env'
 import { parseArgs } from '@/lib/action-args'
 import { hashPassword, verifyPassword } from '@/lib/passwd'
-import { createSessionCookie, destroySessionCookie } from '@/lib/auth'
+import { clearGuestCookie, createSessionCookie, destroySessionCookie, getGuestId } from '@/lib/auth'
+import { adoptGuestData } from '@/lib/adopt'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { clientIp } from '@/lib/client-ip'
 import { RATE_WINDOW_MS } from '@/lib/constants'
@@ -76,6 +77,9 @@ export async function signupAction(_state: AuthFormState, formData: FormData): P
     return { error: 'Could not create the account — please try again.' }
   }
 
+  // Deferred attribution: if this browser was debriefing as a guest, fold that
+  // anonymous data onto the new account before signing them in.
+  await adoptGuestOnSignin(id)
   await createSessionCookie({ id, email: a.email })
   redirect(safeNext(formData.get('next')))
 }
@@ -98,8 +102,29 @@ export async function loginAction(_state: AuthFormState, formData: FormData): Pr
   }
   if (!(await verifyPassword(a.password, u.password_hash))) return { error: 'Wrong email or password.' }
 
+  // Deferred attribution: fold any guest-top debriefs from this browser onto
+  // the signed-in user so a session typed before logging in survives.
+  await adoptGuestOnSignin(u.id)
+
   await createSessionCookie({ id: u.id, email: u.email! })
   redirect(safeNext(formData.get('next')))
+}
+
+/**
+ * Adopt this browser's guest data (if any) onto the given real user, then clear
+ * the guest cookie. Safe to call on every login/signup: no guest cookie → no-op.
+ */
+async function adoptGuestOnSignin(userId: number): Promise<void> {
+  try {
+    const guestId = await getGuestId()
+    if (guestId == null) return
+    await adoptGuestData(guestId, userId)
+    await clearGuestCookie()
+  } catch (e) {
+    // Adoption must never block a successful login. Damaged adoption is logged
+    // so an operator can reconcile; the guest still gets their session cookie.
+    console.error('[auth] guest adoption failed:', e)
+  }
 }
 
 export async function logoutAction(): Promise<void> {

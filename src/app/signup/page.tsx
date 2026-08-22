@@ -1,21 +1,38 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser, getGuestId } from '@/lib/auth'
 import { SignupForm } from './signup-form'
+import { Card, Wordmark } from '@/components/ui'
 
-export default async function SignupPage() {
-  // Already signed in → straight to the journal.
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>
+}) {
   if (await getCurrentUser()) redirect('/')
+  const { next } = await searchParams
+  const safeNext = typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : '/'
+  const hasGuest = (await getGuestId()) != null
+
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center px-6 py-12">
-      <h1 className="text-xl font-semibold tracking-tight">Start your debrief</h1>
-      <p className="mt-1 mb-6 text-sm text-zinc-500 dark:text-zinc-400">
-        An account keeps your journal private to you — sessions, plans and all.
-      </p>
-      <SignupForm />
-      <p className="mt-6 text-sm text-zinc-500 dark:text-zinc-400">
+    <main className="mx-auto flex w-full max-w-md flex-col justify-center px-6 py-12">
+      <div className="mb-8 text-center">
+        <Wordmark />
+        <p className="mt-2 text-sm text-on-surface-muted">
+          {hasGuest
+            ? 'Create an account and your saved debriefs fold straight into your journal.'
+            : 'Turn your debriefs into a compounding, private journal.'}
+        </p>
+      </div>
+      <Card className="p-8">
+        <SignupForm next={safeNext} />
+      </Card>
+      <p className="mt-6 text-center text-sm text-on-surface-muted">
         Already have an account?{' '}
-        <Link href="/login" className="underline underline-offset-2 hover:text-zinc-900 dark:hover:text-zinc-100">
+        <Link
+          href={safeNext !== '/' ? `/login?next=${encodeURIComponent(safeNext)}` : '/login'}
+          className="font-medium text-on-secondary-container underline underline-offset-2 hover:text-on-surface"
+        >
           Log in
         </Link>
       </p>

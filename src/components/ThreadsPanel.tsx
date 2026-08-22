@@ -4,16 +4,17 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { refreshThreads } from '@/actions/debrief'
 import type { StoredThread } from '@/lib/threads'
+import { SectionTitle, Pill } from '@/components/ui'
 
 const KIND_STYLE: Record<StoredThread['kind'], { dot: string; label: string }> = {
-  pattern: { dot: 'bg-indigo-400', label: 'pattern' },
-  progress: { dot: 'bg-emerald-400', label: 'progress' },
-  nudge: { dot: 'bg-amber-400', label: 'nudge' },
+  pattern: { dot: 'bg-secondary-container', label: 'pattern' },
+  progress: { dot: 'bg-primary/40', label: 'progress' },
+  nudge: { dot: 'bg-error/50', label: 'nudge' },
 }
 
 /**
- * "Threads this week" — the cross-day insight panel. This is where the
- * compounding becomes visible: what connected across days, grounded in dates.
+ * "Threads this week" — the cross-day insight panel. The compounding made
+ * visible: what connected across days, grounded in dates.
  */
 export function ThreadsPanel({ threads, canRefresh }: { threads: StoredThread[]; canRefresh: boolean }) {
   const router = useRouter()
@@ -35,17 +36,15 @@ export function ThreadsPanel({ threads, canRefresh }: { threads: StoredThread[];
   }
 
   return (
-    <section className="mb-10">
+    <section>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 dark:border-zinc-800">
-          Threads this week
-        </h2>
+        <SectionTitle className="mb-0 flex-1">Threads this week</SectionTitle>
         {canRefresh && (
           <button
             type="button"
             onClick={onRefresh}
             disabled={pending}
-            className="text-xs text-zinc-500 underline-offset-2 transition hover:text-zinc-900 hover:underline disabled:opacity-40 dark:text-zinc-400 dark:hover:text-zinc-100"
+            className="text-xs font-medium text-on-secondary-container underline-offset-2 transition hover:underline disabled:opacity-40"
           >
             {pending ? 'Reading your week…' : '↻ refresh'}
           </button>
@@ -53,29 +52,34 @@ export function ThreadsPanel({ threads, canRefresh }: { threads: StoredThread[];
       </div>
 
       {threads.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-on-surface-muted">
           Threads appear once there are a few days to connect — the app reads across debriefs and
           names what keeps coming back, what moved, and what&apos;s still open.
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-4">
           {threads.map((t) => {
             const style = KIND_STYLE[t.kind] ?? KIND_STYLE.pattern!
             return (
               <li
                 key={t.id}
-                className="rounded-lg border border-zinc-200 p-4 transition hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700"
+                className="rounded-xl bg-surface-container-low p-5 transition hover:bg-surface-container"
               >
-                <div className="mb-1 flex items-center gap-2">
-                  <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} aria-hidden />
-                  <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{t.title}</span>
-                  <span className="ml-auto text-[10px] uppercase tracking-wide text-zinc-400">{style.label}</span>
+                <div className="mb-2 flex items-center gap-2">
+                  <span className={`h-2 w-2 rounded-full ${style.dot}`} aria-hidden />
+                  <span className="text-sm font-semibold text-on-surface">{t.title}</span>
+                  <span className="ml-auto">
+                    <Pill>{style.label}</Pill>
+                  </span>
                 </div>
-                <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-300">{t.detail}</p>
+                <p className="text-sm leading-6 text-on-surface-muted">{t.detail}</p>
                 {t.dates.length > 0 && (
-                  <p className="mt-1.5 flex flex-wrap gap-1.5">
+                  <p className="mt-3 flex flex-wrap gap-1.5">
                     {t.dates.map((d, i) => (
-                      <span key={i} className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                      <span
+                        key={i}
+                        className="rounded-full bg-meditative-lavender px-2 py-0.5 text-[11px] text-on-surface-muted"
+                      >
                         {d}
                       </span>
                     ))}
@@ -88,7 +92,7 @@ export function ThreadsPanel({ threads, canRefresh }: { threads: StoredThread[];
       )}
 
       {error && (
-        <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="mt-3 text-sm text-error">
           {error}
         </p>
       )}

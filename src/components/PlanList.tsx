@@ -27,9 +27,9 @@ export function PlanList({ items }: { items: PlanItem[] }) {
 
   if (items.length === 0) {
     return (
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-on-surface-muted">
         Nothing on the list.{' '}
-        <Link href="/new" className="underline">
+        <Link href="/new" className="font-medium text-on-secondary-container underline underline-offset-2">
           Debrief your day
         </Link>{' '}
         to surface actions.
@@ -40,43 +40,43 @@ export function PlanList({ items }: { items: PlanItem[] }) {
   return (
     <>
       {error && (
-        <p role="alert" className="mb-2 text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="mb-2 text-sm text-error">
           {error}
         </p>
       )}
       <ul className="flex flex-col gap-1">
-      {items.map((p) => (
-        <li
-          key={p.id}
-          className={`group flex items-start gap-2 rounded-md px-2 py-1.5 transition duration-500 hover:bg-zinc-50 dark:hover:bg-zinc-900 ${
-            justDone === p.id ? 'opacity-0' : 'opacity-100'
-          }`}
-        >
-          <input
-            type="checkbox"
-            aria-label={`mark done: ${p.content}`}
-            disabled={busy === p.id}
-            onChange={() => markDone(p.id)}
-            className="mt-1 h-4 w-4 accent-zinc-900 dark:accent-zinc-100"
-          />
-          <div className="flex flex-col">
-            <span
-              className={`text-sm leading-6 text-zinc-800 transition dark:text-zinc-200 ${
-                justDone === p.id ? '-rotate-1 text-zinc-400 line-through dark:text-zinc-500' : ''
-              }`}
-            >
-              {p.content}
-            </span>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">
-              {p.goalTitle && <>→ {p.goalTitle} </>}
-              {p.dueOn && <>· due {p.dueOn} </>}
-              <Link href={`/session/${p.sessionId}`} className="underline">
-                source
-              </Link>
-            </span>
-          </div>
-        </li>
-      ))}
+        {items.map((p) => (
+          <li
+            key={p.id}
+            className={`group flex items-start gap-3 rounded-xl px-3 py-2.5 transition duration-500 hover:bg-surface-container ${
+              justDone === p.id ? 'opacity-0' : 'opacity-100'
+            }`}
+          >
+            <input
+              type="checkbox"
+              aria-label={`mark done: ${p.content}`}
+              disabled={busy === p.id}
+              onChange={() => markDone(p.id)}
+              className="mt-1.5 h-4 w-4 shrink-0 rounded accent-primary"
+            />
+            <div className="flex flex-col">
+              <span
+                className={`text-sm leading-6 text-on-surface transition ${
+                  justDone === p.id ? '-rotate-1 text-on-surface-muted line-through' : ''
+                }`}
+              >
+                {p.content}
+              </span>
+              <span className="text-xs text-on-surface-muted">
+                {p.goalTitle && <>→ {p.goalTitle} </>}
+                {p.dueOn && <>· due {p.dueOn} </>}
+                <Link href={`/session/${p.sessionId}`} className="underline underline-offset-2">
+                  source
+                </Link>
+              </span>
+            </div>
+          </li>
+        ))}
       </ul>
     </>
   )

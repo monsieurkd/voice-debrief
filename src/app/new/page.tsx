@@ -8,6 +8,7 @@ import { sampleTranscripts } from '@/lib/sample-transcripts'
 import { DemoButton } from '@/components/DemoButton'
 import { MicButton } from '@/components/MicButton'
 import { ExtractionProgress } from '@/components/ExtractionProgress'
+import { AmbientTextarea, Button, Card, GhostLoader } from '@/components/ui'
 
 export default function NewDebrief() {
   const router = useRouter()
@@ -31,74 +32,75 @@ export default function NewDebrief() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-2xl px-6 py-12">
-      <div className="mb-6">
-        <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
-          ← Home
-        </Link>
-      </div>
-
-      <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Debrief your day</h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Talk (or type) it out. I&apos;ll organise it into something you can act on.
+    <main className="mx-auto w-full max-w-[920px] px-6 py-12">
+      <header className="mb-10 text-center">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-muted">No sign-in needed</p>
+        <h1 className="font-display text-3xl text-on-surface sm:text-4xl">Debrief your day</h1>
+        <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-on-surface-muted">
+          Talk (or type) it out — I&apos;ll organise it into something you can act on. Save it to a
+          journal whenever you&apos;re ready.
         </p>
       </header>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-xs text-zinc-400 dark:text-zinc-500">
-            Type it — or click the mic and just talk.
-          </span>
-          <MicButton disabled={pending} onFinal={(chunk) => setText((t) => (t ? `${t} ${chunk}` : chunk))} />
-        </div>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Today was rough. The standup went sideways…"
-          className="min-h-48 w-full resize-y rounded-lg border border-zinc-300 p-4 text-sm leading-6 outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-100"
-          disabled={pending}
-        />
-        {error && (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-            {error}
-          </p>
-        )}
-        {pending && <ExtractionProgress />}
-        <button
-          type="submit"
-          disabled={pending || !text.trim()}
-          className="self-start rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
-        >
-          {pending ? 'Listening to the structure…' : 'Run debrief'}
-        </button>
-      </form>
+      <Card className="p-6 sm:p-8">
+        <form onSubmit={onSubmit} className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs text-on-surface-muted">Type it — or click the mic and just talk.</span>
+            <MicButton disabled={pending} onFinal={(chunk) => setText((t) => (t ? `${t} ${chunk}` : chunk))} />
+          </div>
+          <AmbientTextarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Today was rough. The standup went sideways…"
+            rows={8}
+            disabled={pending}
+            aria-label="Your debrief text"
+          />
+          {error && (
+            <p role="alert" className="text-sm text-error">
+              {error}
+            </p>
+          )}
+          {pending && <ExtractionProgress />}
+          <Button type="submit" disabled={pending || !text.trim()} className="self-start">
+            {pending ? <><GhostLoader /> Listening to the structure…</> : 'Run debrief'}
+          </Button>
+        </form>
 
-      <div className="mt-6 flex flex-col gap-2">
-        <p className="text-xs uppercase tracking-wide text-zinc-400">Or try a sample</p>
-        <div className="flex flex-wrap gap-2">
-          {sampleTranscripts.map((s, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setText(s.text)}
-              className="rounded-full border border-zinc-300 px-3 py-1 text-xs text-zinc-600 transition hover:border-zinc-900 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-100 dark:hover:text-zinc-100"
+        <div className="mt-8 border-t border-outline-variant/50 pt-6">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-on-surface-muted">Or try a sample</p>
+          <div className="flex flex-wrap gap-2">
+            {sampleTranscripts.map((s, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setText(s.text)}
+                className="rounded-full bg-meditative-lavender px-3 py-1.5 text-xs font-medium text-on-surface-muted transition hover:text-on-surface"
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-on-surface-muted">
+            Chips fill the box for a real AI run —{' '}
+            <DemoButton
+              sampleId={0}
+              className="font-medium text-on-secondary-container underline underline-offset-2 hover:text-on-surface"
             >
-              {s.label}
-            </button>
-          ))}
+              or load a sample instantly
+            </DemoButton>{' '}
+            (demo mode: no AI call, same structured result).
+          </p>
         </div>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Chips fill the box for a real AI run —{' '}
-          <DemoButton
-            sampleId={0}
-            className="font-medium text-zinc-700 underline underline-offset-2 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
-          >
-            or load a sample instantly
-          </DemoButton>{' '}
-          (demo mode: no AI call, same structured result).
-        </p>
-      </div>
+      </Card>
+
+      <p className="mt-8 text-center text-sm text-on-surface-muted">
+        Prefer a guided conversation?{' '}
+        <Link href="/interview" className="font-medium text-on-secondary-container underline underline-offset-2 hover:text-on-surface">
+          Try the guided debrief
+        </Link>
+        .
+      </p>
     </main>
   )
 }

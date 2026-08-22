@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser, getGuestId } from '@/lib/auth'
 import { listSessions, listOpenNextSteps, listSessionDays } from '@/lib/queries'
 import { listThreads } from '@/lib/threads'
 import { env } from '@/lib/env'
@@ -10,7 +9,7 @@ import { PlanList } from '@/components/PlanList'
 import { MoodStrip } from '@/components/MoodStrip'
 import { ThreadsPanel } from '@/components/ThreadsPanel'
 import { DemoButton } from '@/components/DemoButton'
-import { LogoutButton } from '@/components/LogoutButton'
+import { ButtonLink, Card, SectionTitle, SaveToJournalPrompt, Pill } from '@/components/ui'
 import { runSampleDebrief, runDemoWeek } from '@/actions/debrief'
 
 // Home reads live journal data on every request. With the default 'auto',
@@ -20,111 +19,140 @@ import { runSampleDebrief, runDemoWeek } from '@/actions/debrief'
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-  // Page-level check (the proxy gate is optimistic only); userId scopes every query below.
-  const user = await getCurrentUser()
-  if (!user) redirect('/login')
-  const [entries, plan, threads, days] = await Promise.all([
-    listSessions(user.id, 20),
-    listOpenNextSteps(user.id, 30),
-    listThreads(user.id),
-    listSessionDays(user.id),
-  ])
-  // From 2 on: a "1-day streak" is just "you used the app today".
+  // Debrief-first: don't mint an account (even a guest) just for viewing —
+  // the guest is created only when someone actually starts a debrief. A
+  // visitor with no identity yet sees the invitational empty state.
+  const real = await getCurrentUser()
+  const guestId = await getGuestId()
+  const userId = real?.id ?? guestId ?? null
+  const isGuest = !real && guestId != null
+  const hasIdentity = userId != null
+
+  const [entries, plan, threads, days] = userId
+    ? await Promise.all([
+        listSessions(userId, 20),
+        listOpenNextSteps(userId, 30),
+        listThreads(userId),
+        listSessionDays(userId),
+      ])
+    : await Promise.all([[], [], [], []])
   const streak = computeStreak(days)
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-2xl px-6 py-12">
-      <header className="mb-10 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold tracking-tight">Voice Debrief</h1>
-          {streak >= 2 && (
-            <span className="rounded-full border border-zinc-200 px-2.5 py-1 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-              {streak}-day streak
-            </span>
-          )}
+    <main className="mx-auto w-full max-w-[920px] px-6 py-14 sm:py-20">
+      {/* Opening: the invitation + primary action first. */}
+      <section className="mb-16 text-center">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-muted">
+          A quiet place to untangle your day
+        </p>
+        <h1 className="font-display text-4xl leading-tight text-on-surface sm:text-5xl">
+          Talk it out. Keep what matters.
+        </h1>
+        <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-on-surface-muted">
+          Debrief your day, and let it come back as something you can act on —{" "}
+          a plan, patterns that connect the days, and a record that compounds.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <ButtonLink href="/new">＋ Debrief now</ButtonLink>
+          <ButtonLink href="/interview" variant="secondary">
+            Guided debrief
+          </ButtonLink>
         </div>
-        <div className="flex items-center gap-4">
-          <Link href="/new" className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
-            quick type
-          </Link>
-          <Link
-            href="/interview"
-            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-          >
-            ＋ Guided debrief
-          </Link>
-          <LogoutButton />
-        </div>
-      </header>
-
-      <section className="mb-10">
-        <h2 className="mb-3 border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 dark:border-zinc-800">
-          Tomorrow&apos;s plan
-        </h2>
-        <PlanList items={plan} />
       </section>
 
-      <ThreadsPanel threads={threads} canRefresh={!!env.LLM_API_KEY} />
+      {/* Guest prompt: gently adopt onto an account. */}
+      <SaveToJournalPrompt href="/signup" shown={isGuest && entries.length > 0} />
 
-      <section>
-        <h2 className="mb-3 flex items-center justify-between border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-          Recent entries
-          <Link
-            href="/archive"
-            className="text-xs font-medium normal-case text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-          >
-            All entries →
-          </Link>
-        </h2>
-        {entries.length === 0 ? (
-          <div className="flex flex-col gap-3">
-            <p className="text-sm text-zinc-400">
-              No entries yet.{' '}
-              <Link href="/new" className="underline">
-                Write your first debrief
-              </Link>
-              .
+      {!hasIdentity && (entries.length === 0) && (
+        <section className="mb-16">
+          <div className="float-card p-8 text-center">
+            <p className="text-sm text-on-surface-muted">
+              No journal yet. Load a sample week to feel the compounding — or just write your first debrief above.
             </p>
-            <div className="flex flex-wrap items-center gap-3 text-sm">
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
               <DemoButton
                 action={runDemoWeek}
                 dest="/"
-                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary transition hover:opacity-90"
               >
                 Load a demo week
               </DemoButton>
-              <span className="text-zinc-400">
-                5 days of a real story arc — or{' '}
-                <DemoButton
-                  action={runSampleDebrief.bind(null, 0)}
-                  className="text-zinc-600 underline underline-offset-2 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
-                >
-                  just one sample
-                </DemoButton>
-              </span>
+              <DemoButton
+                action={runSampleDebrief.bind(null, 0)}
+                className="text-sm font-medium text-on-secondary-container underline underline-offset-2 hover:text-on-surface"
+              >
+                or just one sample
+              </DemoButton>
             </div>
           </div>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {entries.map((e) => (
-              <li key={e.id}>
-                <Link
-                  href={`/session/${e.id}`}
-                  className="block rounded-lg border border-zinc-200 p-4 transition hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
-                >
-                  <div className="mb-1 flex items-center justify-between">
-                    <time className="text-xs text-zinc-400">
-                      {formatDate(e.startedAt, { weekday: 'short', month: 'short', day: 'numeric' })}
-                    </time>
-                    <MoodStrip mood={e.mood} energy={e.energy} />
-                  </div>
-                  <p className="text-sm leading-6 text-zinc-700 dark:text-zinc-300">{e.overview ?? '(no overview)'}</p>
+        </section>
+      )}
+
+      {(hasIdentity || entries.length > 0) && (
+        <>
+          <section className="mb-16">
+            <SectionTitle>Tomorrow&apos;s plan</SectionTitle>
+            <Card className="p-6">
+              <PlanList items={plan} />
+            </Card>
+          </section>
+
+          <section className="mb-16">
+            <ThreadsPanel threads={threads} canRefresh={!!env.LLM_API_KEY} />
+          </section>
+
+          <section>
+            <SectionTitle>
+              <span className="flex w-full items-center justify-between">
+                <span>Recent entries</span>
+                {entries.length > 0 && (
+                  <Link
+                    href="/archive"
+                    className="text-xs font-medium normal-case tracking-normal text-on-surface-muted hover:text-on-surface"
+                  >
+                    All entries →
+                  </Link>
+                )}
+              </span>
+            </SectionTitle>
+            {entries.length === 0 ? (
+              <p className="text-sm text-on-surface-muted">
+                No entries yet.{' '}
+                <Link href="/new" className="font-medium text-on-secondary-container underline underline-offset-2">
+                  Write your first debrief
                 </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                .
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-4">
+                {entries.map((e) => (
+                  <li key={e.id}>
+                    <Link
+                      href={`/session/${e.id}`}
+                      className="group flex flex-col gap-2 rounded-lg bg-surface-container-low p-5 transition hover:bg-surface-container"
+                    >
+                      <div className="flex items-center justify-between">
+                        <time className="text-xs font-medium text-on-surface-muted">
+                          {formatDate(e.startedAt, { weekday: 'short', month: 'short', day: 'numeric' })}
+                        </time>
+                        <MoodStrip mood={e.mood} energy={e.energy} />
+                      </div>
+                      <p className="text-sm leading-6 text-on-surface">{e.overview ?? '(no overview)'}</p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </>
+      )}
+
+      {/* Streak badge — subtle, grows quieter for the first day. */}
+      {streak >= 2 && entries.length > 0 && (
+        <div className="mt-12 flex justify-center">
+          <Pill>{streak}-day streak</Pill>
+        </div>
+      )}
     </main>
   )
 }

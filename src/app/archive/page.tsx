@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/auth'
+import { notFound } from 'next/navigation'
+import { getCurrentUser, getGuestId } from '@/lib/auth'
 import { listArchiveSessions, listUserTagNames } from '@/lib/queries'
 import { formatDate } from '@/lib/dates'
 import { MoodStrip } from '@/components/MoodStrip'
@@ -22,7 +22,9 @@ export default async function ArchivePage({
   const sp = await searchParams
   // Page-level auth (the proxy gate is optimistic only); scopes every query below.
   const user = await getCurrentUser()
-  if (!user) redirect('/login')
+  const guestId = await getGuestId()
+  const uid = user?.id ?? guestId
+  if (uid == null) return notFound() // no identity to own an archive
   // Untrusted query params: bounded before they reach the query layer.
   const q = first(sp.q).trim().slice(0, 200)
   const tag = first(sp.tag).trim().slice(0, 100)
@@ -30,8 +32,8 @@ export default async function ArchivePage({
   const page = Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1
 
   const [{ rows, total }, tagNames] = await Promise.all([
-    listArchiveSessions({ q, tag, page, pageSize: PAGE_SIZE }, user.id),
-    listUserTagNames(user.id),
+    listArchiveSessions({ q, tag, page, pageSize: PAGE_SIZE }, uid),
+    listUserTagNames(uid),
   ])
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const filtering = q !== '' || tag !== ''
@@ -50,21 +52,21 @@ export default async function ArchivePage({
   }
 
   const chip = (active: boolean) =>
-    `rounded-full px-2.5 py-1 text-xs transition ${
+    `inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition ${
       active
-        ? 'bg-zinc-800 text-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
-        : 'bg-zinc-100 text-zinc-500 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100'
+        ? 'bg-secondary-container text-on-secondary-container'
+        : 'bg-meditative-lavender text-on-surface-muted hover:text-on-surface'
     }`
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-2xl px-6 py-12">
-      <header className="mb-8">
-        <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
+    <main className="mx-auto w-full max-w-[920px] px-6 py-12">
+      <header className="mb-10">
+        <Link href="/" className="text-sm text-on-surface-muted transition hover:text-on-surface">
           ← Home
         </Link>
-        <div className="mt-1 flex items-baseline justify-between">
-          <h1 className="text-xl font-semibold tracking-tight">Archive</h1>
-          <p className="text-xs text-zinc-400">
+        <div className="mt-3 flex items-baseline justify-between">
+          <h1 className="font-display text-3xl text-on-surface">Archive</h1>
+          <p className="text-xs text-on-surface-muted">
             {total} {total === 1 ? 'entry' : 'entries'}
             {q && ` matching “${q}”`}
             {tag && !q && ` tagged ${tag}`}
@@ -81,11 +83,11 @@ export default async function ArchivePage({
           defaultValue={q}
           placeholder="Search your entries…"
           aria-label="Search entries"
-          className="min-w-0 flex-1 rounded-lg border border-zinc-300 px-4 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900"
+          className="ambient-field min-w-0 flex-1 py-2 text-sm text-on-surface placeholder:text-on-surface-muted/70"
         />
         <button
           type="submit"
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary transition hover:opacity-90"
         >
           Search
         </button>
@@ -106,47 +108,47 @@ export default async function ArchivePage({
 
       {rows.length === 0 ? (
         filtering ? (
-          <p className="py-8 text-sm text-zinc-400">
+          <p className="py-8 text-sm text-on-surface-muted">
             Nothing matches {q && <>“{q}”</>}
             {q && tag && ' and '}
             {tag && <>#{tag}</>} —{' '}
-            <Link href={href({ tag: null, q: null })} className="underline">
+            <Link href={href({ tag: null, q: null })} className="font-medium text-on-secondary-container underline underline-offset-2">
               clear the filter
             </Link>
             .
           </p>
         ) : page > 1 ? (
-          <p className="py-8 text-sm text-zinc-400">
+          <p className="py-8 text-sm text-on-surface-muted">
             That page is past the end —{' '}
-            <Link href={href({ page: 1 })} className="underline">
+            <Link href={href({ page: 1 })} className="font-medium text-on-secondary-container underline underline-offset-2">
               back to page 1
             </Link>
             .
           </p>
         ) : (
-          <p className="py-8 text-sm text-zinc-400">
+          <p className="py-8 text-sm text-on-surface-muted">
             No entries yet.{' '}
-            <Link href="/new" className="underline">
+            <Link href="/new" className="font-medium text-on-secondary-container underline underline-offset-2">
               Write your first debrief
             </Link>
             .
           </p>
         )
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-4">
           {rows.map((e) => (
             <li key={e.id}>
               <Link
                 href={`/session/${e.id}`}
-                className="block rounded-lg border border-zinc-200 p-4 transition hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+                className="block rounded-lg bg-surface-container-low p-5 transition hover:bg-surface-container"
               >
                 <div className="mb-1 flex items-center justify-between">
-                  <time className="text-xs text-zinc-400">
+                  <time className="text-xs text-on-surface-muted">
                     {formatDate(e.startedAt, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
                   </time>
                   <MoodStrip mood={e.mood} energy={e.energy} />
                 </div>
-                <p className="text-sm leading-6 text-zinc-700 dark:text-zinc-300">{e.overview ?? '(no overview)'}</p>
+                <p className="text-sm leading-6 text-on-surface">{e.overview ?? '(no overview)'}</p>
               </Link>
             </li>
           ))}
@@ -154,23 +156,23 @@ export default async function ArchivePage({
       )}
 
       {pages > 1 && (
-        <nav className="mt-8 flex items-center justify-between text-sm" aria-label="Pagination">
+        <nav className="mt-10 flex items-center justify-between text-sm" aria-label="Pagination">
           {page > 1 ? (
-            <Link href={href({ page: page - 1 })} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
+            <Link href={href({ page: page - 1 })} className="text-on-secondary-container hover:text-on-surface">
               ← Newer
             </Link>
           ) : (
-            <span className="text-zinc-300 dark:text-zinc-700">← Newer</span>
+            <span className="text-on-surface-muted/50">← Newer</span>
           )}
-          <span className="text-xs text-zinc-400">
+          <span className="text-xs text-on-surface-muted">
             Page {page} of {pages}
           </span>
           {page < pages ? (
-            <Link href={href({ page: page + 1 })} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
+            <Link href={href({ page: page + 1 })} className="text-on-secondary-container hover:text-on-surface">
               Older →
             </Link>
           ) : (
-            <span className="text-zinc-300 dark:text-zinc-700">Older →</span>
+            <span className="text-on-surface-muted/50">Older →</span>
           )}
         </nav>
       )}

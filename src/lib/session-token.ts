@@ -10,6 +10,12 @@ import { SignJWT, jwtVerify } from 'jose'
 
 export const SESSION_COOKIE = 'vd_session'
 export const SESSION_TTL_DAYS = 30
+// Guest cookie: identities a debrief-first visitor so their anonymous sessions
+// can be adopted onto a real account later (deferred attribution). A guest is
+// just a users row with email/password NULL. Separate cookie so it can't be
+// confused with a real sign-in.
+export const GUEST_COOKIE = 'vd_guest'
+export const GUEST_TTL_DAYS = 60
 // Exported for src/proxy.ts, which re-verifies tokens and must stay decoupled
 // from app modules (per the proxy docs) — this pure module is its one exception.
 export const SESSION_ISSUER = 'voice-debrief'
@@ -55,6 +61,33 @@ export async function verifySessionToken(token: string | undefined | null): Prom
     const id = Number(payload.sub)
     if (!Number.isInteger(id) || id <= 0 || typeof payload.email !== 'string') return null
     return { id, email: payload.email }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Sign an opaque guest token: just the guest user id. The `guest: true` claim
+ * distinguishes it from a real session token — guests are never signed-in users.
+ */
+export async function signGuestToken(userId: number): Promise<string> {
+  return new SignJWT({ guest: true })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(String(userId))
+    .setIssuedAt()
+    .setIssuer(SESSION_ISSUER)
+    .setExpirationTime(`${GUEST_TTL_DAYS}d`)
+    .sign(key())
+}
+
+/** Verify a guest token → guest user id, or null for anything invalid. */
+export async function verifyGuestToken(token: string | undefined | null): Promise<number | null> {
+  if (!token) return null
+  try {
+    const { payload } = await jwtVerify(token, key(), { algorithms: ['HS256'], issuer: SESSION_ISSUER })
+    if (!payload.guest) return null
+    const id = Number(payload.sub)
+    return Number.isInteger(id) && id > 0 ? id : null
   } catch {
     return null
   }

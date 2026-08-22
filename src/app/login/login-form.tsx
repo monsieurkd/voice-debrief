@@ -2,52 +2,24 @@
 
 import { useActionState } from 'react'
 import { loginAction, type AuthFormState } from '@/actions/auth'
+import { Field, Button } from '@/components/ui'
 
 export function LoginForm({ next }: { next: string }) {
   const [state, action, pending] = useActionState<AuthFormState, FormData>(loginAction, {})
 
   return (
-    <form action={action} className="flex flex-col gap-3">
+    <form action={action} className="flex flex-col gap-5">
       <input type="hidden" name="next" value={next} />
-      <div>
-        <label htmlFor="email" className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          Email
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-100"
-        />
-      </div>
-      <div>
-        <label htmlFor="password" className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          Password
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          minLength={8}
-          className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-100"
-        />
-      </div>
+      <Field id="email" name="email" type="email" label="Email" autoComplete="email" required />
+      <Field id="password" name="password" type="password" label="Password" autoComplete="current-password" required minLength={8} />
       {state.error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-error">
           {state.error}
         </p>
       )}
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-      >
+      <Button type="submit" disabled={pending} className="w-full">
         {pending ? 'Logging in…' : 'Log in'}
-      </button>
+      </Button>
     </form>
   )
 }

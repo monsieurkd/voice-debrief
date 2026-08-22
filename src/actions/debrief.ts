@@ -16,7 +16,7 @@ import { buildDemoWeek, bakedDemoWeekThreads } from '@/lib/demo-week'
 import { sampleTranscripts } from '@/lib/sample-transcripts'
 import { generateThreads, loadThreadSessions, storeThreads } from '@/lib/threads'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { requireUser } from '@/lib/auth'
+import { currentUserOrGuest } from '@/lib/auth'
 import { DEMO_LIMITS, RATE_WINDOW_MS } from '@/lib/constants'
 import type { ExtractionPayload } from '@/lib/extraction-schema'
 import type { EntityType } from '@/lib/constants'
@@ -37,11 +37,9 @@ const idSchema = z.number().int().positive()
  * hand — the transcript is never lost, and the failure is never silent.
  */
 export async function runDebrief(transcriptInput: string): Promise<DebriefResult> {
-  // Self-authorize: server actions are directly-callable HTTP endpoints and
-  // the proxy gate is optimistic only. Result-shaped actions map the miss to
-  // a friendly error; void actions let UnauthorizedError reject the call.
-  const user = await requireUser().catch(() => null)
-  if (!user) return { ok: false, error: 'Your session has expired — please sign in again.' }
+  // Debrief-first: a visitor without an account debriefs as an anonymous guest;
+  // their session is adopted onto a real account if they sign up/log in later.
+  const user = await currentUserOrGuest()
   const { transcript } = parseArgs(z.object({ transcript: z.string().trim().min(1).max(20000) }), { transcript: transcriptInput }, 'runDebrief')
 
   // Spend guardrail, keyed to the signed-in user (shared per-user windows
@@ -119,8 +117,7 @@ export async function runDebrief(transcriptInput: string): Promise<DebriefResult
  * real debrief, but no LLM call. Instant, and works with no API key configured.
  */
 export async function runSampleDebrief(sampleIdInput: number): Promise<DebriefResult> {
-  const user = await requireUser().catch(() => null)
-  if (!user) return { ok: false, error: 'Your session has expired — please sign in again.' }
+  const user = await currentUserOrGuest()
   const { sampleId } = parseArgs(
     z.object({ sampleId: z.number().int().min(0).max(sampleTranscripts.length - 1) }),
     { sampleId: sampleIdInput },
@@ -148,8 +145,7 @@ export async function runSampleDebrief(sampleIdInput: number): Promise<DebriefRe
  * Lands on Home (not a session page): the reveal is the journal itself.
  */
 export async function runDemoWeek(): Promise<DebriefResult> {
-  const user = await requireUser().catch(() => null)
-  if (!user) return { ok: false, error: 'Your session has expired — please sign in again.' }
+  const user = await currentUserOrGuest()
   if (!(await checkRateLimit(`demoweek:u:${user.id}`, 3, RATE_WINDOW_MS))) {
     return { ok: false, error: 'Demo limit reached — the demo week can be loaded 3 times per hour. Come back later.' }
   }
@@ -175,8 +171,7 @@ export async function runDemoWeek(): Promise<DebriefResult> {
 
 /** Re-run the cross-day threads pass over the newest sessions (explicit refresh). */
 export async function refreshThreads(): Promise<{ ok: boolean; error?: string }> {
-  const user = await requireUser().catch(() => null)
-  if (!user) return { ok: false, error: 'Your session has expired — please sign in again.' }
+  const user = await currentUserOrGuest()
   if (!(await checkRateLimit(`threads:u:${user.id}`, 5, RATE_WINDOW_MS))) {
     return { ok: false, error: 'Demo limit reached — thread refreshes are capped at 5/hour. Try again later.' }
   }
@@ -200,7 +195,7 @@ export async function refreshThreads(): Promise<{ ok: boolean; error?: string }>
 
 /** Edit a block's text → UPDATE + source='user' + was_corrected=true. */
 export async function updateRow(entityType: EntityType, id: number, text: string, sessionId: number) {
-  const user = await requireUser()
+  const user = await currentUserOrGuest()
   const a = parseArgs(
     z.object({ entityType: entityTypeSchema, id: idSchema, text: textSchema, sessionId: idSchema }),
     { entityType, id, text, sessionId },
@@ -229,7 +224,7 @@ export async function addRow(
   text: string,
   extrasInput?: z.infer<typeof addExtrasSchema>,
 ): Promise<{ entityType: EntityType; id: number }> {
-  const user = await requireUser()
+  const user = await currentUserOrGuest()
   const a = parseArgs(
     z.object({
       entityType: entityTypeSchema,
@@ -247,7 +242,7 @@ export async function addRow(
 
 /** Delete a block → clean its tag_links, then delete the row. */
 export async function deleteRow(entityType: EntityType, id: number, sessionId: number) {
-  const user = await requireUser()
+  const user = await currentUserOrGuest()
   const a = parseArgs(
     z.object({ entityType: entityTypeSchema, id: idSchema, sessionId: idSchema }),
     { entityType, id, sessionId },
@@ -264,7 +259,7 @@ export async function reclassifyRow(
   to: EntityType,
   sessionId: number,
 ): Promise<{ entityType: EntityType; id: number }> {
-  const user = await requireUser()
+  const user = await currentUserOrGuest()
   const a = parseArgs(
     z.object({ from: entityTypeSchema, id: idSchema, to: entityTypeSchema, sessionId: idSchema }),
     { from, id, to, sessionId },
@@ -277,7 +272,7 @@ export async function reclassifyRow(
 
 /** Mark a next_step open/done/skipped (the plan check-off). Revalidates Home. */
 export async function setStepStatus(id: number, status: 'open' | 'done' | 'skipped') {
-  const user = await requireUser()
+  const user = await currentUserOrGuest()
   const a = parseArgs(
     z.object({ id: idSchema, status: z.enum(['open', 'done', 'skipped']) }),
     { id, status },
@@ -292,7 +287,7 @@ export async function setStepStatus(id: number, status: 'open' | 'done' | 'skipp
  * this revalidates Home and the (now-404) session path. Throws on foreign ids.
  */
 export async function deleteSessionRow(sessionIdInput: number) {
-  const user = await requireUser()
+  const user = await currentUserOrGuest()
   const a = parseArgs(z.object({ sessionId: idSchema }), { sessionId: sessionIdInput }, 'deleteSessionRow')
   await deleteSession(a.sessionId, user.id)
   revalidatePath('/')

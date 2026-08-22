@@ -33,12 +33,12 @@ export function DeleteSessionButton({ sessionId }: { sessionId: number }) {
         type="button"
         onClick={onDelete}
         disabled={pending}
-        className="text-xs text-zinc-400 transition hover:text-red-600 disabled:opacity-40"
+        className="text-xs text-on-surface-muted transition hover:text-error disabled:opacity-40"
       >
         {pending ? 'deleting…' : 'delete session'}
       </button>
       {error && (
-        <small role="alert" className="text-xs text-red-600 dark:text-red-400">
+        <small role="alert" className="text-xs text-error">
           {error}
         </small>
       )}

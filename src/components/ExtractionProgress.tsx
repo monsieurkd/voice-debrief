@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { GhostLoader } from '@/components/ui'
 
 /**
  * Live status during the 30–90s extraction — replaces dead-air button labels
@@ -27,22 +28,18 @@ export function ExtractionProgress() {
   const stage = [...STAGES].reverse().find((s) => elapsed >= s.after)!
 
   return (
-    <div role="status" aria-live="polite" className="flex flex-col gap-1 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-        <span className="flex gap-1" aria-hidden>
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-500 dark:bg-zinc-400"
-              style={{ animationDelay: `${i * 250}ms` }}
-            />
-          ))}
-        </span>
-        {stage.label}
-        <span className="ml-auto font-mono text-xs text-zinc-400 tabular-nums">{elapsed}s</span>
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex flex-col gap-2 rounded-xl bg-surface-container-low p-4"
+    >
+      <div className="flex items-center gap-3 text-sm text-on-surface">
+        <GhostLoader />
+        <span className="flex-1">{stage.label}</span>
+        <span className="font-mono text-xs text-on-surface-muted tabular-nums">{elapsed}s</span>
       </div>
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        You can leave this page — the entry is saved either way, and it&apos;ll be on Home.
+      <p className="text-xs text-on-surface-muted">
+        You can leave this page — the entry is saved either way, and it&apos;ll be on your journal.
       </p>
     </div>
   )

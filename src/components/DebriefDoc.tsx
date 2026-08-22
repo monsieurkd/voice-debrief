@@ -149,12 +149,12 @@ export function DebriefDoc({ initial }: { initial: LoadedSession }) {
           const items = blocks.filter((b) => b.entityType === sec.entityType)
           return (
             <section key={sec.title}>
-              <h2 className="mb-3 flex items-center gap-1.5 border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 dark:border-zinc-800">
-                <SectionIcon entityType={sec.entityType} className="h-3.5 w-3.5" />
+              <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-muted">
+                <SectionIcon entityType={sec.entityType} className="h-4 w-4" />
                 {sec.title}
               </h2>
               <ul className="flex flex-col gap-1">
-                {items.length === 0 && <li className="px-2 py-1 text-sm text-zinc-500 dark:text-zinc-400">Nothing here yet.</li>}
+                {items.length === 0 && <li className="px-2 py-1 text-sm text-on-surface-muted">Nothing here yet.</li>}
                 {items.map((b) => (
                   <EditableBlock
                     key={b.id}
@@ -169,7 +169,7 @@ export function DebriefDoc({ initial }: { initial: LoadedSession }) {
                 <li>
                   <button
                     onClick={() => handleAddNew(sec.entityType)}
-                    className="mt-1 px-2 text-xs text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                    className="mt-1 px-2 text-xs font-medium text-on-surface-muted hover:text-on-surface"
                   >
                     + add
                   </button>
@@ -180,12 +180,12 @@ export function DebriefDoc({ initial }: { initial: LoadedSession }) {
         })}
       </div>
 
-      {tags.length > 0 && <p className="mt-8 text-sm text-zinc-500">{tags.map((t) => t.name).join(' · ')}</p>}
+      {tags.length > 0 && <p className="mt-8 text-sm text-on-surface-muted">{tags.map((t) => t.name).join(' · ')}</p>}
 
       {error && (
         <p
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+          className="mt-4 rounded-lg bg-error-container px-3 py-2 text-sm text-on-error-container"
         >
           {error}{' '}
           <button onClick={() => setError(null)} className="underline">
@@ -195,7 +195,7 @@ export function DebriefDoc({ initial }: { initial: LoadedSession }) {
       )}
 
       {undo && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-primary px-5 py-2.5 text-sm text-on-primary shadow-[0_20px_40px_-16px_rgba(87,95,101,0.6)]">
           Removed.{' '}
           <button onClick={handleUndo} className="font-semibold underline">
             Undo
@@ -261,17 +261,17 @@ function EditableBlock({
               cancel()
             }
           }}
-          className="w-full rounded border border-zinc-300 bg-white px-2 py-1 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900"
+          className="ambient-field w-full py-1 text-sm text-on-surface"
         />
         <button
           onClick={save}
-          className="min-h-7 rounded px-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+          className="min-h-7 rounded px-1.5 text-xs font-medium text-on-secondary-container hover:text-on-surface"
         >
           Save
         </button>
         <button
           onClick={cancel}
-          className="min-h-7 rounded px-1.5 text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+          className="min-h-7 rounded px-1.5 text-xs text-on-surface-muted hover:text-on-surface"
         >
           Cancel
         </button>
@@ -280,21 +280,19 @@ function EditableBlock({
   }
 
   return (
-    <li className="group flex flex-col gap-0.5 rounded-md px-2 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+    <li className="group flex flex-col gap-0.5 rounded-xl px-3 py-2 hover:bg-surface-container">
       <div className="flex items-start gap-2">
-        <span className="flex-1 text-sm leading-6 text-zinc-800 dark:text-zinc-200">{block.text}</span>
+        <span className="flex-1 text-sm leading-6 text-on-surface">{block.text}</span>
         {/* Hover reveals the controls on pointer devices; on touch there is no
-            hover to reveal them (they'd be invisible forever) and keyboard users
-            tab into them unseen — so always show them when hover is unavailable
-            or when anything inside the row holds focus. min-h-7 keeps every
-            control at a ~28px tap target. */}
+            hover to reveal them — always show them when hover is unavailable
+            or when anything inside the row holds focus. min-h-7 = ~28px tap target. */}
         <div className="flex items-center gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
           <button
             onClick={() => {
               setDraft(block.text)
               setEditing(true)
             }}
-            className="min-h-7 rounded px-1.5 text-xs text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+            className="min-h-7 rounded px-1.5 text-xs text-on-surface-muted hover:text-on-surface"
           >
             edit
           </button>
@@ -304,7 +302,7 @@ function EditableBlock({
               onChange={(e) => onReclassify(e.target.value as EntityType)}
               title="Move to another section"
               aria-label="Move to another section"
-              className="min-h-7 bg-transparent px-1 text-xs text-zinc-400 outline-none hover:text-zinc-900 dark:hover:text-zinc-100"
+              className="min-h-7 bg-transparent px-1 text-xs text-on-surface-muted outline-none hover:text-on-surface"
             >
               {SECTIONS.map((s) => (
                 <option key={s.entityType} value={s.entityType}>
@@ -316,20 +314,20 @@ function EditableBlock({
           <button
             onClick={onDelete}
             aria-label="Delete row"
-            className="min-h-7 min-w-7 rounded px-1.5 text-xs text-zinc-400 hover:text-red-600"
+            className="min-h-7 min-w-7 rounded px-1.5 text-xs text-on-surface-muted hover:text-error"
           >
             ✕
           </button>
         </div>
       </div>
       {block.entityType === 'decision' && block.rationale && (
-        <span className="ml-6 text-xs text-zinc-400 dark:text-zinc-500">{block.rationale}</span>
+        <span className="ml-6 text-xs text-on-surface-muted">{block.rationale}</span>
       )}
       {block.entityType === 'decision' && block.resolved === false && (
-        <span className="ml-6 text-xs italic text-zinc-400">still open</span>
+        <span className="ml-6 text-xs italic text-on-surface-muted">still open</span>
       )}
       {block.entityType === 'next_step' && (
-        <span className="ml-6 text-xs text-zinc-400">
+        <span className="ml-6 text-xs text-on-surface-muted">
           {block.goalTitle && <>→ {block.goalTitle} </>}
           {block.dueOn && <>· due {block.dueOn} </>}
           {block.status === 'done' && '· done'}

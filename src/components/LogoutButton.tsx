@@ -2,16 +2,16 @@
 
 import { logoutAction } from '@/actions/auth'
 
-/** Small header sign-out — form-wrapped so it works without JS. */
+/** Quiet sign-out pill, wired as a form so it works without JS. */
 export function LogoutButton() {
   return (
     <form action={logoutAction}>
       <button
         type="submit"
         title="Sign out"
-        className="text-xs text-zinc-400 transition hover:text-zinc-700 dark:hover:text-zinc-200"
+        className="inline-flex items-center gap-2 rounded-full border border-outline-variant bg-white/60 px-4 py-2 text-sm font-medium text-on-surface-muted backdrop-blur-xl transition hover:bg-white hover:text-on-surface"
       >
-        log out
+        Sign out
       </button>
     </form>
   )

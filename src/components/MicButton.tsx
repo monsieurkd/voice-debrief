@@ -31,8 +31,8 @@ export function MicButton({
         title={listening ? 'Stop dictation' : 'Dictate — click and speak'}
         className={`flex shrink-0 items-center justify-center rounded-full border transition disabled:opacity-40 ${
           listening
-            ? 'border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400'
-            : 'border-zinc-300 text-zinc-500 hover:border-zinc-500 hover:text-zinc-800 dark:border-zinc-600 dark:text-zinc-400 dark:hover:border-zinc-300 dark:hover:text-zinc-100'
+            ? 'border-error/40 bg-error-container text-error'
+            : 'border-outline-variant bg-white/60 text-on-surface-muted hover:border-outline hover:text-on-surface'
         } ${compact ? 'h-9 w-9' : 'h-10 w-10'}`}
       >
         {listening ? (
@@ -49,12 +49,12 @@ export function MicButton({
         )}
       </button>
       {listening && interim && (
-        <span className="min-w-0 truncate text-xs italic text-zinc-400 dark:text-zinc-500" aria-hidden>
+        <span className="min-w-0 truncate text-xs italic text-on-surface-muted" aria-hidden>
           {interim}
         </span>
       )}
       {error && (
-        <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+        <p role="alert" className="text-xs text-error">
           {error}
         </p>
       )}

@@ -8,6 +8,7 @@ import { runDebrief } from '@/actions/debrief'
 import { MicButton } from '@/components/MicButton'
 import { ExtractionProgress } from '@/components/ExtractionProgress'
 import { getInitialDraft, saveDraft, clearDraft, type InterviewChecklist } from '@/lib/interview-draft'
+import { Button, GhostButton } from '@/components/ui'
 
 const EMPTY: InterviewChecklist = { events: false, decisions: false, next_steps: false }
 const GREETING = "Hey — how'd today go? Start wherever; I'll listen."
@@ -107,21 +108,17 @@ export default function InterviewPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-6 py-8">
-      <header className="mb-4 flex items-center justify-between">
+    <main className="mx-auto flex min-h-dvh w-full max-w-[820px] flex-col px-6 py-8">
+      <header className="mb-6 flex items-center justify-between">
         <div>
-          <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
-            ← Home
+          <Link href="/new" className="text-sm text-on-surface-muted transition hover:text-on-surface">
+            ← Back
           </Link>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight">Guided debrief</h1>
+          <h1 className="mt-1 font-display text-2xl text-on-surface">Guided debrief</h1>
         </div>
-        <button
-          onClick={finish}
-          disabled={finishing || userTurns === 0}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition hover:border-zinc-900 disabled:opacity-40 dark:border-zinc-700 dark:hover:border-zinc-100"
-        >
+        <GhostButton onClick={finish} disabled={finishing || userTurns === 0}>
           {finishing ? 'Wrapping up…' : 'Finish'}
-        </button>
+        </GhostButton>
       </header>
 
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto py-4">
@@ -130,15 +127,15 @@ export default function InterviewPage() {
             key={i}
             className={
               m.role === 'user'
-                ? 'self-end max-w-[80%] rounded-2xl bg-zinc-900 px-4 py-2 text-sm text-white dark:bg-zinc-100 dark:text-zinc-900'
-                : 'max-w-[85%] rounded-2xl bg-zinc-100 px-4 py-2 text-sm text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200'
+                ? 'self-end max-w-[80%] rounded-2xl bg-primary px-4 py-2 text-sm text-on-primary'
+                : 'max-w-[85%] rounded-2xl bg-surface-container-low px-4 py-2 text-sm text-on-surface'
             }
           >
             {m.content}
           </div>
         ))}
         {pending && (
-          <div role="status" className="max-w-[80%] rounded-2xl bg-zinc-100 px-4 py-2 text-sm text-zinc-400 dark:bg-zinc-800">
+          <div role="status" className="max-w-[80%] rounded-2xl bg-surface-container-low px-4 py-2 text-sm text-on-surface-muted">
             …
           </div>
         )}
@@ -150,12 +147,12 @@ export default function InterviewPage() {
         <Pill on={checklist.decisions} label="decided" />
         <Pill on={checklist.next_steps} label="next move" />
         {(allCovered || userTurns >= 8) && (
-          <span className="text-xs text-zinc-400">Covered the main things — Finish whenever.</span>
+          <span className="text-xs text-on-surface-muted">Covered the main things — Finish whenever.</span>
         )}
       </div>
 
       {error && (
-        <p role="alert" className="mb-2 text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="mb-2 text-sm text-error">
           {error}
         </p>
       )}
@@ -179,25 +176,18 @@ export default function InterviewPage() {
           rows={1}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
-            // Enter sends, Shift+Enter inserts a newline (chat convention).
-            // isComposing guards IME users (e.g. Vietnamese) — their Enter
-            // confirms the composition, not the message.
             if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault()
               submit()
             }
           }}
           placeholder="Type your reply — or dictate…"
-          className="max-h-40 min-w-0 flex-1 resize-none rounded-lg border border-zinc-300 px-4 py-2.5 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900"
+          className="ambient-field max-h-40 min-w-0 flex-1 resize-none py-2.5 text-sm text-on-surface placeholder:text-on-surface-muted/70"
           disabled={pending || finishing}
         />
-        <button
-          type="submit"
-          disabled={pending || finishing || !input.trim()}
-          className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
-        >
+        <Button type="submit" disabled={pending || finishing || !input.trim()}>
           Send
-        </button>
+        </Button>
       </form>
     </main>
   )
@@ -206,10 +196,10 @@ export default function InterviewPage() {
 function Pill({ on, label }: { on: boolean; label: string }) {
   return (
     <span
-      className={`rounded-full px-2.5 py-0.5 text-xs ${
+      className={`rounded-full px-3 py-1 text-xs font-medium transition ${
         on
-          ? 'bg-zinc-800 text-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
-          : 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500'
+          ? 'bg-secondary-container text-on-secondary-container'
+          : 'bg-meditative-lavender text-on-surface-muted'
       }`}
     >
       {label}

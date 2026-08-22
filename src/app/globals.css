@@ -1,27 +1,133 @@
 @import "tailwindcss";
 
+/* ──────────────────────────────────────────────────────────────────────
+   Digital Sanctuary — Cognitive Calm design tokens.
+   Palette, type, elevation & shape are the app's single source of truth;
+   components reference these surfaces/tints instead of ad-hoc zinc/gray.
+   ────────────────────────────────────────────────────────────────────── */
+@theme {
+  /* Palette (from DESIGN.md) */
+  --color-surface: #f7f9ff;
+  --color-surface-dim: #d6dae2;
+  --color-surface-bright: #f7f9ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f0f4fc;
+  --color-surface-container: #eaeef6;
+  --color-surface-container-high: #e4e8f0;
+  --color-surface-container-highest: #dee3eb;
+  --color-on-surface: #171c22;
+  --color-on-surface-variant: #44474a;
+  --color-on-surface-muted: #6b7280;
+  --color-outline: #74777b;
+  --color-outline-variant: #c4c7ca;
+  --color-surface-tint: #575f65;
+
+  /* Semantic roles */
+  --color-primary: #575f65;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #f0f8ff; /* Alice blue — the ambient canvas */
+  --color-on-primary-container: #6a7278;
+  --color-secondary-container: #d6e4f0;
+  --color-on-secondary-container: #596670;
+  --color-tertiary-container: #f2f8ff;
+  --color-on-tertiary-container: #607383;
+
+  /* Signature surfaces */
+  --color-meditative-lavender: #f3f1fb;
+  --color-sanctuary-white: #fcfdff;
+  --color-ambient-sky: #eaf5ff; /* soft glow for focus/shadows */
+
+  /* Error (kept from spec) */
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  /* Fonts */
+  --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Playwrite DE Grund", "Playwrite Deutschland Grundschrift", ui-serif, serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  background: var(--color-surface);
+  color: var(--color-on-surface);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  /* Geist (wired in layout.tsx via next/font) with system fallbacks */
-  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.7;
+  /* The ambient sky centre-bleed: gentle radial gradients, near-imperceptible. */
+  background-image:
+    radial-gradient(1200px 600px at 50% -8%, rgba(240, 248, 255, 0.9), transparent 60%),
+    radial-gradient(900px 500px at 100% 110%, rgba(214, 228, 240, 0.35), transparent 55%);
+  background-attachment: fixed;
+  min-height: 100dvh;
+}
+
+/* Focus ring: an ambient blue glow instead of a hard outline. */
+:focus-visible {
+  outline: 2px solid var(--color-on-secondary-container);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Reusable utilities (document-level) ────────────────────────────── */
+/* Ambient inputs: borderless, glow on focus. */
+.ambient-field {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-outline-variant);
+  border-radius: 0.25rem 0.25rem 0 0;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.ambient-field:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 4px 0 -2px var(--color-on-secondary-container);
+}
+
+/* Glass surface: high-blur refraction + hairline white stroke. */
+.glass {
+  background: rgba(252, 253, 255, 0.7);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Floating card: ambient tint shadow, generous radius. */
+.float-card {
+  background: var(--color-surface-container-lowest);
+  border-radius: 1.5rem;
+  box-shadow: 0 24px 48px -20px rgba(87, 95, 101, 0.25), 0 2px 8px -4px rgba(87, 95, 101, 0.12);
+}
+
+/* Ghost loader: breathing line. Attach an inline animation-delay to stagger. */
+@keyframes ghost-breathe {
+  0%, 100% { opacity: 0.25; transform: scaleY(0.6); }
+  50% { opacity: 1; transform: scaleY(1); }
+}
+.ghost {
+  display: inline-block;
+  width: 3px;
+  border-radius: 9999px;
+  background: var(--color-on-secondary-container);
+  height: 18px;
+  animation: ghost-breathe 1.2s ease-in-out infinite;
+}
+
+/* Reduce motion: honour user preference (accessibility). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

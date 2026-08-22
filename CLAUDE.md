@@ -1,1 +1,2 @@
 @AGENTS.md
+@KNOWLEDGE_BASE.md

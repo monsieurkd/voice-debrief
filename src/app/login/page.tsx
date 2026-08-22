@@ -1,24 +1,35 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser, getGuestId } from '@/lib/auth'
 import { LoginForm } from './login-form'
+import { Card, Wordmark } from '@/components/ui'
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
-  // Already signed in → straight to the journal.
+  // Already signed in → straight to the journal. A signed-in user with an
+  // unattached guest is rare (adoption runs on the way in) but bounce anyway.
   if (await getCurrentUser()) redirect('/')
   const { next } = await searchParams
   const safeNext = typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : '/'
+  const hasGuest = (await getGuestId()) != null
+  void hasGuest // login adopts guest data regardless; no need to branch the copy yet
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center px-6 py-12">
-      <h1 className="text-xl font-semibold tracking-tight">Welcome back</h1>
-      <p className="mt-1 mb-6 text-sm text-zinc-500 dark:text-zinc-400">Log in to continue your debriefs.</p>
-      <LoginForm next={safeNext} />
-      <p className="mt-6 text-sm text-zinc-500 dark:text-zinc-400">
-        No account yet?{' '}
-        <Link href="/signup" className="underline underline-offset-2 hover:text-zinc-900 dark:hover:text-zinc-100">
-          Sign up
-        </Link>
+    <main className="mx-auto flex w-full max-w-md flex-col justify-center px-6 py-12">
+      <div className="mb-8 text-center">
+        <Wordmark />
+        <p className="mt-2 text-sm text-on-surface-muted">
+          {hasGuest ? 'Sign in to fold your saved debriefs into your journal.' : 'Log in to continue your debriefs.'}
+        </p>
+      </div>
+      <Card className="p-8">
+        <LoginForm next={safeNext} />
+      </Card>
+      <p className="mt-6 text-center text-sm text-on-surface-muted">
+        New here?{' '}
+        <Link href={`/signup${safeNext !== '/' ? `?next=${encodeURIComponent(safeNext)}` : ''}`} className="font-medium text-on-secondary-container underline underline-offset-2 hover:text-on-surface">
+          Create an account
+        </Link>{' '}
+        — your saved debriefs come with you.
       </p>
     </main>
   )

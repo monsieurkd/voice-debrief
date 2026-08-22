@@ -6,9 +6,13 @@ import { db } from '@/db/client'
 import { users } from '@/db/schema'
 import {
   SESSION_COOKIE,
+  GUEST_COOKIE,
+  GUEST_TTL_DAYS,
   SESSION_TTL_DAYS,
   signSessionToken,
+  signGuestToken,
   verifySessionToken,
+  verifyGuestToken,
   type SessionUser,
 } from '@/lib/session-token'
 
@@ -36,6 +40,59 @@ export class UnauthorizedError extends Error {
     super('Not signed in')
     this.name = 'UnauthorizedError'
   }
+}
+
+/**
+ * The current guest user id from the signed `vd_guest` cookie, or null.
+ * A guest is a users row with email/password NULL — they debrief first and
+ * adopt their data onto a real account later (deferred attribution).
+ */
+export const getGuestId = cache(async (): Promise<number | null> => {
+  const token = (await cookies()).get(GUEST_COOKIE)?.value
+  const id = await verifyGuestToken(token)
+  if (id == null) return null
+  // Keep in sync with reality: a guest who was never created, or already
+  // adopted+deleted, no longer exists.
+  const [row] = await db.select({ id: users.id }).from(users).where(eq(users.id, id))
+  return row ? id : null
+})
+
+/**
+ * Resolve "who is acting": the signed-in real user if present, else ensure (and
+ * return) an anonymous guest user. This is the seam that makes debrief-first
+ * onboarding work — new visitors can debrief without logging in.
+ */
+export async function currentUserOrGuest(): Promise<{
+  kind: 'user' | 'guest'
+  id: number
+  email: string | null
+}> {
+  const real = await getCurrentUser()
+  if (real) return { kind: 'user', id: real.id, email: real.email }
+  const existing = await getGuestId()
+  if (existing != null) return { kind: 'guest', id: existing, email: null }
+
+  // First guest action → mint an anonymous user + signed guest cookie.
+  const [g] = await db
+    .insert(users)
+    .values({ email: null, password_hash: null })
+    .returning({ id: users.id })
+  const guestId = g!.id
+  const store = await cookies()
+  store.set(GUEST_COOKIE, await signGuestToken(guestId), {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 60 * 60 * 24 * GUEST_TTL_DAYS,
+  })
+  return { kind: 'guest', id: guestId, email: null }
+}
+
+/** Discard the guest cookie (called after their data is adopted onto a real user). */
+export async function clearGuestCookie(): Promise<void> {
+  const store = await cookies()
+  store.delete(GUEST_COOKIE)
 }
 
 /**
