@@ -170,7 +170,7 @@ export function DebriefDoc({ initial }: { initial: LoadedSession }) {
                 <li>
                   <button
                     onClick={() => handleAddNew(sec.entityType)}
-                    className="mt-1 inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-on-surface-muted transition-[background-color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
+                    className="mt-1 inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-on-surface-muted transition-[background-color,color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
                   >
                     <IconPlus className="h-3.5 w-3.5" />
                     add
@@ -267,13 +267,13 @@ function EditableBlock({
         />
         <button
           onClick={save}
-          className="inline-flex min-h-11 cursor-pointer items-center rounded-lg px-2 text-xs font-medium text-on-secondary-container transition-[background-color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
+          className="inline-flex min-h-11 cursor-pointer items-center rounded-lg px-2 text-xs font-medium text-on-secondary-container transition-[background-color,color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
         >
           Save
         </button>
         <button
           onClick={cancel}
-          className="inline-flex min-h-11 cursor-pointer items-center rounded-lg px-2 text-xs text-on-surface-muted transition-[background-color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
+          className="inline-flex min-h-11 cursor-pointer items-center rounded-lg px-2 text-xs text-on-surface-muted transition-[background-color,color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
         >
           Cancel
         </button>
@@ -282,20 +282,20 @@ function EditableBlock({
   }
 
   return (
-    <li className="group flex flex-col gap-0.5 rounded-xl px-3 py-2 hover:bg-surface-container">
+    <li className="group flex flex-col gap-0.5 rounded-xl px-3 py-2">
       <div className="flex items-start gap-2">
         <span className="flex-1 text-sm leading-6 text-on-surface">{block.text}</span>
         {/* Hover reveals the controls on pointer devices; on touch there is no
             hover to reveal them — always show them when hover is unavailable
             or when anything inside the row holds focus. Every control uses a
             min-h-11 (44px) hit target and a visible focus-visible ring. */}
-        <div className="flex items-center gap-1 rounded-lg opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 focus-within:ring-2 focus-within:ring-primary-ring focus-within:ring-offset-2 focus-within:ring-offset-surface [@media(hover:none)]:opacity-100">
+        <div className="flex items-center gap-1 rounded-lg opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
           <button
             onClick={() => {
               setDraft(block.text)
               setEditing(true)
             }}
-            className="inline-flex min-h-11 cursor-pointer items-center rounded-lg px-2 text-xs text-on-surface-muted transition-[background-color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
+            className="inline-flex min-h-11 cursor-pointer items-center rounded-lg px-2 text-xs text-on-surface-muted transition-[background-color,color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
           >
             edit
           </button>
@@ -305,7 +305,7 @@ function EditableBlock({
               onChange={(e) => onReclassify(e.target.value as EntityType)}
               title="Move to another section"
               aria-label="Move to another section"
-              className="min-h-11 cursor-pointer rounded-lg bg-transparent px-1.5 text-xs text-on-surface-muted transition-[background-color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
+              className="min-h-11 cursor-pointer rounded-lg bg-transparent px-1.5 text-xs text-on-surface-muted transition-[background-color,color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
             >
               {SECTIONS.map((s) => (
                 <option key={s.entityType} value={s.entityType}>
