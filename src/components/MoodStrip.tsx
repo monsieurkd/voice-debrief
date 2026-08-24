@@ -2,7 +2,7 @@ import { IconEnergyDot } from '@/components/ui'
 
 const MOOD_COLOR: Record<string, string> = {
   low: 'text-error',
-  neutral: 'text-on-surface-muted',
+  neutral: 'text-on-surface-variant',
   high: 'text-on-secondary-container',
 }
 
@@ -22,7 +22,7 @@ export function MoodStrip({ mood, energy }: { mood: string | null; energy: numbe
               className={
                 n <= energy
                   ? 'h-3 w-3 text-on-surface opacity-100'
-                  : 'h-3 w-3 text-outline-variant opacity-50'
+                  : 'h-3 w-3 text-on-surface-variant opacity-70'
               }
             />
           ))}

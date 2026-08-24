@@ -1,158 +1,127 @@
-# DEFECTS — `ship/ft-prime` adversarial review
+# DEFECTS — Leaf L3 MoodStrip adversarial review
 
-Reviewed: `64802d5` against `SPEC.md` c1–c6, plus prod-build behavior.
-Commands run: `npm run typecheck`, `npm run lint`, `npm test` (all green),
-`npm run build` (see c6 note), and a real compiled-CSS inspection of the
-Tailwind v4 output at `.next/static/chunks/*.css`.
-
----
-
-## DEFECT 1 — Wordmark font-size token compiles to INVALID CSS (c4 / c5-adjacent, HIGH)
-
-**Criterion:** c4 — `@theme` display type-scale consumed by `ui.tsx`.
-**Severity: HIGH** (element visibly broken in the production artifact).
-
-`src/components/ui.tsx:146` uses Tailwind *arbitrary-value* syntax against a bare
-theme token:
-
-```tsx
-text-[--text-display-xl] leading-[--leading-display]
-```
-
-In Tailwind v4, the arbitrary-value variant `text-[--token]` is emitted **literally —
-without a `var()` wrapper**. Confirmed from the actual compiled prod CSS:
-
-```css
-.text-\[--text-display-xl\]{color:--text-display-xl}
-.leading-\[--leading-display\]{--tw-leading:--leading-display;line-height:--leading-display}
-```
-
-This is **invalid CSS**: `color:--text-display-xl` sets the `color` property to the
-literal string `--text-display-xl` (not `var(--text-display-xl)`, and not the intended
-font-size). Effects on the Wordmark:
-
-1. The display font-size (`--text-display-xl: 30px`) is **never applied** — the
-   Wordmark stays at the inherited/header size instead of scaling to 30px. Direct
-   regression of the old `text-2xl` (24px).
-2. The `line-height: --leading-display` declaration is likewise invalid.
-3. Because `text-*` with a bare string also **collides with the `color` property**,
-   the class is semantically the wrong property entirely.
-
-**Fix (as authored, v4-correct):** `text-[var(--text-display-xl)] leading-[var(--leading-display)]`.
-Note the `--text-display-*` values are numeric pixels (`30px` etc.) with no
-properties on the theme token, so `var()` wrapping is required; alternatively use the
-`--text-*` theme namespace properly (e.g. `--text-display-xl` as a `font-size` utility
-works only if defined in a `--text-*((—)*)` key) — but the arbitrary `var()` form is
-the minimal fix that matches the author's intent.
+Reviewed: commit `a5b928f` against `SPEC.md` c1–c6 plus the color-not-only /
+accessibility intent (audit #5).
+Commands run: `npm run typecheck`, `npm run lint`, `npm test` (all green), plus
+static inspection of `src/components/MoodStrip.tsx`, `src/components/ui.tsx`,
+`src/app/globals.css`, and the consuming pages.
 
 ---
 
-## DEFECT 2 — `--ease-*` / `--dur-*` / `--leading-display` tokens are DIFFERENT class of theme var and are partially unused (c4, LOW)
+## DEFECT 1 — Inactive energy dots are effectively invisible on the card surface (MED, a11y / color-not-only)
 
-**Criterion:** c4 — motion + type tokens exist and are consumed.
+**Criterion:** c2 (color-not-only) / audit #5 intent — "count energy" must work in
+grayscale.
+**Severity: MED** (the color-not-only *differentiation* exists, but the low side
+under-perceives).
+
+`MoodStrip.tsx:22-27` renders inactive dots as `text-outline-variant` + `opacity-50`.
+`--color-outline-variant: #c4c7ca` (@globals.css:22) at 50% opacity over the card
+`bg-surface-container-low` `#f0f4fc` blends to an effective **~#DADEE3 → ≈1.22:1
+contrast**.
+
+- Active dot: `text-on-surface` `#171c22`, `opacity-100` → ~14:1 → clearly visible.
+- Inactive dot: ~1.22:1 → **near-invisible**.
+
+Because the differentiation the fix relies on is *dark vs light*, a grayscale or
+colorblind reader must distinguish the five 12px dot positions from the card
+background and the 2px gaps between them. At 1.22:1 the inactive dots essentially
+vanish, so the full meter extent (e.g. "3 of 5") is hard to count by sight — the
+active dark dots reveal how many are lit, but the faint inactive ones can't be
+reliably distinguished from empty slots. If the intent is a *quiet* but perceptible
+empty meter, `opacity-50` on `outline-variant` over a near-white surface is too
+faint; consider a darker empty tint (e.g. `text-outline`/`text-on-surface-variant`
+at higher opacity) so the empty slots stay countable without color.
+
+No change to overall verdict impact: the dot *count* is still correct via the dark
+vs light cue and the `aria-label="energy N of 5"` — this is a perceptibility-quality
+gap, not a wrong-count.
+
+---
+
+## DEFECT 2 — `neutral` mood text marginally below WCAG AA (LOW)
+
+**Criterion:** SPEC deliverable 4 — "Ensure the mood label stays readable."
 **Severity: LOW.**
 
-`globals.css:56-71` adds `--ease-standard`, `--ease-in`, `--ease-out`,
-`--dur-fast`, `--dur-base`, `--dur-slow`. Two observations:
-
-1. Only `--ease-standard` and `--dur-base` are actually consumed (via `PILL_BASE`
-   in `ui.tsx:16-17`). `--ease-in`, `--ease-out`, `--dur-fast`, `--dur-slow` are
-   dead tokens. Not a correctness bug, but the deliverable's `--ease-in/out` and
-   `--dur-*` scale are not wired to any primitive.
-2. `--ease-in`, `--ease-out` are **reserved/ambiguous Tailwind v4 names** — `ease-*`
-   is a utility namespace in v4. Defining bare `--ease-in: cubic-bezier(...)` in
-   `@theme` can generate/reserved a `.ease-in` utility that collides with v4's own
-   `ease-in`. This is a latent confusion/risk rather than a live break (no leaf uses
-   `ease-in` today), flagged for the branch.
+`MOOD_COLOR.neutral = 'text-on-surface-muted'` → `#6b7280` (@globals.css:20).
+Over `bg-surface-container-low` `#f0f4fc` that is ≈**4.39:1** — just under the
+WCAG AA **4.5:1** threshold for normal text (`text-xs` = 12px). Barely perceptible
+under-read. Not a color-only problem (the literal `neutral mood` text + `aria-label`
+carry the meaning regardless of hue), and identical to the pre-existing app-wide
+muted tint — but worth a nudge (`text-on-surface-variant` `#44474a` ≈ 7.5:1) to be
+cleanly AA-clean.
 
 ---
 
-## DEFECT 3 — Secondary/ghost focus-visible ring fails WCAG 1.4.11 non-text contrast (c3, MED)
+## Verification notes (NOT defects)
 
-**Criterion:** c3 — a *visible* focus-visible treatment.
-**Severity: MED (accessibility).**
-
-`src/components/ui.tsx:105,133` use `focus-visible:ring-secondary-focus-ring`
-(`--color-secondary-focus-ring: #8b99a6`, globals.css:50).
-
-Measured contrast of `#8b99a6`:
-- against the surface `#f7f9ff` → **2.77:1**
-- against the ghost white/60 fill (~#fcfcfd) → **2.84:1**
-
-Both are **below the 3:1 WCAG 1.4.11 threshold** for non-text UI-component indicators.
-`ring-2` + `ring-offset-2` rings draw as box-shadow on top of the global
-`:focus-visible{outline:...}` (globals.css:99) so the visible focus indicator on
-ghost/secondary buttons effectively is the low-contrast ring. The primary variant
-(`--color-primary-ring #6a7278`, 4.65:1 vs surface) passes; only the secondary/ghost
-indicator under-delivers. Suggest darkening `--color-secondary-focus-ring`.
-
----
-
-## DEFECT 4 — `--color-primary-focus` hover fill is a negligible 1.22:1 step (c3, LOW)
-
-**Criterion:** c3 — distinct hover fill (not opacity-only).
-**Severity: LOW.**
-
-`hover:bg-primary-focus` darkens the primary button from `#575f65` → `#4b5258`
-(1.22:1). It is a real, perceptible darken (state-clarity is met in kind) but at
-~1.2:1 it is easily missed by low-vision/peripheral users. The ghost variant's
-`hover:bg-white/85` + `hover:border-white/80` is similarly faint (~1.04:1 against
-its own off-white). Acceptable but at the low end; worth confirming the audit's
-"state-clarity" bar.
-
----
-
-## Regression/verification notes (NOT defects)
-
-- **Leaf files untouched:** `git diff befe977 64802d5` shows changes only to
-  `src/components/ui.tsx` and `src/app/globals.css`; none of `DebriefDoc.tsx`,
-  `shell.tsx`, `ThreadsPanel.tsx`, `PlanList.tsx`, `MoodStrip.tsx` changed.
-- **c1 (icons):** `IconPlus/IconClose/IconRefresh/IconEnergyDot` all exported
-  (`ui.tsx:35,44,53,63`), share `ICON_PROPS` (24×24, stroke 2, round caps/joins),
-  take `className`, all `aria-hidden`. `IconEnergyDot` renders a filled dot via
-  `circle fill="currentColor" stroke="none"` — the element-level `fill` override
-  beats the inherited `fill="none"`, so the dot renders. Good.
-- **c2 (touch/pointer):** `PILL_BASE` (`ui.tsx:13-17`) applies `min-h-11` +
-  `cursor-pointer` to `Button`/`GhostButton`/`ButtonLink`; `disabled:pointer-events-none
-  disabled:cursor-not-allowed disabled:opacity-40` retained. Desktop padding
-  unchanged (`px-5 py-2.5`). No misplaced `cursor-not-allowed`.
-- **c5:** `npm run typecheck`, `npm run lint`, `npm test` all **green** in the worktree.
-- **c6 (build):** In the worktree, `npm run build` crashes inside Turbopack:
-  *"Symlink [project]/node_modules is invalid, it points out of the filesystem root"*.
-  This is **environmental** — `node_modules` is a symlink pointing out of the
-  worktree. Running `git archive HEAD` into an isolated `/tmp` copy with a real
-  (copied) `node_modules`, `npm run build` **succeeds** (compiled, TS passed, static
-  pages generated). So the branch code is production-buildable; c6 is only blocked by
-  the sandbox symlink setup, not by these changes.
+- **c1 — no `●` glyphs:** `grep '●' src/components/MoodStrip.tsx` → no matches;
+  `git show HEAD~1:... | grep -c '●'` = 1 (removed). All 5 dots are `IconEnergyDot` (`ui.tsx:63`).
+- **IconEnergyDot is a filled dot:** `<circle cx=12 cy=12 r=5 fill="currentColor" stroke="none">`
+  inside `<svg {...ICON_PROPS}>`. `ICON_PROPS` sets `fill="none"` on the `<svg>`, but the
+  `<circle>`'s own `fill="currentColor"` attribute overrides it at the element level, so the
+  dot fills via `currentColor`; inherited `color` drives it. `aria-hidden` on the svg keeps
+  the 5 dots silent (the container span carries the `role="img"` + `aria-label`). Good.
+- **c2 — active vs inactive distinguished beyond hue:** active = dark `text-on-surface` +
+  `opacity-100`; inactive = light `text-outline-variant` + `opacity-50` — differs by
+  fill/luminance/opacity, not hue alone. Met (see DEFECT 1 for the faintness caveat).
+- **c3 — mood not color-only:** muted/`neutral`/`high` cases render the literal text
+  `"{mood} mood"` (e.g. "low mood", "neutral mood", "high mood") *and* set `role="img"`
+  + `aria-label=\`${mood} mood\``, so low/neutral/high reads regardless of color. Met.
+- **c4 — aria preserved:** `aria-label=\`energy ${energy} of 5\`` retained on the energy
+  span (`MoodStrip.tsx:17`), now paired with `role="img"`. Met.
+- **c5 — verification green:** `npm run typecheck`, `npm run lint`, `npm test`
+  (80 pass, 0 fail) all pass in the worktree.
+- **c6 — only one file changed:** `git diff 8443933 a5b928f --stat` → only
+  `src/components/MoodStrip.tsx` (22+/6−). No edits to `globals.css`, `ui.tsx`, or other files.
+  (`SPEC.md` is untracked in the worktree but is the spec, not a code change.)
+- `role="img"` on the energy span + `role="img"` on the mood span both expose a
+  populated accessible name; no empty-image or dangling-label issue found.
 
 ---
 
 ## Verdict
 
-One genuine **HIGH** defect (Wordmark uses invalid `text-[--token]`/`leading-[--token]`
-arbitrary values → broken font-size/line-height in prod CSS), one **MED** a11y defect
-(secondary focus-ring < 3:1 non-text contrast), and two **LOW** items (faint state
-fills; unused/ambiguous `--ease-*` tokens). `typecheck`/`lint`/`test`/`build` all
-otherwise pass; no leaf files touched; c1/c2 met.
+c1–c6 are **met** (all three checks green; only `MoodStrip.tsx` changed; no `●`
+remain; dots are filled SVG; active/inactive differ beyond hue; mood has a
+color-independent text + aria cue; energy `aria-label` preserved).
 
-Overall: **not ship-ready — fix Defect 1 (and ideally Defect 3) before merging.**
+One **MED** a11y defect (inactive dots near-invisible at ~1.22:1 over the card —
+undercuts the grayscale "count energy" goal), one **LOW** (the `neutral` mood tint
+is ~4.39:1, just under WCAG AA for small text).
+
+Recommend addressing DEFECT 1 (darken the inactive empty-dot treatment) before
+merging; DEFECT 2 is optional polish.
 
 ---
 
 ## FIXED
 
-- **DEFECT 1 (HIGH)** — `ui.tsx:146` Wordmark now uses v4-correct arbitrary values `text-[var(--text-display-xl)] leading-[var(--leading-display)]`. Bares `--text-*` tokens compile to invalid `color:--text-display-xl`; the `var()` wrap emits valid CSS and restores the 30px display size/line-height.
-- **DEFECT 3 (MED, a11y)** — `--color-secondary-focus-ring` darkened `#8b99a6` → `#5b6b78` (globals.css:50). New contrast: **5.22:1 vs surface `#f7f9ff`** and **5.36:1 vs ghost `#fcfcfd`**, comfortably above the WCAG 1.4.11 ≥3:1 threshold.
-- **DEFECT 2 (LOW)** — removed dead/ambiguous motion tokens from `@theme`: dropped `--ease-in`, `--ease-out` (reserved `ease-*` namespace collision in v4), `--dur-fast`, `--dur-slow`. Only consumed tokens remain: `--ease-standard` and `--dur-base` (both used in `PILL_BASE`). No primitive referenced the removed tokens.
-- **DEFECT 4 (LOW)** — `--color-primary-focus` darkened `#4b5258` → `#41484f` (hover step 1.22:1 → **1.43:1** from primary) and `--color-primary-active` → `#33393f` (stable pressed step ~1.8:1). Ghost hover lifted `hover:bg-white/85` → `hover:bg-white/95` (both GhostButton and ButtonLink secondary) for a more perceptible but still subtle lift.
+Reviewed and fixed in `src/components/MoodStrip.tsx` (only file changed; globals.css /
+ui.tsx untouched — all tokens referenced already existed).
 
-VERIFIED: all 4 defects resolved
+### DEFECT 1 — FIXED (inactive energy dots now countable)
+Changed the inactive-dot class from `text-outline-variant opacity-50` to
+`text-on-surface-variant opacity-70`. Effective blend over card
+`bg-surface-container-low #f0f4fc`:
+- **Before:** `#c4c7ca @ 50%` → `#dadee3` → **≈1.23:1** (near-invisible).
+- **After:** `#44474a @ 70%` → `#787b7f` → **≈3.86:1** — empty slots now reliably
+  distinguishable from the card background in grayscale/colorblind, keeping the
+  "count energy N of 5" goal intact.
+- Active `text-on-surface opacity-100` (≈15.5:1) stays clearly darker, so the
+  active-vs-inactive cue remains luminance/fill/opacity only (not hue-only).
+- Verified via WCAG contrast math (luminance + alpha premultiply over the card bg).
 
-## RE-REVIEW
+### DEFECT 2 — FIXED (neutral mood cleanedly AA)
+Changed `MOOD_COLOR.neutral` from `text-on-surface-muted` to
+`text-on-surface-variant`.
+- **Before:** `#6b7280` over `#f0f4fc` → **≈4.39:1** (just under WCAG AA 4.5:1).
+- **After:** `#44474a` over `#f0f4fc` → **≈8.48:1** — cleanly AA for text-xs.
+- Color-not-only intact: the `{mood} mood` literal text token + `role="img"` +
+  `aria-label` still carry meaning independent of hue.
 
-Ship-reviewer flagged that the `var()`-wrapped `text-[var(--text-display-xl)]` still
-compiles to `color: var(--text-display-xl)` (not font-size), because the bare arbitrary
-value stays in the color namespace. Applied the **`length:` disambiguator** —
-`ui.tsx:146` now reads `text-[length:var(--text-display-xl)] leading-[var(--leading-display)]`.
-Isolated Tailwind v4 compile confirms `.text-[length:var(--text-display-xl)] { font-size: var(--text-display-xl) }`
-while the bare form emits `color: var(--text-display-xl)`. `typecheck`/`lint`/`test` all green.
+### Re-verification
+`npm run typecheck` (clean), `npm run lint` (clean), `npm test` (80 pass / 0 fail)
+all green from the worktree root. Only `src/components/MoodStrip.tsx` and
+`DEFECTS.md` changed.
