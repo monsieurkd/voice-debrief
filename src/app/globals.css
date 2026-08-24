@@ -43,9 +43,32 @@
   --color-error-container: #ffdad6;
   --color-on-error-container: #93000a;
 
+  /* Interaction state fills (derived tints of primary/secondary — no rebrand) */
+  --color-primary-focus: #4b5258;      /* primary raised */
+  --color-primary-active: #3f454b;     /* primary pressed */
+  --color-primary-ring: #6a7278;       /* focus ring around primary */
+  --color-secondary-focus-ring: #8b99a6; /* focus ring around ghost/link */
+
   /* Fonts */
   --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Playwrite DE Grund", "Playwrite Deutschland Grundschrift", ui-serif, serif;
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Duration scale (audit: 150–300ms; duration-500 too slow) */
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+  --dur-slow: 400ms;
+
+  /* Display type-scale — stepped numeric headings */
+  --text-display-2xl: 38px;
+  --text-display-xl: 30px;
+  --text-display-lg: 24px;
+  --text-display-md: 20px;
+  --leading-display: 1.15;
 }
 
 :root {
