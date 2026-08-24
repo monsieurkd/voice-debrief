@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { transcribeAudioAction } from '@/actions/voice'
+import { decodeToMono16k, floatToWav } from '@/lib/webm-to-wav'
 
 /**
  * Cross-browser batch voice capture (the server-side STT path). Unlike the
@@ -91,7 +92,12 @@ export function VoiceRecorder({
       const blob = new Blob(chunks, { type: mime })
       setStatus('transcribing')
       try {
-        const res = await transcribeAudioAction({ file: blob, filename: `recording.${mime.split(';')[0].split('/')[1] || 'webm'}` })
+        // Groq/Whisper reject WebM/Opus (and sometimes MP4); WAV is universally
+        // accepted. Transcode the recorded (compressed) clip to mono 16k PCM WAV
+        // before upload so transcription works regardless of recorder container.
+        const samples = await decodeToMono16k(blob)
+        const wav = floatToWav(samples)
+        const res = await transcribeAudioAction({ file: wav, filename: 'recording.wav' })
         if (res.ok) {
           onTranscribed(res.text)
           reset()
