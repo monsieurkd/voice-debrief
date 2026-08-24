@@ -61,7 +61,7 @@ export default async function Home() {
       </section>
 
       {/* Guest prompt: gently adopt onto an account. */}
-      <SaveToJournalPrompt href="/signup" shown={isGuest && entries.length > 0} />
+      <SaveToJournalPrompt next="/" shown={isGuest && entries.length > 0} />
 
       {!hasIdentity && (entries.length === 0) && (
         <section className="mb-16">

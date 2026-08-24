@@ -147,23 +147,40 @@ export function GhostLoader({ bars = 3, className = '' }: { bars?: number; class
 }
 
 /**
- * "Save to your journal" — appears only for guests with at least one debrief.
- * Keeps the debrief-first promise: a gentle nudge to adopt, not a wall.
+ * "Save your day to your journal" — appears for guests who just completed a
+ * debrief (session page) or have entries (Home). Keeps the debrief-first
+ * promise: a gentle, branching nudge to adopt — Create an account OR Log in —
+ * and both paths carry `next` so the guest lands back on the debrief they were
+ * looking at after signing in (their guest data is adopted onto the account).
  */
-export function SaveToJournalPrompt({ href, shown }: { href: string; shown: boolean }) {
+export function SaveToJournalPrompt({
+  next,
+  shown,
+}: {
+  /** Where to send the user after they create/log in (e.g. `/session/123`). */
+  next: string
+  shown: boolean
+}) {
   if (!shown) return null
+  const nextQ = next ? `?next=${encodeURIComponent(next)}` : ''
   return (
     <div
       role="status"
-      className="float-card mt-8 flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between"
+      className="float-card mt-8 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"
     >
       <div>
         <p className="text-sm font-medium text-on-surface">Your day is saved here.</p>
         <p className="text-sm text-on-surface-muted">
-          Create a free account and it&apos;s adopted onto your journal — nothing gets lost.
+          Create a free account (or log in) and it&apos;s adopted onto your journal — nothing gets
+          lost, and you&apos;ll land right back here.
         </p>
       </div>
-      <ButtonLink href={href}>Save to your journal</ButtonLink>
+      <div className="flex flex-wrap items-center gap-2">
+        <ButtonLink href={`/login${nextQ}`} variant="secondary">
+          Log in
+        </ButtonLink>
+        <ButtonLink href={`/signup${nextQ}`}>Create an account</ButtonLink>
+      </div>
     </div>
   )
 }

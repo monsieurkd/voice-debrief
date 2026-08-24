@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth'
 import { Wordmark } from '@/components/ui'
 import { LogoutButton } from '@/components/LogoutButton'
+import { LoginPill } from '@/components/LoginPill'
 
 /**
  * App-wide frame. Debrief-first: the primary action (debrief) is always one
@@ -30,12 +31,7 @@ export async function SanctuaryShell({ children }: { children: React.ReactNode }
                 <LogoutButton />
               </>
             ) : (
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-2 rounded-full border border-outline-variant bg-white/60 px-4 py-2 text-sm font-medium text-on-surface-muted backdrop-blur-xl transition hover:bg-white hover:text-on-surface"
-              >
-                Log in
-              </Link>
+              <LoginPill />
             )}
           </div>
         </div>

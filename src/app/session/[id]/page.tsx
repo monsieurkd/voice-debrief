@@ -74,7 +74,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
         </details>
       )}
 
-      <SaveToJournalPrompt href={`/signup?next=/session/${data.id}`} shown={isGuest} />
+      <SaveToJournalPrompt next={`/session/${data.id}`} shown={isGuest} />
 
       <div className="mt-10 flex items-center justify-between border-t border-outline-variant/60 pt-6">
         <Link href="/" className="text-sm text-on-surface-muted transition hover:text-on-surface">
