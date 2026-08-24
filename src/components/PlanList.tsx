@@ -48,17 +48,19 @@ export function PlanList({ items }: { items: PlanItem[] }) {
         {items.map((p) => (
           <li
             key={p.id}
-            className={`group flex items-start gap-3 rounded-xl px-3 py-2.5 transition duration-500 hover:bg-surface-container ${
+            className={`group flex items-start gap-3 rounded-xl px-3 py-2.5 transition duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container ${
               justDone === p.id ? 'opacity-0' : 'opacity-100'
             }`}
           >
-            <input
-              type="checkbox"
-              aria-label={`mark done: ${p.content}`}
-              disabled={busy === p.id}
-              onChange={() => markDone(p.id)}
-              className="mt-1.5 h-4 w-4 shrink-0 rounded accent-primary"
-            />
+            <label className="-m-3.5 inline-flex cursor-pointer rounded p-3.5">
+              <input
+                type="checkbox"
+                aria-label={`mark done: ${p.content}`}
+                disabled={busy === p.id}
+                onChange={() => markDone(p.id)}
+                className="mt-1.5 h-4 w-4 shrink-0 cursor-pointer rounded accent-primary"
+              />
+            </label>
             <div className="flex flex-col">
               <span
                 className={`text-sm leading-6 text-on-surface transition ${

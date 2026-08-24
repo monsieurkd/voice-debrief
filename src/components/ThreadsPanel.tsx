@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { refreshThreads } from '@/actions/debrief'
 import type { StoredThread } from '@/lib/threads'
-import { SectionTitle, Pill } from '@/components/ui'
+import { SectionTitle, Pill, IconRefresh } from '@/components/ui'
 
 const KIND_STYLE: Record<StoredThread['kind'], { dot: string; label: string }> = {
   pattern: { dot: 'bg-secondary-container', label: 'pattern' },
@@ -44,9 +44,16 @@ export function ThreadsPanel({ threads, canRefresh }: { threads: StoredThread[];
             type="button"
             onClick={onRefresh}
             disabled={pending}
-            className="text-xs font-medium text-on-secondary-container underline-offset-2 transition hover:underline disabled:opacity-40"
+            className="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-on-secondary-container underline-offset-2 transition hover:underline disabled:opacity-40"
           >
-            {pending ? 'Reading your week…' : '↻ refresh'}
+            {pending ? (
+              'Reading your week…'
+            ) : (
+              <>
+                <IconRefresh className="h-3.5 w-3.5" />
+                refresh
+              </>
+            )}
           </button>
         )}
       </div>

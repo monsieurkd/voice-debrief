@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth'
-import { Wordmark } from '@/components/ui'
+import { Wordmark, IconPlus } from '@/components/ui'
 import { LogoutButton } from '@/components/LogoutButton'
 import { LoginPill } from '@/components/LoginPill'
 
@@ -24,7 +24,7 @@ export async function SanctuaryShell({ children }: { children: React.ReactNode }
               <>
                 <Link
                   href="/archive"
-                  className="text-sm text-on-surface-muted transition hover:text-on-surface"
+                  className="text-sm text-on-surface-muted transition hover:text-on-surface cursor-pointer"
                 >
                   Journal
                 </Link>
@@ -40,13 +40,14 @@ export async function SanctuaryShell({ children }: { children: React.ReactNode }
           <div className="mx-auto flex w-full max-w-5xl items-center justify-center gap-2 px-6 py-2">
             <Link
               href="/new"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-on-primary shadow-[0_10px_30px_-12px_rgba(87,95,101,0.5)] transition hover:opacity-90"
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-on-primary shadow-[0_10px_30px_-12px_rgba(87,95,101,0.5)] transition hover:opacity-90 cursor-pointer"
             >
-              ＋ Debrief now
+              <IconPlus className="h-4 w-4" />
+              Debrief now
             </Link>
             <Link
               href="/interview"
-              className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-2 text-sm font-medium text-on-secondary-container backdrop-blur-xl transition hover:bg-white"
+              className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-2 text-sm font-medium text-on-secondary-container backdrop-blur-xl transition hover:bg-white cursor-pointer"
             >
               Guided
             </Link>
