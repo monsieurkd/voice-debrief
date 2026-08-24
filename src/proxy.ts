@@ -35,9 +35,15 @@ export function proxy(req: NextRequest) {
 
   // Debrief-first routes + auth pages: no identity required.
   if (isAllowedWithoutIdentity(pathname)) {
-    // Bounce signed-in/guest users off the auth pages to the journal.
+    // Bounce users who are SIGNED IN off the auth pages to the journal. A
+    // valid guest cookie must NOT bounce: a guest is exactly who needs to
+    // reach /login or /signup to adopt their debriefs onto a real account (the
+    // deferred-attribution contract). The page-level getCurrentUser() check
+    // already sends signed-in users away safely — this proxy guard is just an
+    // optimizer for the signed-in case, and must only look at the SESSION
+    // cookie, never the guest cookie.
     if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
-      const token = req.cookies.get(SESSION_COOKIE)?.value ?? req.cookies.get(GUEST_COOKIE)?.value
+      const token = req.cookies.get(SESSION_COOKIE)?.value
       const secret = process.env.AUTH_SECRET
       if (token && secret) {
         try {
