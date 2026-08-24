@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { updateRow, addRow, deleteRow, reclassifyRow } from '@/actions/debrief'
+import { IconClose, IconPlus } from '@/components/ui'
 import { SECTIONS, type EntityType } from '@/lib/constants'
 import type { LoadedSession, ViewBlock } from '@/lib/session'
 
@@ -169,9 +170,10 @@ export function DebriefDoc({ initial }: { initial: LoadedSession }) {
                 <li>
                   <button
                     onClick={() => handleAddNew(sec.entityType)}
-                    className="mt-1 px-2 text-xs font-medium text-on-surface-muted hover:text-on-surface"
+                    className="mt-1 inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-on-surface-muted transition-[background-color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
                   >
-                    + add
+                    <IconPlus className="h-3.5 w-3.5" />
+                    add
                   </button>
                 </li>
               </ul>
@@ -261,17 +263,17 @@ function EditableBlock({
               cancel()
             }
           }}
-          className="ambient-field w-full py-1 text-sm text-on-surface"
+          className="ambient-field w-full py-2 text-sm text-on-surface"
         />
         <button
           onClick={save}
-          className="min-h-7 rounded px-1.5 text-xs font-medium text-on-secondary-container hover:text-on-surface"
+          className="inline-flex min-h-11 cursor-pointer items-center rounded-lg px-2 text-xs font-medium text-on-secondary-container transition-[background-color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
         >
           Save
         </button>
         <button
           onClick={cancel}
-          className="min-h-7 rounded px-1.5 text-xs text-on-surface-muted hover:text-on-surface"
+          className="inline-flex min-h-11 cursor-pointer items-center rounded-lg px-2 text-xs text-on-surface-muted transition-[background-color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
         >
           Cancel
         </button>
@@ -285,14 +287,15 @@ function EditableBlock({
         <span className="flex-1 text-sm leading-6 text-on-surface">{block.text}</span>
         {/* Hover reveals the controls on pointer devices; on touch there is no
             hover to reveal them — always show them when hover is unavailable
-            or when anything inside the row holds focus. min-h-7 = ~28px tap target. */}
-        <div className="flex items-center gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+            or when anything inside the row holds focus. Every control uses a
+            min-h-11 (44px) hit target and a visible focus-visible ring. */}
+        <div className="flex items-center gap-1 rounded-lg opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 focus-within:ring-2 focus-within:ring-primary-ring focus-within:ring-offset-2 focus-within:ring-offset-surface [@media(hover:none)]:opacity-100">
           <button
             onClick={() => {
               setDraft(block.text)
               setEditing(true)
             }}
-            className="min-h-7 rounded px-1.5 text-xs text-on-surface-muted hover:text-on-surface"
+            className="inline-flex min-h-11 cursor-pointer items-center rounded-lg px-2 text-xs text-on-surface-muted transition-[background-color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
           >
             edit
           </button>
@@ -302,7 +305,7 @@ function EditableBlock({
               onChange={(e) => onReclassify(e.target.value as EntityType)}
               title="Move to another section"
               aria-label="Move to another section"
-              className="min-h-7 bg-transparent px-1 text-xs text-on-surface-muted outline-none hover:text-on-surface"
+              className="min-h-11 cursor-pointer rounded-lg bg-transparent px-1.5 text-xs text-on-surface-muted transition-[background-color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-surface-container hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
             >
               {SECTIONS.map((s) => (
                 <option key={s.entityType} value={s.entityType}>
@@ -314,9 +317,10 @@ function EditableBlock({
           <button
             onClick={onDelete}
             aria-label="Delete row"
-            className="min-h-7 min-w-7 rounded px-1.5 text-xs text-on-surface-muted hover:text-error"
+            title="Delete row"
+            className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg p-2 text-on-surface-muted transition-[background-color,color,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-error-container hover:text-error focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.97]"
           >
-            ✕
+            <IconClose className="h-4 w-4" />
           </button>
         </div>
       </div>
