@@ -143,7 +143,7 @@ export function Wordmark({ small = false }: { small?: boolean }) {
   return (
     <span
       className={`font-display text-on-surface ${
-        small ? 'text-lg' : 'text-[var(--text-display-xl)] leading-[var(--leading-display)]'
+        small ? 'text-lg' : 'text-[length:var(--text-display-xl)] leading-[var(--leading-display)]'
       } tracking-tight`}
     >
       Voice Debrief

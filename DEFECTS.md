@@ -145,3 +145,14 @@ Overall: **not ship-ready — fix Defect 1 (and ideally Defect 3) before merging
 - **DEFECT 3 (MED, a11y)** — `--color-secondary-focus-ring` darkened `#8b99a6` → `#5b6b78` (globals.css:50). New contrast: **5.22:1 vs surface `#f7f9ff`** and **5.36:1 vs ghost `#fcfcfd`**, comfortably above the WCAG 1.4.11 ≥3:1 threshold.
 - **DEFECT 2 (LOW)** — removed dead/ambiguous motion tokens from `@theme`: dropped `--ease-in`, `--ease-out` (reserved `ease-*` namespace collision in v4), `--dur-fast`, `--dur-slow`. Only consumed tokens remain: `--ease-standard` and `--dur-base` (both used in `PILL_BASE`). No primitive referenced the removed tokens.
 - **DEFECT 4 (LOW)** — `--color-primary-focus` darkened `#4b5258` → `#41484f` (hover step 1.22:1 → **1.43:1** from primary) and `--color-primary-active` → `#33393f` (stable pressed step ~1.8:1). Ghost hover lifted `hover:bg-white/85` → `hover:bg-white/95` (both GhostButton and ButtonLink secondary) for a more perceptible but still subtle lift.
+
+VERIFIED: all 4 defects resolved
+
+## RE-REVIEW
+
+Ship-reviewer flagged that the `var()`-wrapped `text-[var(--text-display-xl)]` still
+compiles to `color: var(--text-display-xl)` (not font-size), because the bare arbitrary
+value stays in the color namespace. Applied the **`length:` disambiguator** —
+`ui.tsx:146` now reads `text-[length:var(--text-display-xl)] leading-[var(--leading-display)]`.
+Isolated Tailwind v4 compile confirms `.text-[length:var(--text-display-xl)] { font-size: var(--text-display-xl) }`
+while the bare form emits `color: var(--text-display-xl)`. `typecheck`/`lint`/`test` all green.
