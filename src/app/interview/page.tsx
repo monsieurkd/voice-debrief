@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { interviewTurnAction, type ChatMsg } from '@/actions/interview'
 import { runDebrief } from '@/actions/debrief'
-import { MicButton } from '@/components/MicButton'
 import { VoiceRecorder } from '@/components/VoiceRecorder'
 import { ExtractionProgress } from '@/components/ExtractionProgress'
 import { getInitialDraft, saveDraft, clearDraft, type InterviewChecklist } from '@/lib/interview-draft'
@@ -15,8 +14,8 @@ const EMPTY: InterviewChecklist = { events: false, decisions: false, next_steps:
 const GREETING = "Hey — how'd today go? Start wherever; I'll listen."
 const GREETING_MSG: ChatMsg = { role: 'assistant', content: GREETING }
 
-// Same SSR-safe pattern as use-speech.ts: read client-only storage through
-// useSyncExternalStore (server snapshot is null → no hydration mismatch).
+// SSR-safe pattern: read client-only storage through useSyncExternalStore
+// (server snapshot is null → no hydration mismatch).
 const emptySubscribe = () => () => {}
 
 export default function InterviewPage() {
@@ -164,36 +163,36 @@ export default function InterviewPage() {
           e.preventDefault()
           submit()
         }}
-        className="flex items-end gap-2"
+        className="flex flex-col gap-2"
       >
-        <VoiceRecorder
-          compact
-          disabled={pending || finishing}
-          onTranscribed={(text) => setInput((v) => (v ? `${v} ${text}` : text))}
-        />
-        <MicButton
-          compact
-          disabled={pending || finishing}
-          onFinal={(chunk) => setInput((v) => (v ? `${v} ${chunk}` : chunk))}
-        />
-        <textarea
-          ref={inputRef}
-          value={input}
-          rows={1}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-              e.preventDefault()
-              submit()
-            }
-          }}
-          placeholder="Type your reply — or dictate…"
-          className="ambient-field max-h-40 min-w-0 flex-1 resize-none py-2.5 text-sm text-on-surface placeholder:text-on-surface-muted/70"
-          disabled={pending || finishing}
-        />
-        <Button type="submit" disabled={pending || finishing || !input.trim()}>
-          Send
-        </Button>
+        <div className="flex items-center gap-2">
+          <VoiceRecorder
+            compact
+            disabled={pending || finishing}
+            onTranscribed={(text) => setInput((v) => (v ? `${v} ${text}` : text))}
+          />
+          <span className="text-xs text-on-surface-muted">or record and it&apos;s typed here</span>
+        </div>
+        <div className="flex items-end gap-2">
+          <textarea
+            ref={inputRef}
+            value={input}
+            rows={1}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                e.preventDefault()
+                submit()
+              }
+            }}
+            placeholder="Type your reply…"
+            className="ambient-field max-h-40 min-w-0 flex-1 resize-none py-2.5 text-sm text-on-surface placeholder:text-on-surface-muted/70"
+            disabled={pending || finishing}
+          />
+          <Button type="submit" disabled={pending || finishing || !input.trim()}>
+            Send
+          </Button>
+        </div>
       </form>
     </main>
   )

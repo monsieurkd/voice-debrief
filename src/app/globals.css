@@ -94,9 +94,11 @@ body {
   box-shadow: 0 4px 0 -2px var(--color-on-secondary-container);
 }
 
-/* Glass surface: high-blur refraction + hairline white stroke. */
+/* Glass surface: high-blur refraction + hairline white stroke.
+   Near-opaque so content scrolling underneath never reads through the sticky
+   header — blur still softens edges, but text stays legible and clean. */
 .glass {
-  background: rgba(252, 253, 255, 0.7);
+  background: rgba(247, 249, 255, 0.98);
   backdrop-filter: blur(24px) saturate(1.2);
   -webkit-backdrop-filter: blur(24px) saturate(1.2);
   border: 1px solid rgba(255, 255, 255, 0.4);

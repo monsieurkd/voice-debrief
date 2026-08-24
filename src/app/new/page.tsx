@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import { runDebrief } from '@/actions/debrief'
 import { sampleTranscripts } from '@/lib/sample-transcripts'
 import { DemoButton } from '@/components/DemoButton'
-import { MicButton } from '@/components/MicButton'
 import { VoiceRecorder } from '@/components/VoiceRecorder'
 import { ExtractionProgress } from '@/components/ExtractionProgress'
 import { AmbientTextarea, Button, Card, GhostLoader } from '@/components/ui'
@@ -42,22 +41,18 @@ export default function NewDebrief() {
           journal whenever you&apos;re ready.
         </p>
         <p className="mx-auto mt-2 max-w-lg text-xs leading-5 text-on-surface-muted">
-          🎙 Voice now works in every browser — on Chrome/Edge you get live dictation; elsewhere
-          tap “record”, speak, and it&apos;s transcribed for you.
+          🎙 Record and your clip is transcribed — voice works in every browser.
         </p>
       </header>
 
       <Card className="p-6 sm:p-8">
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-on-surface-muted">Type it — or click the mic and just talk.</span>
-            <div className="flex items-center gap-2">
-              <MicButton disabled={pending} onFinal={(chunk) => setText((t) => (t ? `${t} ${chunk}` : chunk))} />
-              <VoiceRecorder
-                disabled={pending}
-                onTranscribed={(text) => setText((t) => (t ? `${t} ${text}` : text))}
-              />
-            </div>
+            <span className="text-xs text-on-surface-muted">Type it — or record and I&apos;ll transcribe.</span>
+            <VoiceRecorder
+              disabled={pending}
+              onTranscribed={(text) => setText((t) => (t ? `${t} ${text}` : text))}
+            />
           </div>
           <AmbientTextarea
             value={text}

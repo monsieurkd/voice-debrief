@@ -40,7 +40,7 @@ export async function SanctuaryShell({ children }: { children: React.ReactNode }
           </div>
         </div>
         {/* The primary action rides the frame for both guests and users. */}
-        <nav className="border-t border-outline-variant/60 bg-white/40 backdrop-blur-xl">
+        <nav className="border-t border-outline-variant/60 bg-white/95 backdrop-blur-xl">
           <div className="mx-auto flex w-full max-w-5xl items-center justify-center gap-2 px-6 py-2">
             <Link
               href="/new"
