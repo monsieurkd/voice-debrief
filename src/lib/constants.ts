@@ -9,6 +9,8 @@ export const DEMO_LIMITS = {
   debriefsPerHour: 5,
   interviewTurnsPerHour: 20,
   samplesPerHour: 30,
+  // Batch STT clips per user per window — each one is a billed ASR round-trip.
+  transcriptionsPerHour: 20,
 } as const
 export const RATE_WINDOW_MS = 60 * 60 * 1000
 

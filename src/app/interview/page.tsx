@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { interviewTurnAction, type ChatMsg } from '@/actions/interview'
 import { runDebrief } from '@/actions/debrief'
 import { MicButton } from '@/components/MicButton'
+import { VoiceRecorder } from '@/components/VoiceRecorder'
 import { ExtractionProgress } from '@/components/ExtractionProgress'
 import { getInitialDraft, saveDraft, clearDraft, type InterviewChecklist } from '@/lib/interview-draft'
 import { Button, GhostButton } from '@/components/ui'
@@ -165,6 +166,11 @@ export default function InterviewPage() {
         }}
         className="flex items-end gap-2"
       >
+        <VoiceRecorder
+          compact
+          disabled={pending || finishing}
+          onTranscribed={(text) => setInput((v) => (v ? `${v} ${text}` : text))}
+        />
         <MicButton
           compact
           disabled={pending || finishing}

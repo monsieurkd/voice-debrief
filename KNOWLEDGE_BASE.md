@@ -31,9 +31,12 @@ extraction with correction write-back** (no competitor lets you fix the AI's
 rows), **plan-first home** (action loop, not insight loop), deterministic
 interview checklist, BYOK/privacy wedge.
 
-**The name is the promise: "voice" is commercially fatal if unshipped.** Web
-Speech API only works on Chromium — Safari/Firefox (i.e. most iPhones) can't
-dictate yet.
+**The name is the promise: "voice" is now shipped across browsers.** Web Speech
+API (Chromium-only live dictation) is joined by **server-side batch STT**: a
+MediaRecorder tap-to-record button on `/new` + `/interview` works on
+Safari/Firefox/iOS and transcribes through a provider-neutral endpoint
+(`LLM_ASR_*`, falling back to the main `LLM_*` provider) that feeds the same
+transcript pipeline — so everyone can talk their debrief, not just type it.
 
 **UI is the "Digital Sanctuary".** The app is styled to a meditative, glassy,
 low-cognitive-load aesthetic (see `stitch_mindcloud_ai/DESIGN.md`): surface
@@ -46,15 +49,17 @@ shared primitives in `src/components/ui.tsx`; the app frame is
 `~/.claude/agents/ui-ux.md` and encodes these rules.
 
 
-## 2. Verified state (2026-08-21, `bdeeb04`)
+## 2. Verified state (2026-08-24)
 
-- **65 unit tests green, typecheck + lint green, prod build green, 6 DB
+- **78 unit tests green, typecheck + lint green, prod build green, 6 DB
   integration suites** (`npm test`, `npm run typecheck`, `npm run lint`,
   `npm run test:db` with a migrated local Postgres).
 - Phases **0 (stabilize), 1 (auth+tenancy), 2 (market slice)** done.
 - Working: auth (scrypt + jose-signed cookies, 30-day TTL), tenancy
-  (every query/mutation user-scoped, fails closed), voice input (Web Speech,
-  Chromium only), guided interview (deterministic checklist), editable doc
+  (every query/mutation user-scoped, fails closed), voice input — live Web
+  Speech dictation (Chromium) **+ server-side batch STT recording (every
+  browser) via `src/actions/voice.ts` + `src/components/VoiceRecorder.tsx`**,
+  guided interview (deterministic checklist), editable doc
   with undo/reclassify, archive + PG full-text search, threads, streak,
   per-user rate limits, per-session export/delete, demo week + samples.
 - CI (`lint` → `typecheck` → `test` → `build`, plus a Postgres job running
@@ -65,6 +70,12 @@ shared primitives in `src/components/ui.tsx`; the app frame is
 ```
 /new (type)  ─┐                              /interview (chat) ─ client chat
               ├──► runDebrief (server action, src/actions/debrief.ts)
+              ├──► voice path: <VoiceRecorder> (MediaRecorder, every browser)
+              │        → transcribeAudioAction (src/actions/voice.ts)
+              │        → src/lib/asr.ts → LLM_ASR_* / LLM_* /transcriptions
+              │        → text lands back in the composer above the same pipeline
+              ├─ (also: Web Speech live dictation on Chromium via <MicButton>)
+              ├──► runDebrief (server action, src/actions/debrief.ts)
               │       ├─ generateOverview()   FAST model  (LLM_SMALL_MODEL)  2-liner
               │       └─ extractDebrief()     STRONG model (LLM_MODEL)       Zod-validated payload
               │            └─ storeSession()  ONE transaction: sessions + 4 child tables
@@ -73,6 +84,11 @@ shared primitives in `src/components/ui.tsx`; the app frame is
 /
   Home (server, force-dynamic) → listSessions + listOpenNextSteps + threads + streak
 ```
+
+- **Voice is layered, not a rebuild**: every input mode (Web Speech dictation,
+  MediaRecorder recording → server STT, typed, guided interview) resolves to a
+  transcript that feeds the identical `runDebrief` extraction pipeline. The idea
+  is "the data layer IS the product; voice is just the door."
 
 - **Extraction never loses the transcript**: on LLM failure the session is
   still persisted (placeholder overview with the failure cause + raw
@@ -93,12 +109,12 @@ shared primitives in `src/components/ui.tsx`; the app frame is
 
 | Area | Files |
 |---|---|
-| Actions (all self-authorize) | `src/actions/debrief.ts` (runDebrief, samples, demo week, threads, all doc edits), `auth.ts`, `interview.ts` |
-| LLM engine | `lib/llm-call.ts`, `llm-client.ts`, `llm-errors.ts` (friendly `summarizeLlmError`), `extract.ts`, `extract-prompt.ts`, `overview.ts`, `interview.ts`, `extraction-schema.ts` |
+| Actions (all self-authorize) | `src/actions/debrief.ts` (runDebrief, samples, demo week, threads, all doc edits), `auth.ts`, `interview.ts`, `voice.ts` (transcribeAudioAction — batch STT) |
+| LLM engine | `lib/llm-call.ts`, `llm-client.ts`, `llm-errors.ts` (friendly `summarizeLlmError`), `asr.ts` (provider-neutral STT + `summarizeAsrError`), `extract.ts`, `extract-prompt.ts`, `overview.ts`, `interview.ts`, `extraction-schema.ts` |
 | Data layer | `db/schema.ts`, `lib/store.ts` (transactional store), `mutations.ts`, `reclassify.ts`, `queries.ts`, `session.ts`, `dates.ts`, `streak.ts` |
 | Auth | `lib/auth.ts` (getCurrentUser/requireUser + getGuestId/currentUserOrGuest — the real gates), `lib/session-token.ts` (jose sign/verify for session + guest cookies), `lib/passwd.ts` (scrypt), `lib/adopt.ts` (deferred attribution — moves a guest's data to a real user on signup/login), `proxy.ts` (optimistic, debrief-first route gate) |
-| Other | `lib/rate-limit.ts` (DB-backed per-user windows), `lib/action-args.ts` (runtime Zod validation of action inputs), `lib/demo-week.ts`, `lib/sample-sessions.ts`, `lib/use-speech.ts` (Web Speech), `lib/env.ts` (validates env at import) |
-| UI | `components/ui.tsx` (Button/GhostButton/ButtonLink/Wordmark/Card/SectionTitle/Pill/Field/GhostLoader/AmbientTextarea/SaveToJournalPrompt — the Digital Sanctuary primitives), `components/shell.tsx` (app frame: wordmark, login pill, debrief CTA), `components/DebriefDoc.tsx` (the editable doc — largest component), `PlanList`, `ThreadsPanel`, `MoodStrip`, `MicButton`, `ExtractionProgress`, `DemoButton`, `DeleteSessionButton` |
+| Other | `lib/rate-limit.ts` (DB-backed per-user windows), `lib/action-args.ts` (runtime Zod validation of action inputs), `lib/demo-week.ts`, `lib/sample-sessions.ts`, `lib/use-speech.ts` (Web Speech live dictation), `lib/env.ts` (validates env at import) |
+| UI | `components/ui.tsx` (Button/GhostButton/ButtonLink/Wordmark/Card/SectionTitle/Pill/Field/GhostLoader/AmbientTextarea/SaveToJournalPrompt — the Digital Sanctuary primitives), `components/shell.tsx` (app frame: wordmark, login pill, debrief CTA), `components/DebriefDoc.tsx` (the editable doc — largest component), `PlanList`, `ThreadsPanel`, `MoodStrip`, `MicButton` (Web Speech), `VoiceRecorder` (MediaRecorder → server STT — every browser), `ExtractionProgress`, `DemoButton`, `DeleteSessionButton` |
 
 ## 5. Schema quick reference (`src/db/schema.ts`)
 
@@ -148,11 +164,13 @@ shared primitives in `src/components/ui.tsx`; the app frame is
 
 ## 7. Next step (per the roadmap in PROGRESS.md)
 
-**Phase 3 — commercial launch**, with Phase-2 leftovers first:
-1. **Phase-2 leftovers** (small, queued): server-side batch STT for
-   Safari/Firefox + audio upload · reminders (retention hook) · weekly rollup ·
-   PWA manifest · tag chips on undo · bulk export · daily per-user spend
-   budget · `/api/health` · Sentry + backup runbook.
+**Phase 3 — commercial launch**, with the remaining Phase-2 leftovers first:
+1. **Phase-2 leftovers** (small, queued): ~~server-side batch STT~~ **✅ shipped
+   2026-08-24 (voice now works in every browser)** · audio-file upload (the
+   live recorder covers input; files run through the same action) · reminders
+   (retention hook) · weekly rollup · PWA manifest · tag chips on undo · bulk
+   export · daily per-user spend budget · `/api/health` · Sentry + backup
+   runbook.
 2. **Phase 3 — billing (Stripe, free + paid ~$5–10/mo anchored under
    Rosebud's $12.99) → legal/trust (ToS, privacy, AI disclosure — "your
    provider's LLM sees the transcript") → launch ops (analytics, transactional
@@ -169,14 +187,14 @@ assistant turns (cost choice).
 billing first, but billing is where you spend the most for the least
 information. My order:
 
-1. **Ship server-side batch STT next** (the Phase-2 leftover). Web Speech is
-   Chromium-only; the pitch is "voice debrief" and most mobile users are
-   Safari. The `openai` SDK is already a dependency — add a provider-neutral
-   transcription endpoint (env-gated like `LLM_*`, e.g. `LLM_ASR_*`), accept
-   an audio file on `/new`, transcribe server-side, feed the existing
-   transcript pipeline. Medium slice, not a rebuild — and it closes the
-   product's single most commercially dangerous gap before you ask anyone to
-   pay.
+1. **~~Ship server-side batch STT next~~ — ✅ done 2026-08-24.** Web Speech
+   is Chromium-only; the pitch is "voice debrief" and most mobile users are
+   Safari. Provider-neutral transcription (`LLM_ASR_*`, falls back to the main
+   `LLM_*` provider) + a MediaRecorder tap-to-record button on `/new` +
+   `/interview` transcribe server-side and feed the existing transcript
+   pipeline — voice works in every browser now, closing the commercially
+   dangerous gap before anyone is asked to pay. Next: audio-file (paste/upload)
+   still rides the same action.
 2. **Run the closed beta BEFORE building Stripe.** A waitlist + invite
    (privacy-friendly analytics + D7 retention) costs almost nothing and tells
    you whether to build billing at all — and at what price. Build legal/trust

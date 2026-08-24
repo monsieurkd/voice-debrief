@@ -2,7 +2,7 @@
 
 A daily debrief tool, going from single-user v1 to **multi-user SaaS**. Type your day (voice lands in Phase 2) → LLM extracts structured rows → an editable doc → browse entries + check off tomorrow's plan. Design reference: `~/Documents/job/CV/voice-debrief-design-spec.md`.
 
-**Status (2026-08-19): Phase 1 (auth + tenancy) ✅ + Phase 2 market slice ✅ — built concurrently by two parallel worktree swarms, integrated on main (`2221a77`). 65 unit tests + 6 DB suites green, production build green, proxy auth gate active. Next: Phase 3 (commercial launch: billing, legal, beta) with the Phase-2 leftovers below.** Earlier: 2026-08-18 vigorous 3-track review (correctness · security · product/market); target decided: **multi-user SaaS**. Phase 0 fixed the correctness/security-hygiene layer; the refinement package made the differentiator visible; Phase 1+2 now close the review's top blockers (auth, tenancy, voice, wait UX, archive/search, streak).
+**Status (2026-08-24):** Phase 2's last commercial blocker — **server-side batch voice STT** — shipped (the "voice debrief" name now keeps its promise in every browser). 78 unit tests + 6 DB suites green, production build green, proxy auth gate active. Next: Phase 3 (commercial launch: billing, legal, beta) with the remaining Phase-2 leftovers below. Earlier: 2026-08-18 vigorous 3-track review (correctness · security · product/market); target decided: **multi-user SaaS**. Phase 0 fixed the correctness/security-hygiene layer; the refinement package made the differentiator visible; Phase 1+2 now close the review's top blockers (auth, tenancy, voice, wait UX, archive/search, streak).
 
 ## What works (verified live 2026-07-16; code re-read in review 2026-08-18)
 - **Write** (`/new`): transcript → dual-model LLM (strong extraction ‖ fast overview) → editable doc at `/session/[id]`.
@@ -74,7 +74,7 @@ Order rationale: **correctness first** (every later phase builds on these functi
 **Done when: ✅** — tenancy suite proves cross-user reads/writes are rejected; every action re-checks the session; export/delete per session.
 
 ### Phase 2 — The market slice (product) · ✅ DONE 2026-08-19 (minus noted leftovers)
-1. **Voice input — ✅ v1**: Web Speech API mic on `/new` + interview. Leftover: server-side STT (Safari/Firefox, audio files).
+1. **Voice input — ✅ v1**: Web Speech API mic on `/new` + interview **+ ✅ batch STT (2026-08-24)**: provider-neutral server-side transcription (`LLM_ASR_*`, falls back to the main `LLM_*` provider), a MediaRecorder tap-to-record button on `/new` + interview that works in **every** browser (Safari/Firefox/iOS included) and feeds the same transcript pipeline; per-user cap 20 clips/h; ASR env routing + error-mapping unit-tested. Leftover: real-time streaming voice, audio file paste/upload.
 2. **Extraction wait UX — ✅**: staged progress + timer + "safe to leave".
 3. **Mobile pass — ✅**: touch-visible (`@media(hover:none)`) + `group-focus-within` edit controls, auto-growing interview composer (Enter sends / Shift+Enter newlines).
 4. **Onboarding — ✅**: demo week + single samples, baked threads.
@@ -94,7 +94,7 @@ Order rationale: **correctness first** (every later phase builds on these functi
 **Done when:** a stranger can sign up, pay, and journal from their phone, with costs capped and observable.
 
 ## Deferred (post-launch)
-Streaming/real-time STT · embeddings/pgvector semantic search · cross-day insights (spec slice 4) · weekly rollup · 2-stage async fast/slow + preloaded-lagged insight (spec §3) · goal-management UI beyond the plan · native apps · interview transcript including assistant turns (currently user-turns only — cost choice).
+Streaming/real-time STT · audio-file paste/upload (the recorder button covers live input; files can still be handled via the same action) · embeddings/pgvector semantic search · cross-day insights (spec slice 4) · weekly rollup · 2-stage async fast/slow + preloaded-lagged insight (spec §3) · goal-management UI beyond the plan · native apps · interview transcript including assistant turns (currently user-turns only — cost choice).
 
 ## Known issues (tracked in phases above)
 Undo restores text only, not chips/`due_on`/`status` (P2) · `user_state.last_session_id` FK is `NO ACTION` (P1) · no per-row confidence scores (deferred until real confidence exists) · model-emitted free-form dates silently null (P0) · `resolveGoalId` duplicate-title race (P1 unique constraint) · interview drops assistant turns from the final transcript (deferred).

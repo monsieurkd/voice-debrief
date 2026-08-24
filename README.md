@@ -8,10 +8,12 @@
 > lets you correct anything — so a daily debrief compounds into a personal data
 > layer you can search and act on.
 
-**Status:** multi-user and demo-ready — talk (live dictation) or type your day →
-structured, editable data → tomorrow's plan → **threads that connect your days**
-— with per-user accounts, per-session export/delete, archive + full-text search,
-and a streak. Email+password auth; every query scoped by owner.
+**Status:** multi-user and demo-ready — **voice works in every browser** (live
+dictation on Chrome/Edge, tap-to-record + server transcription elsewhere), or
+type your day → structured, editable data → tomorrow's plan → **threads that
+connect your days** — with per-user accounts, per-session export/delete,
+archive + full-text search, and a streak. Email+password auth; every query
+scoped by owner.
 
 ---
 
@@ -168,7 +170,8 @@ cross-session adaptation (`user_state`).
 per-user data isolation end-to-end · per-user rate limits · session JSON
 export + delete.
 
-**Next:** voice/STT (batch, then streaming) · cross-day insight rollup ·
+**Next:** streaming (real-time) voice · audio-file paste/upload (the live
+recorder already covers every browser) · cross-day insight rollup ·
 embeddings/pgvector for fuzzy thread-connection.
 
 See [`PROGRESS.md`](PROGRESS.md) for the detailed build log.

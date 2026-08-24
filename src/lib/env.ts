@@ -17,6 +17,18 @@ const envSchema = z.object({
   LLM_MODEL: z.string().default('glm-4.6'),
   // fast model for the low-stakes overview + interview driver
   LLM_SMALL_MODEL: z.string().default('glm-4.5-air'),
+
+  // ── Speech-to-text (ASR), provider-neutral ─────────────────────────────
+  // Defaults to whatever LLM provider is configured (same base URL + key), so
+  // OpenAI / Z.ai / Gemini / OpenRouter works with ZERO extra env. Override
+  // LLM_ASR_* to point transcription at a different ASR endpoint/model
+  // (e.g. a dedicated Whisper deployment). Omitting all of these = live STT
+  // uses the main LLM provider.
+  LLM_ASR_BASE_URL: z.string().default(''),
+  LLM_ASR_API_KEY: z.string().default(''),
+  // Whisper-family model names persist the input language, so no `language`
+  // field is hardcoded — the transcriptions api returns its own detected lang.
+  LLM_ASR_MODEL: z.string().default('whisper-1'),
 })
 
 export const env = envSchema.parse(process.env)
