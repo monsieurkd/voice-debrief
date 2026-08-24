@@ -101,7 +101,7 @@ export function GhostButton({
       {...rest}
       className={`${PILL_BASE} text-on-secondary-container
         bg-white/60 backdrop-blur-xl border border-white/60 shadow-sm
-        hover:bg-white/85 hover:border-white/80
+        hover:bg-white/95 hover:border-white/80
         focus-visible:ring-2 focus-visible:ring-secondary-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface
         active:bg-white
         disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
@@ -129,7 +129,7 @@ export function ButtonLink({
          hover:bg-primary-focus active:bg-primary-active
          focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${className}`
       : `bg-white/60 backdrop-blur-xl border border-white/60 text-on-secondary-container shadow-sm
-         hover:bg-white/85 hover:border-white/80 active:bg-white
+         hover:bg-white/95 hover:border-white/80 active:bg-white
          focus-visible:ring-2 focus-visible:ring-secondary-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${className}`
   return (
     <Link href={href} className={`${PILL_BASE} ${look}`}>
@@ -143,7 +143,7 @@ export function Wordmark({ small = false }: { small?: boolean }) {
   return (
     <span
       className={`font-display text-on-surface ${
-        small ? 'text-lg' : 'text-[--text-display-xl] leading-[--leading-display]'
+        small ? 'text-lg' : 'text-[var(--text-display-xl)] leading-[var(--leading-display)]'
       } tracking-tight`}
     >
       Voice Debrief

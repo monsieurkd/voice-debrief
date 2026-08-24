@@ -44,10 +44,10 @@
   --color-on-error-container: #93000a;
 
   /* Interaction state fills (derived tints of primary/secondary — no rebrand) */
-  --color-primary-focus: #4b5258;      /* primary raised */
-  --color-primary-active: #3f454b;     /* primary pressed */
+  --color-primary-focus: #41484f;      /* primary raised — perceptible darken (1.43:1 from primary) */
+  --color-primary-active: #33393f;     /* primary pressed */
   --color-primary-ring: #6a7278;       /* focus ring around primary */
-  --color-secondary-focus-ring: #8b99a6; /* focus ring around ghost/link */
+  --color-secondary-focus-ring: #5b6b78; /* focus ring around ghost/link — 5.2:1 vs surface/ghost (WCAG 1.4.11 >=3:1) */
 
   /* Fonts */
   --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
@@ -55,13 +55,9 @@
 
   /* Motion */
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-in: cubic-bezier(0.4, 0, 1, 1);
-  --ease-out: cubic-bezier(0, 0, 0.2, 1);
 
   /* Duration scale (audit: 150–300ms; duration-500 too slow) */
-  --dur-fast: 150ms;
   --dur-base: 250ms;
-  --dur-slow: 400ms;
 
   /* Display type-scale — stepped numeric headings */
   --text-display-2xl: 38px;
