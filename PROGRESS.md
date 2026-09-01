@@ -1,11 +1,29 @@
 # Voice Debrief — Progress
 
+## Current state (2026-08-31 — chat pivot)
+
+The product is now **voice-first conversational**: the landing `/` is a
+ChatGPT-style chat window (text + voice-in via `VoiceRecorder` → provider ASR;
+optional voice-out via provider TTS). A fast model drives a varied
+therapist/assistant persona; the structured-journal + extraction layer was
+**removed** (schema slimmed to `users` + `conversations` + `messages` +
+`rate_limits`; migration `0004_chat_pivot`). Guests chat immediately; their
+conversations adopt onto an account on signup/login. 35 unit tests + typecheck +
+lint + prod build green. No DB integration suite remains.
+
+See `README.md` and `KNOWLEDGE_BASE.md` for the current, authoritative picture.
+The sections below are the historical build log leading up to the pivot.
+
+---
+
+## History (pre-pivot: a structured-journal app)
+
 A daily debrief tool, going from single-user v1 to **multi-user SaaS**. Type your day (voice lands in Phase 2) → LLM extracts structured rows → an editable doc → browse entries + check off tomorrow's plan. Design reference: `~/Documents/job/CV/voice-debrief-design-spec.md`.
 
 **Status (2026-08-24):** Phase 2's last commercial blocker — **server-side batch voice STT** — shipped (the "voice debrief" name now keeps its promise in every browser). 78 unit tests + 6 DB suites green, production build green, proxy auth gate active. Next: Phase 3 (commercial launch: billing, legal, beta) with the remaining Phase-2 leftovers below. Earlier: 2026-08-18 vigorous 3-track review (correctness · security · product/market); target decided: **multi-user SaaS**. Phase 0 fixed the correctness/security-hygiene layer; the refinement package made the differentiator visible; Phase 1+2 now close the review's top blockers (auth, tenancy, voice, wait UX, archive/search, streak).
 
-## What works (verified live 2026-07-16; code re-read in review 2026-08-18)
-- **Write** (`/new`, the single entry point): type **or record** → voice is transcoded to mono 16k WAV and transcribed by the ASR gateway (429-retry resilient) → dual-model LLM (strong extraction ‖ fast overview) → editable doc at `/session/[id]`. *(Guided interview removed 2026-08-31 — the app is extraction-first.)*
+## What works (as of the pre-pivot review 2026-08-18)
+- **Write** (`/new`, the single entry point): type **or record** → voice is transcoded to mono 16k WAV and transcribed by the ASR gateway (429-retry resilient) → dual-model LLM (strong extraction ‖ fast overview) → editable doc at `/session/[id]`. *(Guided interview removed, then the whole extraction layer removed, in the 2026-08-31 chat pivot.)*
 - **Review** (`/session/[id]`): editable doc — edit / add / delete(+undo) / reclassify. Edits write back `source='user'`, `was_corrected=true`.
 - **See notes + plan** (`/`): Home = Tomorrow's plan (check-off) + Recent entries (mood/energy/overview cards).
 - Extraction is Zod-validated with a 3-attempt retry; failure still persists the session so **the transcript is never lost** (the architecture's best decision — held up under review).
