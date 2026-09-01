@@ -82,7 +82,15 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
         </Link>
         <div className="flex items-center gap-4">
           <a
+            href={`/session/${data.id}/export/markdown`}
+            title="Download this debrief as Markdown"
+            className="text-xs text-on-surface-muted transition hover:text-on-surface"
+          >
+            export .md
+          </a>
+          <a
             href={`/session/${data.id}/export`}
+            title="Download this session's data as JSON"
             className="text-xs text-on-surface-muted transition hover:text-on-surface"
           >
             export JSON
