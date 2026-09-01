@@ -29,6 +29,13 @@ const envSchema = z.object({
   // Whisper-family model names persist the input language, so no `language`
   // field is hardcoded — the transcriptions api returns its own detected lang.
   LLM_ASR_MODEL: z.string().default('whisper-1'),
+
+  // ── Speech-to-text output (TTS), provider-neutral ────────────────────────
+  // Optional. When set, the assistant replies are spoken aloud (AI voice out).
+  // Reuses the chat provider (LLM_BASE_URL/key) unless LLM_TTS_* overrides.
+  LLM_TTS_BASE_URL: z.string().default(''),
+  LLM_TTS_API_KEY: z.string().default(''),
+  LLM_TTS_MODEL: z.string().default(''),
 })
 
 export const env = envSchema.parse(process.env)

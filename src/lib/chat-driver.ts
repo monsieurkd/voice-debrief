@@ -1,0 +1,37 @@
+import { llm } from './llm-client'
+import { env } from './env'
+import { buildChatMessages } from './chat-prompt'
+
+/**
+ * One assistant chat turn: history + the user's latest message → a reply.
+ * Uses the FAST model (small) — the product is now chat-first and wants
+ * responsive answers; the large thinking model has been removed.
+ *
+ * Plain text reply (no JSON), so no Zod round-trip — just a bounded, retried
+ * chat call. Never throws raw provider errors to the client; the caller maps
+ * via summarizeLlmError.
+ */
+export async function generateChatReply(
+  history: { role: 'user' | 'assistant'; content: string }[],
+): Promise<string> {
+  const messages = buildChatMessages(history)
+
+  let res
+  try {
+    res = await llm.chat.completions.create({
+      model: env.LLM_SMALL_MODEL,
+      messages,
+      temperature: 0.9, // variety — the conversation should not feel repetitive
+      max_tokens: 400,
+    })
+  } catch (e) {
+    // Re-throw so the caller turns it into a friendly, safe message.
+    throw new Error(e instanceof Error ? e.message : String(e))
+  }
+
+  const content = res.choices?.[0]?.message?.content?.trim() ?? ''
+  if (!content) {
+    throw new Error('The assistant returned an empty reply.')
+  }
+  return content
+}
