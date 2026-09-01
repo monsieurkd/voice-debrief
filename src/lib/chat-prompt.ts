@@ -3,6 +3,8 @@
 // The behavioural rules below are load-bearing: they stop the assistant from
 // degenerating into a robotic echo/paraphrase of whatever the user just said.
 
+import { personaById, type PersonaId } from './personas'
+
 export const CHAT_SYSTEM_PROMPT = `You are a warm, attentive conversation partner for someone who wants to talk through their day — a blend of a trusted friend, a therapist, and a thoughtful assistant.
 
 Your job is to make the conversation feel alive and to draw out what matters. You are NOT a transcription bot.
@@ -24,12 +26,17 @@ GOALS, in order:
 A good turn here feels like the user learned something about their own day or felt genuinely engaged. If a user says nothing much or just vents, that's fine — respond like a good friend would and keep the door open.`
 
 /** Build the full chat message list: persona + recent history + the latest turn. */
-export function buildChatMessages(history: { role: 'user' | 'assistant'; content: string }[]): Array<{
+export function buildChatMessages(
+  history: { role: 'user' | 'assistant'; content: string }[],
+  persona?: PersonaId,
+): Array<{
   role: 'system' | 'user' | 'assistant'
   content: string
 }> {
+  // Shared non-negotiable core first, then the persona's tone layer (defaults
+  // to 'warm' when absent) — addons only adapt tone, the core always wins.
   return [
-    { role: 'system', content: CHAT_SYSTEM_PROMPT },
+    { role: 'system', content: `${CHAT_SYSTEM_PROMPT}\n\n${personaById(persona).promptAddon}` },
     ...history.slice(-24), // bound context: last 12 turns keeps latency + cost sane
   ]
 }

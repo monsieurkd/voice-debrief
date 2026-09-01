@@ -9,6 +9,7 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui'
 
 export default function ErrorPage({
   error,
@@ -24,27 +25,33 @@ export default function ErrorPage({
     console.error('[app] unhandled error:', error)
   }, [error])
 
+  // The shell is height-locked, so this page scrolls itself on short screens.
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col items-start justify-center px-6 py-12">
-      <h1 className="text-xl font-semibold tracking-tight">Something broke on our side</h1>
-      <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-        Your words are safe — debriefs are saved before anything downstream runs. Give it another
-        moment and try again.
-      </p>
-      {error.digest && <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">ref: {error.digest}</p>}
-      <div className="mt-6 flex items-center gap-3">
-        <button
-          onClick={() => {
-            retry()
-            router.refresh()
-          }}
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-        >
-          Try again
-        </button>
-        <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
-          Back to Home
-        </Link>
+    <main className="flex-1 overflow-y-auto">
+      <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col justify-center px-6 py-12">
+        <h1 className="text-xl font-semibold tracking-tight text-on-surface">Something broke on our side</h1>
+        <p className="mt-2 text-sm leading-6 text-on-surface-muted">
+          Your words are safe — debriefs are saved before anything downstream runs. Give it another
+          moment and try again.
+        </p>
+        {error.digest && <p className="mt-1 text-xs text-on-surface-muted/80">ref: {error.digest}</p>}
+        <div className="mt-6 flex items-center gap-4">
+          <Button
+            type="button"
+            onClick={() => {
+              retry()
+              router.refresh()
+            }}
+          >
+            Try again
+          </Button>
+          <Link
+            href="/"
+            className="text-sm font-medium text-on-secondary-container underline underline-offset-2 transition hover:text-on-surface"
+          >
+            Back to Home
+          </Link>
+        </div>
       </div>
     </main>
   )

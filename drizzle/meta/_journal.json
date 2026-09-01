@@ -36,6 +36,13 @@
       "when": 1787110000000,
       "tag": "0004_chat_pivot",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788254864019,
+      "tag": "0005_colossal_kronos",
+      "breakpoints": true
     }
   ]
 }

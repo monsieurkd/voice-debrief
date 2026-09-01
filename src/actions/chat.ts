@@ -9,12 +9,15 @@ import { DEMO_LIMITS, RATE_WINDOW_MS } from '@/lib/constants'
 import {
   appendMessage,
   createConversation,
+  getConversation,
   getConversationMessages,
   listConversations,
+  setConversationPersona,
   touchConversation,
   titleFromText,
 } from '@/lib/chat'
 import { generateChatReply } from '@/lib/chat-driver'
+import { isPersonaId, personaById, type PersonaId } from '@/lib/personas'
 import { summarizeLlmError } from '@/lib/llm-errors'
 import { synthesizeSpeech, ttsConfigured } from '@/lib/tts'
 
@@ -34,13 +37,21 @@ export type ChatTurnResult =
 export async function chatTurnAction(input: {
   message: string
   conversationId?: number
+  persona?: string
 }): Promise<ChatTurnResult> {
   const actor = await currentUserOrGuest()
-  const { message, conversationId } = parseArgs(
-    z.object({ message: z.string().trim().min(1).max(4000), conversationId: z.number().int().positive().optional() }),
-    { message: input.message, conversationId: input.conversationId },
+  const { message, conversationId, persona: personaInput } = parseArgs(
+    z.object({
+      message: z.string().trim().min(1).max(4000),
+      conversationId: z.number().int().positive().optional(),
+      persona: z.string().max(24).optional(),
+    }),
+    { message: input.message, conversationId: input.conversationId, persona: input.persona },
     'chatTurn',
   )
+  // Persona is incidental here (a UI nicety) — junk silently falls back to the
+  // default rather than rejecting an otherwise valid turn.
+  const persona = isPersonaId(personaInput) ? personaInput : undefined
 
   if (!(await checkRateLimit(`chat:u:${actor.id}`, DEMO_LIMITS.chatTurnsPerHour, RATE_WINDOW_MS))) {
     return {
@@ -52,16 +63,21 @@ export async function chatTurnAction(input: {
 
   // Resolve which conversation this turn belongs to (create on first turn).
   let conv = conversationId
+  let convPersona: PersonaId | undefined
   try {
     if (conv == null) {
-      conv = await createConversation(actor.id)
+      conv = await createConversation(actor.id, persona)
       // First turn also sets the sidebar title.
       await touchConversation(conv, titleFromText(message))
       revalidatePath('/')
+      convPersona = persona
     } else {
-      // Must own the conversation; a foreign id behaves like not-found.
-      const history = await getConversationMessages(actor.id, conv)
-      if (history == null) return { ok: false, error: 'That conversation was not found.' }
+      // Must own the conversation; a foreign id behaves like not-found. For an
+      // existing conversation the STORED persona is authoritative — a stale
+      // client-sent persona must never hijack the tone.
+      const existing = await getConversation(actor.id, conv)
+      if (existing == null) return { ok: false, error: 'That conversation was not found.' }
+      convPersona = personaById(existing.persona).id
     }
   } catch (e) {
     console.error('[chatTurn] conversation resolve/store failed:', e)
@@ -82,7 +98,7 @@ export async function chatTurnAction(input: {
 
   let reply: string
   try {
-    reply = await generateChatReply(history)
+    reply = await generateChatReply(history, convPersona)
   } catch (e) {
     console.error('[chatTurn] model failed:', e)
     // The user's words are already saved; surface a friendly cause.
@@ -126,7 +142,13 @@ export async function listConversationsAction(): Promise<{ ok: true; conversatio
 
 /** Load a single past conversation's messages (self-authorizing). */
 export async function getConversationAction(conversationIdInput: number): Promise<
-  | { ok: true; id: number; messages: { role: 'user' | 'assistant'; content: string }[] }
+  | {
+      ok: true
+      id: number
+      title: string | null
+      persona: PersonaId
+      messages: { role: 'user' | 'assistant'; content: string }[]
+    }
   | { ok: false; error: string }
 > {
   const actor = await currentUserOrGuest()
@@ -136,11 +158,47 @@ export async function getConversationAction(conversationIdInput: number): Promis
     'getConversation',
   )
   try {
+    const conv = await getConversation(actor.id, conversationId)
+    if (conv == null) return { ok: false, error: 'That conversation was not found.' }
     const history = await getConversationMessages(actor.id, conversationId)
     if (history == null) return { ok: false, error: 'That conversation was not found.' }
-    return { ok: true, id: conversationId, messages: history.map((m) => ({ role: m.role, content: m.content })) }
+    return {
+      ok: true,
+      id: conversationId,
+      title: conv.title,
+      persona: personaById(conv.persona).id,
+      messages: history.map((m) => ({ role: m.role, content: m.content })),
+    }
   } catch (e) {
     console.error('[getConversation] failed:', e)
     return { ok: false, error: 'Could not load that conversation.' }
+  }
+}
+
+/**
+ * Switch a conversation's persona (self-authorizing, ownership-gated). Takes
+ * effect from the NEXT chat turn — the stored persona is what drives replies.
+ */
+export async function setConversationPersonaAction(input: {
+  conversationId: number
+  persona: string
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const actor = await currentUserOrGuest()
+  const { conversationId, persona } = parseArgs(
+    z.object({ conversationId: z.number().int().positive(), persona: z.string().min(1).max(24) }),
+    { conversationId: input.conversationId, persona: input.persona },
+    'setConversationPersona',
+  )
+  // Here the persona IS the request — an unknown id is a real error, unlike
+  // chatTurnAction where it is incidental.
+  if (!isPersonaId(persona)) return { ok: false, error: 'Unknown persona.' }
+  try {
+    const updated = await setConversationPersona(actor.id, conversationId, persona)
+    if (!updated) return { ok: false, error: 'That conversation was not found.' }
+    revalidatePath('/')
+    return { ok: true }
+  } catch (e) {
+    console.error('[setConversationPersona] failed:', e)
+    return { ok: false, error: 'Could not change the persona.' }
   }
 }

@@ -32,6 +32,7 @@ export function VoiceRecorder({
   onTranscriptFailed,
   disabled,
   compact,
+  variant = 'light',
 }: {
   /** Called with the transcribed text whenever a clip finishes successfully. */
   onTranscribed: (text: string) => void
@@ -39,6 +40,8 @@ export function VoiceRecorder({
   onTranscriptFailed?: (error: string) => void
   disabled?: boolean
   compact?: boolean
+  /** 'light' = the legacy white chip; 'glass' = the dark-glass composer look. */
+  variant?: 'light' | 'glass'
 }) {
   const supported = useSyncExternalStore(emptySubscribe, browserSupportsCapture, () => false)
   const [status, setStatus] = useState<Status>('idle')
@@ -183,6 +186,12 @@ export function VoiceRecorder({
   const isBusy = status === 'transcribing'
 
   const outer = compact ? 'h-9 w-9' : 'h-10 w-10'
+  const glass = variant === 'glass'
+  // Idle mic button: glass style is a translucent deep-blue pill; legacy is the
+  // light white chip.
+  const idleClass = glass
+    ? 'border border-glass-border bg-glass text-on-surface-variant hover:bg-glass-strong hover:text-on-surface'
+    : 'border border-outline-variant bg-white/60 text-on-surface-muted hover:border-outline hover:text-on-surface'
 
   return (
     <div className="flex min-w-0 flex-col gap-1">
@@ -194,7 +203,7 @@ export function VoiceRecorder({
             disabled={disabled || isBusy}
             aria-label="Record — click and speak"
             title="Record — click and speak"
-            className={`flex shrink-0 items-center justify-center rounded-full border border-outline-variant bg-white/60 text-on-surface-muted transition hover:border-outline hover:text-on-surface disabled:opacity-40 ${outer}`}
+            className={`flex shrink-0 items-center justify-center rounded-full border transition hover:border-outline hover:text-on-surface disabled:opacity-40 ${idleClass} ${outer}`}
           >
             <MicIcon />
           </button>
@@ -214,21 +223,21 @@ export function VoiceRecorder({
               onClick={stop}
               aria-label="Stop and transcribe"
               title="Stop and transcribe"
-              className={`flex shrink-0 items-center justify-center rounded-full bg-primary text-on-primary shadow-[0_8px_20px_-10px_rgba(87,95,101,0.5)] transition hover:opacity-90 disabled:opacity-40 ${outer}`}
+              className={`flex shrink-0 items-center justify-center rounded-full bg-primary text-on-primary shadow-[0_8px_20px_-10px_rgba(61,123,255,0.6)] transition hover:opacity-90 disabled:opacity-40 ${outer}`}
             >
               <span className="h-3 w-3 rounded-sm bg-white" />
             </button>
-            <span className="hidden text-xs text-on-surface-muted sm:inline">Tap to transcribe</span>
+            {glass && <span className="hidden text-xs text-on-surface-muted sm:inline">Tap to transcribe</span>}
           </>
         )}
 
         {status === 'transcribing' && (
-          <span className="flex items-center gap-2 rounded-full border border-outline-variant bg-white/60 px-3 py-1.5 text-xs font-medium text-on-surface-muted">
+          <span className="flex items-center gap-2 rounded-full border border-glass-border bg-glass px-3 py-1.5 text-xs font-medium text-on-surface-muted">
             <span className="ghost" /> Transcribing…
           </span>
         )}
 
-        {status === 'idle' && (
+        {status === 'idle' && !glass && (
           <span className="hidden text-xs text-on-surface-muted sm:inline">or record aloud</span>
         )}
       </div>
@@ -260,9 +269,9 @@ function mmss(totalSeconds: number): string {
 }
 
 /** Static microphone glyph — hoisted so it isn't redefined per render. */
-function MicIcon() {
+function MicIcon({ className = '' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-4 w-4 ${className}`}>
       <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
       <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
       <path d="M12 19v3" />

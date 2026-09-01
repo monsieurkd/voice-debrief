@@ -26,6 +26,10 @@ export const conversations = pgTable(
     user_id: bigint('user_id', { mode: 'number' }).notNull().references(() => users.id, { onDelete: 'cascade' }),
     // Short auto-generated label shown in the sidebar (first user turn).
     title: text('title'),
+    // Which persona steers this conversation's tone — one of the PERSONAS ids
+    // in src/lib/personas.ts. NULL = the default 'warm' persona (pre-feature
+    // rows and callers that don't care).
+    persona: text('persona'),
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

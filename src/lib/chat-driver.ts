@@ -1,6 +1,7 @@
 import { llm } from './llm-client'
 import { env } from './env'
 import { buildChatMessages } from './chat-prompt'
+import type { PersonaId } from './personas'
 
 /**
  * One assistant chat turn: history + the user's latest message → a reply.
@@ -13,8 +14,9 @@ import { buildChatMessages } from './chat-prompt'
  */
 export async function generateChatReply(
   history: { role: 'user' | 'assistant'; content: string }[],
+  persona?: PersonaId,
 ): Promise<string> {
-  const messages = buildChatMessages(history)
+  const messages = buildChatMessages(history, persona)
 
   let res
   try {

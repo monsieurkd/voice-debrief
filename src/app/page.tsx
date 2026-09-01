@@ -17,7 +17,8 @@ export default async function Home() {
   let conversations: ConversationSummary[] = []
   if (userId != null) {
     try {
-      conversations = await listConversations(userId)
+      const rows = await listConversations(userId)
+      conversations = rows.map((c) => ({ id: c.id, title: c.title, persona: c.persona }))
     } catch {
       conversations = []
     }
