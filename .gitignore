@@ -43,3 +43,7 @@ next-env.d.ts
 
 # Local Claude Code artifacts (worktrees, plans)
 .claude/
+
+# Reasonix local tool config
+reasonix.toml
+.reasonix/
