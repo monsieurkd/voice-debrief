@@ -1,8 +1,8 @@
-// The interview draft is what stands between "accidental refresh" and "the
-// whole conversation is gone". These pin the failure modes that matter:
-// corrupt JSON must not crash the page, foreign shapes must be discarded,
-// and the restored history must stay inside the server's turn-args bound
-// (history ≤ 60) or every later send would be rejected.
+// The interview draft is what stands between "a closed window / accidental
+// refresh" and "the whole conversation is gone". These pin the failure modes
+// that matter: corrupt JSON must not crash the page, foreign shapes must be
+// discarded, and the restored history must stay inside the server's turn-args
+// bound (history ≤ 60) or every later send would be rejected.
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -68,7 +68,7 @@ test('parseDraft bounds message size (oversized entries are dropped)', () => {
   assert.deepEqual(draft.messages, [{ role: 'user', content: 'fine' }])
 })
 
-test('loadDraft is a safe no-op without sessionStorage (node/SSR)', () => {
+test('loadDraft is a safe no-op without localStorage (node/SSR)', () => {
   // node:test runs without a DOM — loadDraft must return null, not throw.
   assert.equal(loadDraft(), null)
 })

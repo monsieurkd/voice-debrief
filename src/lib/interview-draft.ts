@@ -1,7 +1,8 @@
-// The guided interview lives only in React state — an accidental refresh used
-// to destroy the whole conversation. This module (de)serializes the chat to
-// sessionStorage so a reload resumes where the user left off. Pure functions
-// for encode/parse (unit-testable in node), thin guarded accessors for the
+// The guided interview lives only in React state — an accidental refresh or a
+// closed window used to destroy the whole conversation. This module
+// (de)serializes the chat to localStorage so a reload — or reopening the
+// page later — resumes where the user left off. Pure functions for
+// encode/parse (unit-testable in node), thin guarded accessors for the
 // browser API. Best-effort by design: quota errors or private modes must never
 // break the chat itself.
 
@@ -59,7 +60,7 @@ export function parseDraft(raw: string | null): InterviewDraft | null {
 
 export function saveDraft(messages: DraftMessage[], checklist: InterviewChecklist): void {
   try {
-    sessionStorage.setItem(KEY, encodeDraft(messages, checklist))
+    localStorage.setItem(KEY, encodeDraft(messages, checklist))
   } catch {
     // quota exceeded / private mode — persistence is best-effort
   }
@@ -67,16 +68,16 @@ export function saveDraft(messages: DraftMessage[], checklist: InterviewChecklis
 
 export function loadDraft(): InterviewDraft | null {
   try {
-    return parseDraft(sessionStorage.getItem(KEY))
+    return parseDraft(localStorage.getItem(KEY))
   } catch {
-    return null // no sessionStorage (SSR, tests) — same as "nothing saved"
+    return null // no localStorage (SSR, tests) — same as "nothing saved"
   }
 }
 
 export function clearDraft(): void {
   cached = null // a later mount must not restore what was just finished
   try {
-    sessionStorage.removeItem(KEY)
+    localStorage.removeItem(KEY)
   } catch {
     // nothing to do — a stale draft just gets overwritten next visit
   }

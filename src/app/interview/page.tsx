@@ -20,8 +20,8 @@ const emptySubscribe = () => () => {}
 
 export default function InterviewPage() {
   const router = useRouter()
-  // Survive an accidental refresh: the conversation restores from
-  // sessionStorage (draft) until the user's first turn moves it into state.
+  // Survive a refresh or a closed window: the conversation restores from
+  // localStorage (draft) until the user's first turn moves it into state.
   const draft = useSyncExternalStore(emptySubscribe, getInitialDraft, () => null)
   const [liveMessages, setLiveMessages] = useState<ChatMsg[] | null>(null)
   const [liveChecklist, setLiveChecklist] = useState<InterviewChecklist | null>(null)
