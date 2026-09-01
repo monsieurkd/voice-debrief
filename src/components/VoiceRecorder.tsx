@@ -5,13 +5,13 @@ import { transcribeAudioAction } from '@/actions/voice'
 import { decodeToMono16k, floatToWav } from '@/lib/webm-to-wav'
 
 /**
- * Cross-browser batch voice capture (the server-side STT path). Unlike the
- * Web Speech mic (Chromium-only), this uses MediaRecorder + getUserMedia — so
- * Safari/Firefox/iOS can actually talk their debrief, not just type it.
+ * Cross-browser batch voice capture (the server-side STT path). This is the
+ * one voice input: MediaRecorder + getUserMedia works on Safari/Firefox/iOS
+ * (the removed live-dictation mic was Chromium-only Web Speech).
  *
  * Flow: click to start → record (live elapsed timer, cancellable) → click to
  * stop → the clip uploads to transcribeAudioAction → onTranscribed(text) feeds
- * the existing transcript pipeline (the /new composer or an interview turn).
+ * the existing transcript pipeline (the /new composer).
  *
  * Renders nothing where the browser lacks getUserMedia/MediaRecorder. Support
  * and the "would recording even work" flag are read through useSyncExternalStore

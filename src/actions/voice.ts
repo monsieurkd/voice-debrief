@@ -9,12 +9,11 @@ import { DEMO_LIMITS, RATE_WINDOW_MS } from '@/lib/constants'
 import { asrConfigured, AsrUnconfiguredError, transcribeAudio, summarizeAsrError } from '@/lib/asr'
 
 /**
- * Server-side batch STT — the cross-browser voice path (Safari/Firefox/iOS have
- * no Web Speech dictionary, so live dictation alone would keep them from the
- * product's core promise). A recorded clip arrives here as a Blob; it's
- * transcribed against LLM_ASR_* / LLM_* and the text flows straight into the
- * existing transcript pipeline (the /new composer or an interview turn).
- *
+ * Server-side batch STT — the (only) voice path, and it works in every browser
+ * (there is no Web Speech dictionary on Safari/Firefox/iOS, so live dictation
+ * was removed). A recorded clip arrives here as a Blob; it's transcribed
+ * against LLM_ASR_* / LLM_* and the text flows straight into the existing
+ * transcript pipeline (the /new composer).
  * Args are client-controlled → bounded at runtime (mime type allowlist, a hard
  * size cap that keeps the upload cheap, and the per-user rate window). Errors
  * return as `error`, never thrown — the client must be able to show *why* a

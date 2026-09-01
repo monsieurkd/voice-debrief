@@ -8,8 +8,10 @@ import assert from 'node:assert/strict'
 import {
   asrBaseUrl,
   asrApiKey,
+  isRetryable,
   summarizeAsrError,
   AsrError,
+  AsrTransientError,
   AsrUnconfiguredError,
 } from '../src/lib/asr'
 
@@ -62,4 +64,26 @@ test('summarizeAsrError never leaks raw provider text', () => {
 test('summarizeAsrError surfaces a readable failure for empty/generic errors', () => {
   assert.ok(summarizeAsrError(new AsrError('the speech-to-text service failed to respond')).length > 0)
   assert.ok(summarizeAsrError(new Error('network error')).length > 0)
+})
+
+test('summarizeAsrError maps an exhausted transient failure to a retryable nudge, not internals', () => {
+  const e = new AsrTransientError('the speech-to-text service is busy, please retry in a moment')
+  ;(e as AsrTransientError & { causeText?: string }).causeText = '429 Rate limit reached on endpoint 10.0.0.5'
+  const summary = summarizeAsrError(e)
+  assert.match(summary, /busy|moment/i)
+  assert.ok(!/10\.0\.0\.5/.test(summary), 'internal endpoint must not surface')
+})
+
+test('isRetryable classifies transient vs permanent ASR failures', () => {
+  // transient — should retry
+  assert.equal(isRetryable('Error: 429 Too Many Requests'), true)
+  assert.equal(isRetryable('rate limit exceeded for whisper-free'), true)
+  assert.equal(isRetryable('503 Service Unavailable'), true)
+  assert.equal(isRetryable('ETIMEDOUT'), true)
+  assert.equal(isRetryable('ECONNRESET'), true)
+  // permanent — must NOT be retried
+  assert.equal(isRetryable('401 api key invalid'), false)
+  assert.equal(isRetryable('404 not found'), false)
+  assert.equal(isRetryable('file too large'), false)
+  assert.equal(isRetryable('failed'), false)
 })
