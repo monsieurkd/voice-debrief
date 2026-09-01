@@ -6,7 +6,7 @@ import { SESSION_COOKIE, GUEST_COOKIE, SESSION_ISSUER } from '@/lib/session-toke
  * Route gate (Next 16's renamed middleware). Debrief-first routing:
  *
  * - Login/signup stay public (also redirect signed-in/guests away).
- * - `/`, `/new`, and `/interview` are ALWAYS reachable — no identity required —
+ * - `/`, `/new` are ALWAYS reachable — no identity required —
  *   because the core act of the app (the debrief) must sit in front of any
  *   wall. A brand-new visitor lands straight on the debrief; their first
  *   debrief mints an anonymous guest in `runDebrief`.
@@ -23,7 +23,7 @@ import { SESSION_COOKIE, GUEST_COOKIE, SESSION_ISSUER } from '@/lib/session-toke
 
 // Always-reachable: the debrief surfaces + the two auth entry points.
 const PUBLIC_PATHS = ['/login', '/signup']
-const DEBRIEF_FIRST_PATHS = ['/', '/new', '/interview']
+const DEBRIEF_FIRST_PATHS = ['/', '/new']
 
 function isAllowedWithoutIdentity(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||

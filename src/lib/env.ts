@@ -15,7 +15,7 @@ const envSchema = z.object({
   LLM_BASE_URL: z.string().default('https://api.z.ai/api/coding/paas/v4'),
   // strong model for the precision extraction task
   LLM_MODEL: z.string().default('glm-4.6'),
-  // fast model for the low-stakes overview + interview driver
+  // fast model for the low-stakes overview
   LLM_SMALL_MODEL: z.string().default('glm-4.5-air'),
 
   // ── Speech-to-text (ASR), provider-neutral ─────────────────────────────

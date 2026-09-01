@@ -7,7 +7,6 @@ export const USER_ID = 1
 // them). Authenticated actions key by user id; the auth pages key by IP.
 export const DEMO_LIMITS = {
   debriefsPerHour: 5,
-  interviewTurnsPerHour: 20,
   samplesPerHour: 30,
   // Batch STT clips per user per window — each one is a billed ASR round-trip.
   transcriptionsPerHour: 20,

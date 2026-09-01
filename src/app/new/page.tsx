@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { runDebrief } from '@/actions/debrief'
 import { sampleTranscripts } from '@/lib/sample-transcripts'
@@ -100,13 +99,7 @@ export default function NewDebrief() {
         </div>
       </Card>
 
-      <p className="mt-8 text-center text-sm text-on-surface-muted">
-        Prefer a guided conversation?{' '}
-        <Link href="/interview" className="font-medium text-on-secondary-container underline underline-offset-2 hover:text-on-surface">
-          Try the guided debrief
-        </Link>
-        .
-      </p>
+      {/* /new is the single, self-contained entry point of the app — nothing after it. */}
     </main>
   )
 }

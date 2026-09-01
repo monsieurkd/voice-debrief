@@ -45,12 +45,6 @@ export async function SanctuaryShell({ children }: { children: React.ReactNode }
               <IconPlus className="h-4 w-4" />
               Debrief now
             </Link>
-            <Link
-              href="/interview"
-              className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-2 text-sm font-medium text-on-secondary-container backdrop-blur-xl transition hover:bg-white cursor-pointer"
-            >
-              Guided
-            </Link>
           </div>
         </nav>
       </header>

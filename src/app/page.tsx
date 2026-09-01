@@ -54,9 +54,6 @@ export default async function Home() {
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <ButtonLink href="/new">＋ Debrief now</ButtonLink>
-          <ButtonLink href="/interview" variant="secondary">
-            Guided debrief
-          </ButtonLink>
         </div>
       </section>
 

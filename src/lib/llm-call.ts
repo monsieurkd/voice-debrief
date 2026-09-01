@@ -50,7 +50,7 @@ const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
  * - Parse/schema failures: the error is fed back to the model and the call retried
  *   (up to `attempts`), per the spec's bounded-retry design.
  *
- * The shared engine behind extraction (strong) and the interview driver (small).
+ * The shared engine behind extraction (strong) and the fast overview (small).
  * Never mutates the caller's messages array.
  */
 export async function callJsonValidated<T>(args: {

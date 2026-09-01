@@ -3,14 +3,14 @@
 [![Live demo](https://img.shields.io/badge/live-demo-2ea44f?style=flat-square)](#) <!-- replace # with the deployment URL — see DEPLOY.md -->
 [![CI](https://img.shields.io/github/actions/workflow/status/monsieurkd/voice-debrief/ci.yml?style=flat-square)](https://github.com/monsieurkd/voice-debrief/actions/workflows/ci.yml)
 
-> Talk (or type) through your day. A small AI interview captures it, a strong
-> model turns it into **structured, queryable data**, and an editable document
-> lets you correct anything — so a daily debrief compounds into a personal data
-> layer you can search and act on.
+> Talk (or type) through your day. Voice is transcribed server-side into text,
+> a strong model turns it into **structured, queryable data**, and an editable
+> document lets you correct anything — so a daily debrief compounds into a
+> personal data layer you can search and act on.
 
-**Status:** multi-user and demo-ready — **voice works in every browser** (live
-dictation on Chrome/Edge, tap-to-record + server transcription elsewhere), or
-type your day → structured, editable data → tomorrow's plan → **threads that
+**Status:** multi-user and demo-ready — **voice works in every browser**
+(tap-to-record + server transcription, with fast, retry-resilient speech-to-text),
+or type your day → structured, editable data → tomorrow's plan → **threads that
 connect your days** — with per-user accounts, per-session export/delete,
 archive + full-text search, and a streak. Email+password auth; every query
 scoped by owner.
@@ -25,36 +25,34 @@ scoped by owner.
 
 ![A day becomes a structured, editable doc — every row fixable, movable, deletable](docs/screenshots/03-session-doc.png)
 
-![Dictate instead of type — the browser transcribes live](docs/screenshots/06-new.png)
-
-![The guided interview — small-model driver, deterministic checklist of what's covered](docs/screenshots/07-interview.png)
+![Record or type — one smooth debrief flow](docs/screenshots/06-new.png)
 
 ---
 
 ## Why
 
 Journaling and life-management apps fail for one reason: after a long day,
-typing and organizing is the last thing you'll do. A smart interview removes
-the friction — but the real value isn't a faster unstructured journal. It's the
-second step: **turning the verbal dump into structured data that accrues over
-time.** Once that data layer exists, "a clear look at your day + your next
-steps" falls out almost for free.
+typing is the last thing you'll do — so recording and letting the app transcribe
+is the friction-free door in. The real value isn't a faster unstructured
+journal though. It's the second step: **turning the verbal (or typed) dump into
+structured data that accrues over time.** Once that data layer exists, "a clear
+look at your day + your next steps" falls out almost for free.
 
 This project is also where I learned the part of LLM engineering that matters
 most: **making LLM systems reliable enough to depend on.**
 
 ## What's non-obvious (the engineering)
 
-- **Deterministic interview control.** A small-model driver runs a
-  reflect-then-probe interview, but "am I done?" is decided by an explicit
-  checklist state machine — *not* the model's self-judgment. The model reports
-  which fields a turn covered; a rule decides when to stop.
 - **Trustworthy extraction.** A strong model emits typed rows validated by
   **Zod** with a bounded retry loop (`json_object` mode + schema
   self-validation), so malformed output can never reach the database.
 - **Model routing by stakes.** A fast model handles low-stakes fluency (the
-  overview, the live interview); a strong model handles high-stakes precision
-  (extraction). Routed by the *cost of being wrong*, not raw capability.
+  overview); a strong model handles high-stakes precision (extraction). Routed
+  by the *cost of being wrong*, not raw capability.
+- **Reliable voice.** The recorder transcribes to **mono 16 kHz WAV** with a
+  proper band-limited resample + power-equal downmix (no aliasing / phase
+  cancellation), then a provider-neutral endpoint with **exponential-backoff
+  retry** turns transient rate-limits into a retry instead of a dead clip.
 - **Human-in-the-loop data quality.** Every extracted row is editable, and each
   correction is written back (`source = user`, `was_corrected = true`), so
   extraction errors are surfaced and fixed instead of accumulating.
@@ -103,7 +101,7 @@ The app is multi-user: sign up at `/signup`, or log in as the seeded account
 |---|---|---|
 | `DATABASE_URL` | yes | Postgres connection string |
 | `AUTH_SECRET` | yes | signs session cookies — generate with `openssl rand -base64 32`; rotating it logs everyone out |
-| `LLM_API_KEY` | no | without it, live debriefs/interview fail fast; instant samples still work |
+| `LLM_API_KEY` | no | without it, live debriefs fail fast; instant samples still work |
 | `LLM_BASE_URL` / `LLM_MODEL` / `LLM_SMALL_MODEL` | no | provider-neutral (Z.ai GLM by default) |
 | `APP_TIMEZONE` | no | IANA name; the zone dates are interpreted and rendered in |
 | `SEED_PASSWORD` | no | password for the seeded account (default `devpassword`) |
@@ -148,23 +146,22 @@ node scripts/demo-shots.mjs    # playwright-core + system Chrome → docs/screen
 ## How it works
 
 ```
-input  (typed monologue  OR  guided interview)
+input  (typed monologue  OR  recorded voice → server transcription)
   │
-  ├─ small model: reflect-then-probe driver, tracks a deterministic checklist
-  └─ on finish: transcript → strong model
-       └─ Zod-validated extraction (bounded retry on schema failure)
-            └─ transactional store: session + rows + tags + user_state
-                 └─ editable doc: edit / add / delete(+undo) / reclassify
-                      └─ corrections write back  source='user', was_corrected=true
+  └─ strong model: Zod-validated extraction (bounded retry on schema failure)
+       └─ transactional store: session + rows + tags + user_state
+            └─ editable doc: edit / add / delete(+undo) / reclassify
+                 └─ corrections write back  source='user', was_corrected=true
 
 Home page: tomorrow's plan (checkable next steps) + recent entries
 ```
 
 ## Status & roadmap
 
-**Done (v1):** typed + guided-interview input · dual-model extraction with
-validation/retry · editable structured doc with write-back · next-steps plan ·
-cross-session adaptation (`user_state`).
+**Done (v1):** typed + recorded-voice input with server transcription · dual-model
+extraction (fast overview + strong rows) with validation/retry · editable
+structured doc with write-back · next-steps plan · cross-session adaptation
+(`user_state`).
 
 **Done (Phase 1):** multi-user auth (scrypt + signed session cookies) ·
 per-user data isolation end-to-end · per-user rate limits · session JSON
