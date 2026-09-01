@@ -35,12 +35,24 @@ const idSchema = z.number().int().positive()
  * On extraction failure we STILL persist the session (placeholder overview with
  * the failure cause + raw transcript, no children) so the user can add rows by
  * hand — the transcript is never lost, and the failure is never silent.
+ *
+ * `fast: true` runs the whole extraction on the small (fast) model instead of
+ * the strong one — several times quicker, at slightly lower structured
+ * fidelity. Otherwise identical (same schema, same store, same failure-safe
+ * persist).
  */
-export async function runDebrief(transcriptInput: string): Promise<DebriefResult> {
+export async function runDebrief(transcriptInput: string, optsInput?: { fast?: boolean }): Promise<DebriefResult> {
   // Debrief-first: a visitor without an account debriefs as an anonymous guest;
   // their session is adopted onto a real account if they sign up/log in later.
   const user = await currentUserOrGuest()
-  const { transcript } = parseArgs(z.object({ transcript: z.string().trim().min(1).max(20000) }), { transcript: transcriptInput }, 'runDebrief')
+  const {
+    transcript,
+    fast = false,
+  } = parseArgs(
+    z.object({ transcript: z.string().trim().min(1).max(20000), fast: z.boolean().optional() }),
+    { transcript: transcriptInput, fast: optsInput?.fast },
+    'runDebrief',
+  )
 
   // Spend guardrail, keyed to the signed-in user (shared per-user windows
   // across serverless instances): the live AI path costs money per call.
@@ -56,13 +68,14 @@ export async function runDebrief(transcriptInput: string): Promise<DebriefResult
     return { ok: false, error: 'LLM_API_KEY is not set. Add it to .env.local and try again — nothing was saved.' }
   }
 
-  // FAST model (overview) runs concurrently with the STRONG model (extraction).
+  // FAST path (small model) when requested; otherwise the FAST model runs the
+  // overview concurrently with the STRONG model doing the extraction.
   const overviewP = generateOverview(transcript)
 
   let payload: ExtractionPayload | null = null
   let failCause: string | null = null
   try {
-    payload = await extractDebrief(transcript)
+    payload = await extractDebrief(transcript, { model: fast ? env.LLM_SMALL_MODEL : undefined })
   } catch (e) {
     if (e instanceof ExtractionError) {
       payload = null // handled below: persist anyway

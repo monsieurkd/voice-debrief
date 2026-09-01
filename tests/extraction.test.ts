@@ -59,3 +59,15 @@ test('always-bad output throws ExtractionError after exhausting retries', async 
     ExtractionError,
   )
 })
+
+test('fast extraction uses a tight budget (feeds through to the completer)', async () => {
+  // A `model` opts means 'fast' in extractDebrief -> tiny maxTokens so the fast
+  // model's budget is bounded. Capture what the completer is actually handed.
+  let handedBudget = 0
+  const scripted = async (_msgs: unknown, opts: { maxTokens: number }): Promise<string> => {
+    handedBudget = opts.maxTokens
+    return JSON.stringify({ overview: 'ok', events: [], reflections: [], decisions: [], next_steps: [] })
+  }
+  await extractDebrief('y', { model: 'small-model', complete: scripted })
+  assert.equal(handedBudget, 2048, 'fast extraction should use the tight 2048 budget')
+})
