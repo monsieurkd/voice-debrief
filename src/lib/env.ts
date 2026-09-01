@@ -18,6 +18,17 @@ const envSchema = z.object({
   // fast model for the low-stakes overview
   LLM_SMALL_MODEL: z.string().default('glm-4.5-air'),
 
+  // ── Fallback LLM provider (failover) ────────────────────────────────────
+  // Optional. When set, ANY caller that goes through the failover helper
+  // (chat + LLM-call) transparently switches to this provider on a transient
+  // transport error (timeout / 429 / connection reset) after the primary's
+  // retries are exhausted. Lets you run a primary (e.g. Z.ai) with a cheap
+  // fallback (e.g. Google Gemini free tier) so a rate-limit never kills a turn.
+  // Falls back to the same SMALL model unless LLM_FALLBACK_SMALL_MODEL is set.
+  LLM_FALLBACK_BASE_URL: z.string().default(''),
+  LLM_FALLBACK_API_KEY: z.string().default(''),
+  LLM_FALLBACK_SMALL_MODEL: z.string().default(''),
+
   // ── Speech-to-text (ASR), provider-neutral ─────────────────────────────
   // Defaults to whatever LLM provider is configured (same base URL + key), so
   // OpenAI / Z.ai / Gemini / OpenRouter works with ZERO extra env. Override

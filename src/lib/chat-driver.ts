@@ -1,4 +1,4 @@
-import { llm } from './llm-client'
+import { completeWithFallback } from './llm-fallback'
 import { env } from './env'
 import { buildChatMessages } from './chat-prompt'
 import type { PersonaId } from './personas'
@@ -20,11 +20,11 @@ export async function generateChatReply(
 
   let res
   try {
-    res = await llm.chat.completions.create({
-      model: env.LLM_SMALL_MODEL,
+    res = await completeWithFallback({
       messages,
+      model: env.LLM_SMALL_MODEL,
       temperature: 0.9, // variety — the conversation should not feel repetitive
-      max_tokens: 400,
+      maxTokens: 400,
     })
   } catch (e) {
     // Re-throw so the caller turns it into a friendly, safe message.

@@ -1,8 +1,8 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { getConversationAction, setConversationPersonaAction } from '@/actions/chat'
+import { getConversationAction, listConversationsAction, setConversationPersonaAction } from '@/actions/chat'
 import { ChatApp, type ChatRow } from '@/components/ChatApp'
 import { IconPlus } from '@/components/ui'
 import { PERSONAS, personaById, type PersonaId } from '@/lib/personas'
@@ -17,12 +17,16 @@ export interface ConversationSummary {
  * Composes the persistent sidebar of past chats with the main ChatApp window.
  * Selecting a conversation loads its transcript; "New chat" clears the window.
  *
+ * The past-chat list is fetched AFTER mount (listConversationsAction) rather
+ * than during the server render, so the chat window — the LCP content — paints
+ * without waiting on a database round-trip.
+ *
  * New chat opens a brand-new, unsaved draft. It is keyed by a monotonically
  * increasing session counter so every click forces a fresh ChatApp mount — the
  * previous window's in-memory messages/conversation are thrown away.
  */
-export function ChatWorkspace({ initialConversations }: { initialConversations: ConversationSummary[] }) {
-  const [conversations, setConversations] = useState<ConversationSummary[]>(initialConversations)
+export function ChatWorkspace() {
+  const [conversations, setConversations] = useState<ConversationSummary[]>([])
   const [activeId, setActiveId] = useState<number | null>(null)
   const [activePersona, setActivePersona] = useState<PersonaId>('warm')
   const [messages, setMessages] = useState<ChatRow[]>([])
@@ -30,6 +34,26 @@ export function ChatWorkspace({ initialConversations }: { initialConversations: 
   // Bumped on every "New chat" so the ChatApp key changes and it truly remounts
   // a fresh draft. State (not a ref) because it is read during render for the key.
   const [sessionId, setSessionId] = useState(0)
+
+  // Load the past-chat sidebar lazily — never on the critical first-paint path.
+  useEffect(() => {
+    let alive = true
+    listConversationsAction().then((res) => {
+      if (!alive) return
+      if (res.ok) {
+        setConversations(
+          (res.conversations as ConversationSummary[]).map((c) => ({
+            id: c.id,
+            title: c.title,
+            persona: c.persona,
+          })),
+        )
+      }
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
 
   const openConversation = useCallback(async (id: number) => {
     setLoading(true)

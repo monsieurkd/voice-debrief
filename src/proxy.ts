@@ -21,13 +21,17 @@ import { SESSION_COOKIE, GUEST_COOKIE, SESSION_ISSUER } from '@/lib/session-toke
  * silently lose coverage when routes move (see the data-security guide).
  */
 
-// Always-reachable: the debrief surfaces + the two auth entry points.
+// Always-reachable: the debrief surfaces, the two auth entry points, and the
+// public mission page (a brand-new visitor must be able to read about Voyo
+// without an account).
 const PUBLIC_PATHS = ['/login', '/signup']
 const DEBRIEF_FIRST_PATHS = ['/', '/new']
+const PUBLIC_MISSION_PATHS = ['/about']
 
 function isAllowedWithoutIdentity(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
-    DEBRIEF_FIRST_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+    DEBRIEF_FIRST_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
+    PUBLIC_MISSION_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 }
 
 export function proxy(req: NextRequest) {

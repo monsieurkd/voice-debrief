@@ -18,11 +18,12 @@ export async function SanctuaryShell({ children }: { children: React.ReactNode }
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
       <header className="glass z-40 shrink-0">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" aria-label="Voyo home">
+        {/* Flush-left logo, flush-right auth actions, vertically centered. */}
+        <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6">
+          <Link href="/about" aria-label="Voyo — about and mission" className="flex shrink-0 items-center self-center leading-none">
             <Wordmark small />
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center justify-end gap-3 sm:gap-4">
             {user ? <LogoutButton /> : <LoginPill />}
           </div>
         </div>

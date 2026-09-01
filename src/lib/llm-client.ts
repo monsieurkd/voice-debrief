@@ -12,3 +12,21 @@ export const llm = new OpenAI({
     'X-Title': 'Voice Debrief',
   },
 })
+
+/**
+ * Failover client. Only present (non-null) when a fallback provider is
+ * configured (LLM_FALLBACK_BASE_URL + LLM_FALLBACK_API_KEY). When both the
+ * primary and a fallback are set, transient failures retried through the
+ * `callWithFallback` helper transparently switch to this provider.
+ */
+export const llmFallback: OpenAI | null =
+  env.LLM_FALLBACK_BASE_URL && env.LLM_FALLBACK_API_KEY
+    ? new OpenAI({
+        apiKey: env.LLM_FALLBACK_API_KEY,
+        baseURL: env.LLM_FALLBACK_BASE_URL,
+        defaultHeaders: {
+          'HTTP-Referer': 'http://localhost:3000',
+          'X-Title': 'Voice Debrief',
+        },
+      })
+    : null

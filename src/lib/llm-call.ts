@@ -1,6 +1,6 @@
 import type OpenAI from 'openai'
 import type { ZodType } from 'zod'
-import { llm } from './llm-client'
+import { completeWithFallback } from './llm-fallback'
 import { env } from './env'
 import { safeJsonParse, summarizeZodIssues } from './json'
 
@@ -82,12 +82,15 @@ export async function callJsonValidated<T>(args: {
       if (!env.LLM_API_KEY) throw new LlmCallError('LLM_API_KEY is not set. Add it to .env.local.')
       let res: OpenAI.Chat.ChatCompletion
       try {
-        res = await llm.chat.completions.create({
-          model,
+        // Transient failures on the primary auto-fail-over to a configured
+        // fallback provider (see llm-fallback.ts) before the retry loop above
+        // counts a transport miss.
+        res = await completeWithFallback({
           messages: msgs,
-          response_format: { type: 'json_object' },
+          model,
+          maxTokens: budget,
           temperature,
-          max_tokens: budget,
+          fallbackModelOverride: model, // JSON path uses one model throughout
         })
       } catch (e) {
         throw new LlmTransportError(e instanceof Error ? e.message : String(e))

@@ -67,8 +67,10 @@ export function Button({
 export function Wordmark({ small = false }: { small?: boolean }) {
   return (
     <span
-      className={`font-display font-semibold tracking-tight text-on-surface ${
-        small ? 'inline-flex items-center gap-2 text-lg' : 'inline-flex items-center gap-2.5 text-[30px] leading-[1.15]'
+      className={`inline-flex items-center text-on-surface ${
+        small
+          ? 'gap-2 text-lg leading-none'
+          : 'gap-2.5 text-[30px] leading-[1.15]'
       }`}
     >
       <span
@@ -77,7 +79,7 @@ export function Wordmark({ small = false }: { small?: boolean }) {
           small ? 'h-2 w-2' : 'h-2.5 w-2.5'
         }`}
       />
-      Voyo
+      <span className="font-display font-semibold tracking-wide">Voyo</span>
     </span>
   )
 }
