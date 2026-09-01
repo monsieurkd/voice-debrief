@@ -18,7 +18,7 @@ const playwrite = Playwrite_DE_Grund({
 
 export const metadata: Metadata = {
   title: "Voice Debrief",
-  description: "Talk out your day; get a structured, editable write-up.",
+  description: "Talk it out. A warm AI voice helps you through your day, in your voice or your typing.",
 };
 
 export default function RootLayout({

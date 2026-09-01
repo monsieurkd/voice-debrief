@@ -19,10 +19,16 @@ export interface ChatRow {
  * server returns TTS audio for an assistant reply, it is played aloud
  * immediately and a per-message "hear it" button replays it.
  */
-export function ChatApp({ initialMessages }: { initialMessages: ChatRow[] }) {
+export function ChatApp({
+  initialMessages,
+  conversationId: initialConversationId,
+}: {
+  initialMessages: ChatRow[]
+  conversationId?: number
+}) {
   const [messages, setMessages] = useState<ChatRow[]>(initialMessages)
   const [input, setInput] = useState('')
-  const [conversationId, setConversationId] = useState<number | null>(null)
+  const [conversationId, setConversationId] = useState<number | null>(initialConversationId ?? null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [playingIndex, setPlayingIndex] = useState<number | null>(null)

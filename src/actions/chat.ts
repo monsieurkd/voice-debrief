@@ -123,3 +123,24 @@ export async function listConversationsAction(): Promise<{ ok: true; conversatio
     return { ok: false, error: 'Could not load conversations.' }
   }
 }
+
+/** Load a single past conversation's messages (self-authorizing). */
+export async function getConversationAction(conversationIdInput: number): Promise<
+  | { ok: true; id: number; messages: { role: 'user' | 'assistant'; content: string }[] }
+  | { ok: false; error: string }
+> {
+  const actor = await currentUserOrGuest()
+  const { conversationId } = parseArgs(
+    z.object({ conversationId: z.number().int().positive() }),
+    { conversationId: conversationIdInput },
+    'getConversation',
+  )
+  try {
+    const history = await getConversationMessages(actor.id, conversationId)
+    if (history == null) return { ok: false, error: 'That conversation was not found.' }
+    return { ok: true, id: conversationId, messages: history.map((m) => ({ role: m.role, content: m.content })) }
+  } catch (e) {
+    console.error('[getConversation] failed:', e)
+    return { ok: false, error: 'Could not load that conversation.' }
+  }
+}
