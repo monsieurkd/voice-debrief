@@ -3,7 +3,7 @@ import { getCurrentUser, getGuestId } from '@/lib/auth'
 import { listSessions, listOpenNextSteps, listSessionDays } from '@/lib/queries'
 import { listThreads } from '@/lib/threads'
 import { env } from '@/lib/env'
-import { formatDate } from '@/lib/dates'
+import { formatDate, isoDateInAppTz, formatRelativeDay } from '@/lib/dates'
 import { computeStreak } from '@/lib/streak'
 import { PlanList } from '@/components/PlanList'
 import { MoodStrip } from '@/components/MoodStrip'
@@ -132,8 +132,9 @@ export default async function Home() {
                       className="group flex flex-col gap-2 rounded-lg bg-surface-container-low p-5 transition hover:bg-surface-container"
                     >
                       <div className="flex items-center justify-between">
-                        <time className="text-xs font-medium text-on-surface-muted">
-                          {formatDate(e.startedAt, { weekday: 'short', month: 'short', day: 'numeric' })}
+                        <time dateTime={isoDateInAppTz(e.startedAt)} className="text-xs font-medium text-on-surface-muted">
+                          {formatRelativeDay(isoDateInAppTz(e.startedAt)) ??
+                            formatDate(e.startedAt, { weekday: 'short', month: 'short', day: 'numeric' })}
                         </time>
                         <MoodStrip mood={e.mood} energy={e.energy} />
                       </div>

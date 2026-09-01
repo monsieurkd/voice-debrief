@@ -163,7 +163,78 @@ export function todayInAppTz(now = new Date()): string {
   return `${get('year')}-${get('month')}-${get('day')}`
 }
 
+/** Any instant → 'YYYY-MM-DD' in the app timezone (parts-based, DST-safe).
+ *  Corollary of todayInAppTz that is not pinned to "now", so callers can
+ *  feed formatRelativeDay the calendar day of an arbitrary started_at. */
+export function isoDateInAppTz(instant: Date): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: appTimezone(),
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(instant)
+  const get = (type: string) => parts.find((p) => p.type === type)!.value
+  return `${get('year')}-${get('month')}-${get('day')}`
+}
+
 /** Calendar-day arithmetic on 'YYYY-MM-DD' strings (timezone-free). */
 export function isoMinusDays(iso: string, days: number): string {
   return new Date(Date.parse(`${iso}T00:00:00Z`) - days * 86400000).toISOString().slice(0, 10)
+}
+
+/** Calendar Y-M-D of an instant in `tz` (parts-based, never ms math). */
+function ymdInTz(instant: Date, tz: string): { y: number; mo: number; d: number } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(instant)
+  const get = (type: string) => Number(parts.find((p) => p.type === type)!.value)
+  return { y: get('year'), mo: get('month'), d: get('day') }
+}
+
+/**
+ * _Date label_ / _app timezone_ / _DST-safe_ (3/5) — compact relative label:
+ * 'YYYY-MM-DD' → "Today" / "Yesterday" / "N days ago" (2–6 days), or a plain
+ * calendar date ("Aug 12", plus ", 2025" when the year differs from now's)
+ * once the date is a week old or in the future.
+ *
+ * Day distance is counted calendar-day-wise, NEVER by subtracting millisecond
+ * instants — DST days are 23/25h and midnight boundaries shift, so ms math
+ * miscounts across a transition. Both calendar dates are reduced to UTC day
+ * numbers (timezone-free, like isoMinusDays); their difference is exact.
+ *
+ * The input is a date-only 'YYYY-MM-DD' string, so callers that hold an
+ * instant should convert it with todayInAppTz's parts-based logic or, when
+ * the instant may differ from "now" in timezone, derive it explicitly.
+ *
+ * Timezone resolution, innermost wins: opts.timezone for this call, else the
+ * app-wide appTimezone() (APP_TIMEZONE env, else the server's zone).
+ * opts.now pins "now" (tests, previews); default is the current instant.
+ */
+export function formatRelativeDay(
+  iso?: string | null,
+  opts: { now?: Date; timezone?: string } = {},
+): string | null {
+  const m = (iso ?? '').trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)
+  if (!m || !validYmd(+m[1], +m[2], +m[3])) return null
+
+  const today = ymdInTz(opts.now ?? new Date(), opts.timezone ?? appTimezone())
+  const dayNum = (y: number, mo: number, d: number) => Date.UTC(y, mo - 1, d) / 86400000
+  const distance = dayNum(today.y, today.mo, today.d) - dayNum(+m[1], +m[2], +m[3])
+
+  if (distance === 0) return 'Today'
+  if (distance === 1) return 'Yesterday'
+  if (distance >= 2 && distance <= 6) return `${distance} days ago`
+
+  // A week or more old, or any future date: the calendar date itself, via
+  // formatDate. It renders in the app timezone, so anchor at noon there —
+  // noon is DST-safe in every zone and keeps the label on this calendar day
+  // even when distance was measured in an overriding opts.timezone.
+  const date = formatDate(zonedTimeToUtc(+m[1], +m[2], +m[3], 12, 0, appTimezone()), {
+    month: 'short',
+    day: 'numeric',
+  })
+  return +m[1] === today.y ? date : `${date}, ${m[1]}`
 }

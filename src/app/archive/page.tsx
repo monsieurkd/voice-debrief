@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getCurrentUser, getGuestId } from '@/lib/auth'
 import { listArchiveSessions, listUserTagNames } from '@/lib/queries'
-import { formatDate } from '@/lib/dates'
+import { formatDate, isoDateInAppTz, formatRelativeDay } from '@/lib/dates'
 import { MoodStrip } from '@/components/MoodStrip'
 
 // Same freshness rule as Home: the archive reads live data per request.
@@ -143,8 +143,9 @@ export default async function ArchivePage({
                 className="block rounded-lg bg-surface-container-low p-5 transition hover:bg-surface-container"
               >
                 <div className="mb-1 flex items-center justify-between">
-                  <time className="text-xs text-on-surface-muted">
-                    {formatDate(e.startedAt, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                  <time dateTime={isoDateInAppTz(e.startedAt)} className="text-xs text-on-surface-muted">
+                    {formatRelativeDay(isoDateInAppTz(e.startedAt)) ??
+                      formatDate(e.startedAt, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
                   </time>
                   <MoodStrip mood={e.mood} energy={e.energy} />
                 </div>
