@@ -18,12 +18,22 @@ session cookie/adoption keeps conversations per visitor.
 
 ```bash
 DATABASE_URL='<your-neon-pooled-url>' npm run db:migrate
+DATABASE_URL='<your-neon-pooled-url>' npm run db:verify
 DATABASE_URL='<your-neon-pooled-url>' npm run db:seed
 ```
 
+(`db:verify` self-checks that every table/column the app reads or writes exists;
+run it any time the app errors with `column does not exist` after a redeploy.)
 (`db:seed` creates the seeded account `you@example.com` / `SEED_PASSWORD`, default
 `devpassword`; on a public deploy set a strong `SEED_PASSWORD` or delete that row
 after migrating: `DELETE FROM users WHERE email = 'you@example.com'`.)
+
+> **Important — existing deployments:** the app's schema can grow between
+> deploys (e.g. a new column like `conversations.persona`). Nothing in `build`/
+> `start` applies migrations, so **after pulling new code onto an existing
+> deployment, re-run `db:migrate`** (above) before expecting new features to
+> work. Skipping it yields query-time errors like `column "persona" ... does
+> not exist` (code `42703`).
 
 ## 3. Deploy on Vercel
 
