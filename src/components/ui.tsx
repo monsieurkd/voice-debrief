@@ -1,9 +1,8 @@
-'use client'
-
+import Link from 'next/link'
 import type { ReactNode, InputHTMLAttributes } from 'react'
 
 /* ──────────────────────────────────────────────────────────────────────
-   Voyo primitives — the deep-blue glass canvas design system.
+   Digital Sanctuary primitives.
    Every component page-agnostic; keeps the look consistent without
    hand-rolled class strings that fight the design system in globals.css.
    ────────────────────────────────────────────────────────────────────── */
@@ -49,12 +48,9 @@ export function Button({
   return (
     <button
       {...rest}
-      className={`${PILL_BASE} text-on-primary font-semibold
-        bg-[linear-gradient(135deg,#2757c9,#3670f0)]
-        shadow-[0_10px_30px_-12px_rgba(61,123,255,0.45)]
-        hover:bg-[linear-gradient(135deg,#2757c9,#2e63e0)]
-        hover:shadow-[0_14px_38px_-12px_rgba(61,123,255,0.7)]
-        active:bg-[linear-gradient(135deg,#2757c9,#2e63e0)]
+      className={`${PILL_BASE} bg-primary text-on-primary font-semibold
+        shadow-[0_10px_30px_-12px_rgba(87,95,101,0.45)]
+        hover:bg-primary-focus active:bg-primary-active
         focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface
         disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
     >
@@ -63,23 +59,65 @@ export function Button({
   )
 }
 
-/** The app wordmark — "Voyo" beside a gradient orb (pure CSS, no image). */
+export function ButtonLink({
+  href,
+  children,
+  variant = 'primary',
+  className = '',
+}: {
+  href: string
+  children: ReactNode
+  variant?: 'primary' | 'secondary'
+  className?: string
+}) {
+  const look = variant === 'primary'
+    ? 'bg-primary text-on-primary font-semibold shadow-[0_10px_30px_-12px_rgba(87,95,101,0.45)] hover:bg-primary-focus active:bg-primary-active'
+    : 'border border-white/80 bg-white/60 text-on-secondary-container shadow-sm backdrop-blur-xl hover:bg-white/95'
+  return <Link href={href} className={`${PILL_BASE} ${look} ${className}`}>{children}</Link>
+}
+
+/**
+ * The meaning mark: a conversational container holding a continuous lowercase
+ * m. It stays deliberately monochrome so it reads at favicon size and does not
+ * compete with the listener orb inside the product.
+ */
+export function BrandMark({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      className={className}
+      aria-hidden
+      focusable="false"
+    >
+      <rect x="4" y="4" width="56" height="56" rx="18" fill="currentColor" />
+      <path
+        d="M18 17.5h28a6.5 6.5 0 0 1 6.5 6.5v13A6.5 6.5 0 0 1 46 43.5H31L21.5 51l2.2-7.5H18a6.5 6.5 0 0 1-6.5-6.5V24a6.5 6.5 0 0 1 6.5-6.5Z"
+        fill="none"
+        stroke="var(--color-sanctuary-white)"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M20.5 36V27a4 4 0 0 1 8 0v9-9a4 4 0 0 1 8 0v9"
+        fill="none"
+        stroke="var(--color-sanctuary-white)"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+/** The journal-like What I Mean wordmark and meaning mark lockup. */
 export function Wordmark({ small = false }: { small?: boolean }) {
   return (
-    <span
-      className={`inline-flex items-center text-on-surface ${
-        small
-          ? 'gap-2 text-lg leading-none'
-          : 'gap-2.5 text-[30px] leading-[1.15]'
-      }`}
-    >
-      <span
-        aria-hidden
-        className={`inline-block shrink-0 rounded-full bg-[radial-gradient(circle_at_32%_30%,#a9e3ff_0%,#5c90ff_45%,#2e63e0_100%)] shadow-[0_0_10px_rgba(61,123,255,0.55)] ${
-          small ? 'h-2 w-2' : 'h-2.5 w-2.5'
-        }`}
-      />
-      <span className="font-display font-semibold tracking-wide">Voyo</span>
+    <span className={`inline-flex items-center text-primary ${small ? 'gap-2' : 'gap-3'}`}>
+      <BrandMark className={small ? 'h-7 w-7' : 'h-11 w-11'} />
+      <span className={`font-display tracking-tight text-on-surface ${small ? 'text-lg' : 'text-3xl leading-tight'}`}>
+        What I Mean
+      </span>
     </span>
   )
 }
@@ -87,6 +125,16 @@ export function Wordmark({ small = false }: { small?: boolean }) {
 /** Floating vibrancy card (glass panel over the canvas — see .float-card). */
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return <div className={`float-card ${className}`}>{children}</div>
+}
+
+export function SectionTitle({ children }: { children: ReactNode }) {
+  return (
+    <h2 className="mb-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-muted">
+      <span className="h-px flex-1 bg-outline-variant" aria-hidden />
+      {children}
+      <span className="h-px flex-1 bg-outline-variant" aria-hidden />
+    </h2>
+  )
 }
 
 /** Ambient (borderless, focus-glow) text field. */

@@ -1,4 +1,4 @@
-# Voice Debrief — UI/UX Makeover Review Report
+# What I Mean — UI/UX Makeover Review Report
 
 Consolidated audit + ship-team review record for the UI/UX makeover
 ("Digital Sanctuary" — surgical refinement, sanctuary tokens preserved).

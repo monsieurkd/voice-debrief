@@ -3,7 +3,7 @@ import { env } from './env'
 
 /**
  * Provider-neutral batch speech-to-text, mirroring the `LLM_*` pattern for the
- * transcript pipeline so "voice debrief" works on EVERY browser (the recorder
+ * transcript pipeline so What I Mean works on EVERY browser (the recorder
  * path — the removed live-dictation mic was Chromium/Web-Speech-only).
  *
  * Routing: `LLM_ASR_*` env wins when set; otherwise transcription falls back to
@@ -77,7 +77,7 @@ function asrClient(): OpenAI {
     baseURL: asrBaseUrl(),
     defaultHeaders: {
       'HTTP-Referer': 'http://localhost:3000',
-      'X-Title': 'Voice Debrief',
+      'X-Title': 'What I Mean',
     },
   })
 }

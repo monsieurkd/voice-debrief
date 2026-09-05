@@ -1,4 +1,4 @@
-# Voice Debrief — Knowledge Base
+# What I Mean — Knowledge Base
 
 > Session cache: loaded automatically via `CLAUDE.md` (`@KNOWLEDGE_BASE.md`).
 > This is the distilled, loadable picture of the project — what it is, how it

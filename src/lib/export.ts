@@ -20,7 +20,7 @@ export interface ExportMessageInput {
 }
 
 export interface ExportPayload {
-  app: 'voyo'
+  app: 'what-i-mean'
   version: 1
   exportedAt: string
   conversation: {
@@ -44,7 +44,7 @@ export function buildExportPayload(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   )
   return {
-    app: 'voyo',
+    app: 'what-i-mean',
     version: 1,
     exportedAt: exportedAt.toISOString(),
     conversation: {

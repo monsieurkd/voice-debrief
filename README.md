@@ -1,4 +1,4 @@
-# Voice Debrief
+# What I Mean
 
 [![Live demo](https://img.shields.io/badge/live-demo-2ea44f?style=flat-square)](#) <!-- replace # with the deployment URL — see DEPLOY.md -->
 [![CI](https://img.shields.io/github/actions/workflow/status/monsieurkd/voice-debrief/ci.yml?style=flat-square)](https://github.com/monsieurkd/voice-debrief/actions/workflows/ci.yml)
@@ -126,7 +126,10 @@ CI runs lint + typecheck + test + build on every push.
 ```
 
 See [`PROGRESS.md`](PROGRESS.md) for the detailed build log and
-[`KNOWLEDGE_BASE.md`](KNOWLEDGE_BASE.md) for the project knowledge base.
+[`KNOWLEDGE_BASE.md`](KNOWLEDGE_BASE.md) for the project knowledge base. The
+planned migration from tap-to-record voice to provider-neutral LiveKit realtime
+voice is documented in
+[`docs/realtime-voice-architecture.md`](docs/realtime-voice-architecture.md).
 
 ## License
 

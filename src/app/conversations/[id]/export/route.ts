@@ -31,7 +31,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return new Response(JSON.stringify(payload, null, 2), {
       headers: {
         'Content-Type': 'application/json',
-        'Content-Disposition': `attachment; filename="voyo-conversation-${conversationId}.json"`,
+        'Content-Disposition': `attachment; filename="what-i-mean-conversation-${conversationId}.json"`,
       },
     })
   } catch (e) {

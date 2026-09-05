@@ -1,4 +1,4 @@
-# Voice Debrief — Progress
+# What I Mean — Progress
 
 ## Current state (2026-08-31 — chat pivot)
 
@@ -20,7 +20,7 @@ The sections below are the historical build log leading up to the pivot.
 
 A daily debrief tool, going from single-user v1 to **multi-user SaaS**. Type your day (voice lands in Phase 2) → LLM extracts structured rows → an editable doc → browse entries + check off tomorrow's plan. Design reference: `~/Documents/job/CV/voice-debrief-design-spec.md`.
 
-**Status (2026-08-24):** Phase 2's last commercial blocker — **server-side batch voice STT** — shipped (the "voice debrief" name now keeps its promise in every browser). 78 unit tests + 6 DB suites green, production build green, proxy auth gate active. Next: Phase 3 (commercial launch: billing, legal, beta) with the remaining Phase-2 leftovers below. Earlier: 2026-08-18 vigorous 3-track review (correctness · security · product/market); target decided: **multi-user SaaS**. Phase 0 fixed the correctness/security-hygiene layer; the refinement package made the differentiator visible; Phase 1+2 now close the review's top blockers (auth, tenancy, voice, wait UX, archive/search, streak).
+**Status (2026-08-24):** Phase 2's last commercial blocker — **server-side batch voice STT** — shipped, so What I Mean supports voice in every browser. 78 unit tests + 6 DB suites green, production build green, proxy auth gate active. Next: Phase 3 (commercial launch: billing, legal, beta) with the remaining Phase-2 leftovers below. Earlier: 2026-08-18 vigorous 3-track review (correctness · security · product/market); target decided: **multi-user SaaS**. Phase 0 fixed the correctness/security-hygiene layer; the refinement package made the differentiator visible; Phase 1+2 now close the review's top blockers (auth, tenancy, voice, wait UX, archive/search, streak).
 
 ## What works (as of the pre-pivot review 2026-08-18)
 - **Write** (`/new`, the single entry point): type **or record** → voice is transcoded to mono 16k WAV and transcribed by the ASR gateway (429-retry resilient) → dual-model LLM (strong extraction ‖ fast overview) → editable doc at `/session/[id]`. *(Guided interview removed, then the whole extraction layer removed, in the 2026-08-31 chat pivot.)*

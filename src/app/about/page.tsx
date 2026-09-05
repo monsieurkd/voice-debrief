@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import { Wordmark } from '@/components/ui'
+import { ButtonLink, Wordmark } from '@/components/ui'
 
 /**
- * About & mission — the pitch behind Voyo. Reachable from the logo in the
+ * About & mission — the pitch behind What I Mean. Reachable from the logo in the
  * header. This page owns its own scrolling (the shell is height-locked).
  */
 export default function AboutPage() {
@@ -12,20 +12,20 @@ export default function AboutPage() {
         <div className="mb-10 flex flex-col items-center gap-4 text-center">
           <Wordmark />
           <p className="max-w-lg text-base leading-relaxed text-on-surface-muted">
-            Talk through your day, every day — like giving your mind a workout.
+            Talk your way to what you really mean.
           </p>
         </div>
 
         <div className="flex flex-col gap-10">
           <section>
-            <h2 className="mb-3 font-display text-2xl text-on-surface">Debrief like you train.</h2>
+            <h2 className="mb-3 font-display text-2xl text-on-surface">Say it until it makes sense.</h2>
             <p className="text-[15px] leading-7 text-on-surface-muted">
               Most of us wouldn&apos;t dream of skipping leg day. But your mind? We pour a
               hundred thoughts into it every day and never take the time to sort through them.
             </p>
             <p className="mt-3 text-[15px] leading-7 text-on-surface-muted">
-              Voyo turns mental debriefing into the same kind of habit: a short, honest,
-              daily conversation that clears the noise, catches what matters, and builds
+              What I Mean turns thinking out loud into a simple habit: a short, honest
+              conversation that clears the noise, catches what matters, and builds
               resilience one check-in at a time. Consistency is the goal — not perfection.
             </p>
           </section>
@@ -65,16 +65,13 @@ export default function AboutPage() {
             </p>
           </section>
 
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#2757c9,#3670f0)] px-6 py-2.5 text-sm font-semibold text-on-primary shadow-[0_10px_30px_-12px_rgba(61,123,255,0.45)] transition hover:opacity-90"
-            >
-              Start your debrief
-            </Link>
+          <div className="mt-2 flex flex-col items-center justify-center gap-4 border-t border-glass-border pt-8 sm:flex-row">
+            <ButtonLink href="/chat" className="w-full px-7 sm:w-auto">
+              Start talking
+            </ButtonLink>
             <Link
               href="/login"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-glass-border bg-glass px-6 py-2.5 text-sm font-medium text-on-surface-variant backdrop-blur-xl transition hover:bg-glass-strong hover:text-on-surface"
+              className="text-sm font-medium text-on-surface-muted underline decoration-outline-variant underline-offset-4 transition hover:text-on-surface"
             >
               Log in
             </Link>

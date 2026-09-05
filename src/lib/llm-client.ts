@@ -9,7 +9,7 @@ export const llm = new OpenAI({
   baseURL: env.LLM_BASE_URL,
   defaultHeaders: {
     'HTTP-Referer': 'http://localhost:3000',
-    'X-Title': 'Voice Debrief',
+    'X-Title': 'What I Mean',
   },
 })
 
@@ -26,7 +26,7 @@ export const llmFallback: OpenAI | null =
         baseURL: env.LLM_FALLBACK_BASE_URL,
         defaultHeaders: {
           'HTTP-Referer': 'http://localhost:3000',
-          'X-Title': 'Voice Debrief',
+          'X-Title': 'What I Mean',
         },
       })
     : null

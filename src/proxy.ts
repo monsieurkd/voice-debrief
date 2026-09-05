@@ -6,7 +6,7 @@ import { SESSION_COOKIE, GUEST_COOKIE, SESSION_ISSUER } from '@/lib/session-toke
  * Route gate (Next 16's renamed middleware). Debrief-first routing:
  *
  * - Login/signup stay public (also redirect signed-in/guests away).
- * - `/`, `/new` are ALWAYS reachable — no identity required —
+ * - `/`, `/chat`, and `/new` are ALWAYS reachable — no identity required —
  *   because the core act of the app (the debrief) must sit in front of any
  *   wall. A brand-new visitor lands straight on the debrief; their first
  *   debrief mints an anonymous guest in `runDebrief`.
@@ -22,13 +22,13 @@ import { SESSION_COOKIE, GUEST_COOKIE, SESSION_ISSUER } from '@/lib/session-toke
  */
 
 // Always-reachable: the debrief surfaces, the two auth entry points, and the
-// public mission page (a brand-new visitor must be able to read about Voyo
+// public mission page (a brand-new visitor must be able to read about What I Mean
 // without an account).
 const PUBLIC_PATHS = ['/login', '/signup']
-const DEBRIEF_FIRST_PATHS = ['/', '/new']
+const DEBRIEF_FIRST_PATHS = ['/', '/chat', '/new']
 const PUBLIC_MISSION_PATHS = ['/about']
 
-function isAllowedWithoutIdentity(pathname: string): boolean {
+export function isAllowedWithoutIdentity(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
     DEBRIEF_FIRST_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
     PUBLIC_MISSION_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))

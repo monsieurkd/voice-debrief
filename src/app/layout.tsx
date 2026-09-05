@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Open_Sans, Sora } from 'next/font/google';
+import { Open_Sans, Playwrite_DE_Grund } from 'next/font/google';
 import './globals.css';
 import { SanctuaryShell } from '@/components/shell';
 
@@ -10,16 +10,23 @@ const openSans = Open_Sans({
   display: 'swap',
 });
 
-// Sora is a variable font — one file covers the whole weight axis.
-const sora = Sora({
-  variable: '--font-sora',
-  subsets: ['latin'],
+const playwrite = Playwrite_DE_Grund({
+  variable: '--font-playwrite',
+  weight: ['400'],
   display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: 'Voyo',
-  description: 'Talk it out. A warm AI voice helps you debrief your day — speak or type, and be heard.',
+  title: 'What I Mean',
+  description: 'Talk your way to what you really mean — speak or type, and find the thought underneath.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
+      { url: '/what-i-mean-mark.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/what-i-mean-mark.svg',
+  },
 };
 
 export default function RootLayout({
@@ -30,11 +37,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${openSans.variable} ${sora.variable} h-full antialiased`}
+      className={`${openSans.variable} ${playwrite.variable} h-full antialiased`}
     >
-      {/* Height-locked app shell: the document never scrolls; each page
-          region owns its scrolling (see shell.tsx). */}
-      <body className="flex h-dvh flex-col overflow-hidden">
+      <body className="min-h-full flex flex-col">
         <SanctuaryShell>{children}</SanctuaryShell>
       </body>
     </html>

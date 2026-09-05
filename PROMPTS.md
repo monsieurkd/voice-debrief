@@ -1,4 +1,4 @@
-# Voice Debrief — Ready-to-copy prompt templates
+# What I Mean — Ready-to-copy prompt templates
 
 The working loop these templates feed: **tiny slice → verify → review gate →
 commit**. For code you can move fast; for UI the human (you) is the CI — one

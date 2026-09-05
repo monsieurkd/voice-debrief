@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { chatTurnAction } from '@/actions/chat'
 import { VoiceRecorder } from '@/components/VoiceRecorder'
 import { GhostLoader } from '@/components/ui'
-import type { PersonaId } from '@/lib/personas'
+import { PERSONAS, type PersonaId } from '@/lib/personas'
 
 export interface ChatRow {
   role: 'user' | 'assistant'
@@ -12,7 +12,7 @@ export interface ChatRow {
 }
 
 /**
- * The Voyo chat window — the product's single surface.
+ * The What I Mean chat window — the product's single surface.
  *
  * One continuous conversation view on the deep-blue glass canvas: the assistant
  * carries an animated "listener" orb (pure CSS; the same orb-breathe/ripple
@@ -28,12 +28,14 @@ export function ChatApp({
   initialMessages,
   conversationId: initialConversationId,
   initialPersona = 'warm',
+  onPersonaChange,
 }: {
   initialMessages: ChatRow[]
   conversationId?: number
   /** The voice to apply to the FIRST turn that creates a conversation. After
    *  that the server's stored persona is authoritative (matches chat action). */
   initialPersona?: PersonaId
+  onPersonaChange?: (persona: PersonaId, conversationId: number | null) => void | Promise<void>
 }) {
   const [messages, setMessages] = useState<ChatRow[]>(initialMessages)
   const [input, setInput] = useState('')
@@ -44,6 +46,10 @@ export function ChatApp({
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const personaRef = useRef(initialPersona)
+
+  useEffect(() => {
+    personaRef.current = initialPersona
+  }, [initialPersona])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -174,34 +180,60 @@ export function ChatApp({
 
       {/* Composer — a floating-glass dock, not a cramped strip against the edge. */}
       <div className="border-t border-glass-border bg-surface/70 px-4 pb-5 pt-3 backdrop-blur-xl sm:px-6">
-        <div className="mx-auto flex w-full max-w-2xl items-center gap-3 rounded-3xl border border-glass-border bg-glass p-2 pl-4 shadow-[0_18px_40px_-20px_rgba(2,8,24,0.8)] backdrop-blur-2xl">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                void send(input)
-              }
-            }}
-            placeholder="Say it here… or press the mic."
-            rows={1}
-            disabled={busy}
-            aria-label="Your message"
-            className="max-h-40 flex-1 resize-none bg-transparent py-2 text-[15px] leading-6 text-on-surface placeholder:text-on-surface-muted/60 focus:outline-none"
-          />
-          {/* Mic + Send as two equal, symmetric pill controls. */}
-          <div className="flex shrink-0 items-center gap-2">
-            <VoiceRecorder disabled={busy} onTranscribed={onTranscribed} variant="glass" />
-            <button
-              type="button"
-              onClick={() => void send(input)}
-              disabled={busy || !input.trim()}
-              aria-label="Send"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#2757c9,#3670f0)] text-on-primary shadow-[0_10px_24px_-12px_rgba(61,123,255,0.7)] transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-primary-ring disabled:opacity-40"
+        <div className="mx-auto w-full max-w-2xl rounded-3xl border border-glass-border bg-glass p-2 shadow-[0_18px_40px_-20px_rgba(2,8,24,0.8)] backdrop-blur-2xl">
+          <div className="flex items-center justify-between gap-3 border-b border-glass-border px-2 pb-2 pt-0.5">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-on-surface-muted">
+              Voice
+            </span>
+            <select
+              value={initialPersona}
+              onChange={(event) => {
+                const persona = event.target.value as PersonaId
+                personaRef.current = persona
+                void onPersonaChange?.(persona, conversationId)
+              }}
+              disabled={busy}
+              aria-label="Conversation voice"
+              title={`${PERSONAS[initialPersona].tagline} — applies from the next message`}
+              className="min-h-8 rounded-full border border-glass-border bg-surface-container-low px-3 py-1 text-xs font-medium text-on-surface outline-none transition hover:bg-glass-strong focus-visible:ring-2 focus-visible:ring-secondary-focus-ring disabled:opacity-50"
             >
-              <SendIcon />
-            </button>
+              {Object.values(PERSONAS).map((persona) => (
+                <option key={persona.id} value={persona.id}>
+                  {persona.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-3 pl-2 pt-1">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  void send(input)
+                }
+              }}
+              placeholder="Say it here… or press the mic."
+              rows={1}
+              disabled={busy}
+              aria-label="Your message"
+              className="max-h-40 flex-1 resize-none bg-transparent py-2 text-[15px] leading-6 text-on-surface placeholder:text-on-surface-muted/60 focus:outline-none"
+            />
+            {/* Mic + Send as two equal, symmetric pill controls. */}
+            <div className="flex shrink-0 items-center gap-2">
+              <VoiceRecorder disabled={busy} onTranscribed={onTranscribed} variant="glass" />
+              <button
+                type="button"
+                onClick={() => void send(input)}
+                disabled={busy || !input.trim()}
+                aria-label="Send"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#2757c9,#3670f0)] text-on-primary shadow-[0_10px_24px_-12px_rgba(61,123,255,0.7)] transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-primary-ring disabled:opacity-40"
+              >
+                <SendIcon />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -255,8 +287,8 @@ function ListenerOrbMini({ speaking = false }: { speaking?: boolean }) {
   return (
     <span
       role="img"
-      aria-label="Voyo"
-      title="Voyo"
+      aria-label="What I Mean"
+      title="What I Mean"
       className="grid h-8 w-8 place-items-center rounded-full bg-[radial-gradient(circle_at_32%_28%,#a9c4ff_0%,#3d7bff_48%,#1f4cc9_100%)] shadow-[0_8px_20px_-8px_rgba(61,123,255,0.8)]"
       style={{ animation: speaking ? 'orb-pulse 1s ease-in-out infinite' : 'none' }}
     >

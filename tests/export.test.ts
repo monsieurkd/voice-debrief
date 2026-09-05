@@ -21,7 +21,7 @@ const msgs = [
 
 test('payload carries app/version keys and ISO-8601 exportedAt', () => {
   const p = buildExportPayload(conv, msgs, exportedAt)
-  assert.equal(p.app, 'voyo')
+  assert.equal(p.app, 'what-i-mean')
   assert.equal(p.version, 1)
   assert.equal(p.exportedAt, '2026-09-01T12:00:00.000Z')
 })

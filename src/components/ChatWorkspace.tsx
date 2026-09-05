@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { getConversationAction, listConversationsAction, setConversationPersonaAction } from '@/actions/chat'
 import { ChatApp, type ChatRow } from '@/components/ChatApp'
 import { IconPlus } from '@/components/ui'
-import { PERSONAS, personaById, type PersonaId } from '@/lib/personas'
+import { personaById, type PersonaId } from '@/lib/personas'
 
 export interface ConversationSummary {
   id: number
@@ -79,15 +79,16 @@ export function ChatWorkspace() {
   }, [])
 
   const changePersona = useCallback(
-    async (persona: PersonaId) => {
+    async (persona: PersonaId, conversationId?: number | null) => {
       // Only persisted for an already-saved conversation; a fresh (unsaved)
       // draft just remembers it locally for the next first turn.
       setActivePersona(persona)
-      if (activeId == null) return
-      const res = await setConversationPersonaAction({ conversationId: activeId, persona })
+      const targetId = conversationId ?? activeId
+      if (targetId == null) return
+      const res = await setConversationPersonaAction({ conversationId: targetId, persona })
       if (res.ok) {
         setConversations((cs) =>
-          cs.map((c) => (c.id === activeId ? { ...c, persona } : c)),
+          cs.map((c) => (c.id === targetId ? { ...c, persona } : c)),
         )
       }
     },
@@ -111,35 +112,6 @@ export function ChatWorkspace() {
             <IconPlus className="h-4 w-4" />
             New voice chat
           </button>
-        </div>
-
-        {/* Personality selector — the voice behind this conversation. */}
-        <div className="px-3 pb-2">
-          <p className="px-1 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface-muted">
-            Voice
-          </p>
-          <div className="flex flex-col gap-1">
-            {Object.values(PERSONAS).map((p) => {
-              const active = activePersona === p.id
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => void changePersona(p.id)}
-                  title={`${p.tagline} — applies from the next message`}
-                  aria-pressed={active}
-                  className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm transition ${
-                    active ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-muted hover:bg-glass-strong hover:text-on-surface'
-                  }`}
-                >
-                  <span className="font-medium">{p.label}</span>
-                  {active && (
-                    <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  )}
-                </button>
-              )
-            })}
-          </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2 pb-3" aria-label="Past conversations">
@@ -205,6 +177,7 @@ export function ChatWorkspace() {
             initialMessages={messages}
             conversationId={activeId ?? undefined}
             initialPersona={activePersona}
+            onPersonaChange={changePersona}
             // Force a true remount whenever a fresh draft starts.
             key={activeId ?? `new-${sessionId}`}
           />
