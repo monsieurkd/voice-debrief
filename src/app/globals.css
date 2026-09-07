@@ -21,10 +21,10 @@
   --color-surface-tint: #575f65;
 
   /* Semantic roles */
-  --color-primary: #575f65;
+  --color-primary: #35678a;
   --color-on-primary: #ffffff;
-  --color-primary-container: #f0f8ff;
-  --color-on-primary-container: #6a7278;
+  --color-primary-container: #e4edf6;
+  --color-on-primary-container: #1f4462;
   --color-secondary-container: #d6e4f0;
   --color-on-secondary-container: #596670;
   --color-tertiary-container: #f2f8ff;
@@ -47,10 +47,10 @@
   --color-on-error-container: #93000a;
 
   /* Interaction state fills */
-  --color-primary-focus: #41484f;
-  --color-primary-active: #33393f;
-  --color-primary-ring: #6a7278;
-  --color-secondary-focus-ring: #5b6b78;
+  --color-primary-focus: #2d5877;
+  --color-primary-active: #274c67;
+  --color-primary-ring: #8fb0c9;
+  --color-secondary-focus-ring: #6b8498;
 
   /* Fonts */
   --font-sans: var(--font-open-sans), ui-sans-serif, system-ui, sans-serif;
@@ -133,16 +133,18 @@ body::before { display: none; }
   border: 1px solid var(--color-glass-border);
 }
 
-/* Floating vibrancy card: glass panel lifted by a deep ambient shadow. */
+/* Floating vibrancy card: translucent glass panel over the lavender-white
+   canvas, lifted gently. Reads as a floating sanctuary pane, not a flat white
+   utility card. */
 .float-card {
-  background: var(--color-surface-container-lowest);
-  backdrop-filter: blur(24px) saturate(1.4);
-  -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  border: 1px solid var(--color-glass-border);
+  background: rgba(252, 253, 255, 0.74);
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  border: 1px solid rgba(246, 248, 255, 0.9);
   border-radius: 1.5rem;
   box-shadow:
-    0 24px 48px -20px rgba(87, 95, 101, 0.25),
-    0 2px 8px -4px rgba(87, 95, 101, 0.12);
+    0 24px 48px -22px rgba(60, 84, 112, 0.22),
+    0 2px 10px -6px rgba(60, 84, 112, 0.12);
 }
 
 /* Ghost loader: breathing line. Attach an inline animation-delay to stagger. */

@@ -142,7 +142,8 @@ export function ChatWorkspace() {
                 >
                   <span
                     aria-hidden
-                    className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[radial-gradient(circle_at_32%_28%,#a9c4ff_0%,#3d7bff_48%,#1f4cc9_100%)]"
+                    className="grid h-5 w-5 shrink-0 place-items-center rounded-full"
+                    style={{ background: personaById(c.persona).aura }}
                   >
                     <span className="flex items-center gap-[1.5px]">
                       <span className="h-[3px] w-[3px] rounded-full bg-white/95" />

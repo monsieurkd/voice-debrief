@@ -38,8 +38,9 @@ export function IconPlus({ className }: { className?: string }) {
 }
 
 /** Primary pill button (the "act" button for send, save, and continue).
-    Carries the same azure gradient as the user chat bubble so the two
-    "you act" affordances read as one voice; the glow lifts on hover. */
+    Uses the `primary` slate-blue token family and a soft neutral elevation;
+    the glow lifts slightly on hover. Keep every "you act" affordance on this
+    tone so the chat, forms and CTAs read as one voice. */
 export function Button({
   children,
   className = '',
@@ -49,7 +50,7 @@ export function Button({
     <button
       {...rest}
       className={`${PILL_BASE} bg-primary text-on-primary font-semibold
-        shadow-[0_10px_30px_-12px_rgba(87,95,101,0.45)]
+        shadow-[0_12px_28px_-14px_rgba(51,81,107,0.55)]
         hover:bg-primary-focus active:bg-primary-active
         focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface
         disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
@@ -71,8 +72,8 @@ export function ButtonLink({
   className?: string
 }) {
   const look = variant === 'primary'
-    ? 'bg-primary text-on-primary font-semibold shadow-[0_10px_30px_-12px_rgba(87,95,101,0.45)] hover:bg-primary-focus active:bg-primary-active'
-    : 'border border-white/80 bg-white/60 text-on-secondary-container shadow-sm backdrop-blur-xl hover:bg-white/95'
+    ? 'bg-primary text-on-primary font-semibold shadow-[0_12px_28px_-14px_rgba(51,81,107,0.55)] hover:bg-primary-focus active:bg-primary-active'
+    : 'border border-surface-container-high bg-primary-container/60 text-on-secondary-container backdrop-blur-xl hover:bg-glass-strong hover:text-on-surface'
   return <Link href={href} className={`${PILL_BASE} ${look} ${className}`}>{children}</Link>
 }
 

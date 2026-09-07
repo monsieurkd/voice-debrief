@@ -28,10 +28,10 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </Card>
         <p className="mt-6 text-center text-sm text-on-surface-muted">
           New here?{' '}
-          <Link href={`/signup${safeNext !== '/' ? `?next=${encodeURIComponent(safeNext)}` : ''}`} className="font-medium text-on-secondary-container underline underline-offset-2 hover:text-on-surface">
+          <Link href={`/signup${safeNext !== '/' ? `?next=${encodeURIComponent(safeNext)}` : ''}`} className="font-medium text-primary underline-offset-2 hover:text-on-surface">
             Create an account
           </Link>{' '}
-          to bring your saved debriefs with you.
+          to start talking — nothing to lose, nothing to keep unless you say so.
         </p>
       </div>
     </main>

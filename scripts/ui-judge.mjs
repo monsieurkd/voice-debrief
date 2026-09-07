@@ -37,20 +37,24 @@ const MODEL = process.env.LLM_VISION_MODEL ?? 'deepseek-v4-flash-vision-exp'
 // One-line context per screen — the judge needs to know what each page IS to
 // judge whether its primary action is obvious. Keep in sync with ui-shots.mjs.
 const SCREEN_GUIDE = {
-  home: 'Voyo\'s product landing — it IS the chat app. A visitor lands here without logging in. The "What is Voyo?" greeting card, the message composer ("Write or speak your day…") and the send + mic buttons are the whole screen on mobile; on desktop there is also a past-conversation sidebar ("New voice chat", "Voice" personas, "Journal").',
+  home: 'The product landing page (guest-first, no login required): a center-aligned wordmark ("What I Mean"), the tagline "A quiet place to think out loud.", a display-font headline ("Say it messily. / Find what matters.") and a small set of invitation links. Its job is to feel calm and intentional, not like a sales page.',
+  chat: 'The core chat window at /chat (guest can open it). The empty state: a calm "listener" orb in the logo language, a persona label (e.g. "Warm listener ·"), a short invitation, and a floating composer dock with a voice selector ("Voice" pill + a persona colour swatch), a mic button and a primary send pill. This is the product\'s main "digital sanctuary" surface — the mental-health calm-factor axis matters most here.',
   login: 'The login page: wordmark, a short line of copy, one card with the sign-in form, and a "Create an account" link beneath.',
   signup: 'The signup page: wordmark, a short line of copy, one card with the account-creation form, and a "Log in" link beneath.',
   notfound: 'The 404 page: "That page isn\'t here", one sentence of copy, and two actions ("Back to Home" primary pill + a text link).',
 }
 
 const SYSTEM = `You are a strict senior product UI reviewer. You grade a screenshot of
-the "Voyo" app (a private voice-first journal/chat) against a written rubric.
+"What I Mean", a private voice-first mental-wellbeing journal/chat ("digital sanctuary").
+against a written rubric.
 The app has a locked design system: semantic color tokens (surface / on-surface
-/ on-surface-muted / primary / primary-container / outline-variant …) defined
-in src/app/globals.css and shared primitives in src/components/ui.tsx
-(Button, Card, Field, Wordmark, GhostLoader). The canvas is a flat light grey,
-white panes with hairline borders, one restrained blue accent, one radius
-family, a 4px spacing rhythm and a small fixed elevation scale.
+/ on-surface-muted / primary / primary-container / meditative-lavender /
+outline-variant …) defined in src/app/globals.css and shared primitives in
+src/components/ui.tsx (Button, Card, Field, Wordmark, GhostLoader, …). The
+canvas is a soft near-white calm wash, translucent hairline "glass" panes, one
+muted slate-blue action accent (primary), plus the assistant/persona "aura"
+hues (lavender / sage green / slate-blue) used ONLY as the listener's identity.
+Calm and low-stress is the product promise — cold, generic or harsh = wrong.
 
 Rules of the job:
 1. Judge ONLY what is visible in the static screenshot. Do not infer

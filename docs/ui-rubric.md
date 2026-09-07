@@ -6,27 +6,36 @@ the executable spec — edit it when the design language changes, and the loop
 follows automatically.
 
 The anchor: **the tokens in `src/app/globals.css` and the primitives in
-`src/components/ui.tsx` are the only source of truth.** Voyo's visual contract:
+`src/components/ui.tsx` are the only source of truth.** Their visual contract:
 
-- Canvas: flat light grey (`surface`), white panes (`glass` / `surface-bright`)
-  with **hairline borders** (`outline-variant`), **no** floating-glass
-  translucency or decorative gradients.
-- One restrained blue accent (`primary`) used for the primary action, links,
-  active states and focus — never for decoration. Error text only in `error`
-  tokens. Neutral surfaces carry the page (60/30/10: ~60% neutral canvas,
-  ~30% panels, ~10% accent).
+- Canvas: a soft, pale lavender-white wash (`surface` #f7f9ff) with translucent
+  hairline-bordered "glass" panels (`glass`, `glass-strong`) that float over it
+  with a subtle backdrop blur — a calm, airy sanctuary canvas, not a flat grey
+  dashboard. No mist-drift, no heavy shadows, nothing harsh.
+- One restrained slate action accent (`primary`) drives the primary buttons,
+  links and the commerce/sanctuary pill (Button, ButtonLink, primary calls to
+  action). Error only in `error` tokens. ~60% neutral canvas, ~30% panels,
+  ~10% accent. The send control / user bubble may use a single vivid azure in
+  the same family ONLY if it is also tokenized in globals.css — otherwise fall
+  back to `primary`.
+- The assistant/listener carries its own calm identity via curated soft
+  persona "aura" hues (`meditative-lavender` lavender for warm / sage for
+  friend / slate-blue for coach). A persona shows ONE quiet hue and only on the
+  listener cue (orb/avatar/swatch dot) so the listener reads as a person. The
+  user's own actions stay the action accent above. Three vivid accents or
+  persona hue leaking onto non-listener UI = an over-accent problem.
 - Text ink from the `on-surface` scale (`on-surface` / `-variant` / `-muted`).
   Body copy ~15-16px, secondary ~13-14px, nothing under 12px, nothing muted
   that a user must read as primary.
 - Spacing on the 4px rhythm (4/8/12/16/24/32…). One radius family
   (rounded-lg/xl/2xl + the pill buttons). Elevation only via the documented
   `.elev-1/.elev-2` scale — no one-off box-shadows.
-- Headings in the display font (Sora), body in Open Sans — no third font, no
-  more than 2-3 weights visible on one screen.
+- Headings in the display font (Playwrite DE Grund), body in Open Sans — no
+  third font, no more than 2-3 weights visible on one screen.
 
 ## Scoring (1-10)
 
-Judge each screenshot on all six axes, weighted by severity:
+Judge each screenshot on all seven axes, weighted by severity:
 
 1. **Token discipline** — do colours, fonts, radii, shadows look like they come
    from one system, or are there invented values (a hex colour that is not a
@@ -46,6 +55,16 @@ Judge each screenshot on all six axes, weighted by severity:
 6. **Mobile (390px) / responsive** — no horizontal scroll, no clipped or
    overflowed text, tap targets ≈44px tall, the layout is a sane one-column
    reading flow.
+7. **Calm factor (wellness resonance)** — this is a mental-health / reflective
+   product, so the aesthetic must read as a restful "sanctuary", not a generic
+   utility SaaS. Judge whether the surface palette, accent and rhythm feel calm
+   and human (soft near-neutral canvas, breathing room, at most two gentle hue
+   presences — user `primary` + one listener persona cue), or whether it feels
+   corporate/cold, cluttered, or hospital-like. Prefer token-level notes: which
+   `glass` / `surface-container` step or which existing lavender/emerald persona
+   tint would warm or decompress a spot. Never invent a new palette. A screen
+   that is technically clean but reads emotionally cold/stressful should score
+   below its otherwise-solid technical marks on this axis.
 
 Then fold them into the single `**Overall: n/10**`:
 

@@ -38,7 +38,7 @@ export default async function Home() {
           <h2 className="mt-9 font-display text-3xl leading-tight text-on-surface sm:text-4xl">
             Say it messily.<br />Find what matters.
           </h2>
-          <p className="mx-auto mt-5 max-w-md text-[15px] leading-7 text-on-surface-muted">
+          <p className="mx-auto mt-6 max-w-md text-[15px] leading-7 text-on-surface-variant">
             Speak freely. A thoughtful voice will listen, ask one useful question at a time,
             and help you find what you really mean.
           </p>
@@ -46,7 +46,7 @@ export default async function Home() {
 
         <Card className="mt-8 p-3 sm:p-4">
           <div className="rounded-[1.1rem] bg-surface-container-low px-5 py-5 text-center sm:px-7">
-            <p className="text-sm leading-6 text-on-surface-muted">
+            <p className="text-sm leading-6 text-on-surface-variant">
               No forms. No need to be polished. Start wherever you are.
             </p>
             <ButtonLink href="/chat" className="mt-5 w-full">Start talking</ButtonLink>

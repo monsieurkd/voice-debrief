@@ -22,8 +22,8 @@ export default async function SignupPage({
           <Wordmark />
           <p className="mt-2 text-sm text-on-surface-muted">
             {hasGuest
-              ? 'Create an account and your saved debriefs fold straight into your journal.'
-              : 'Turn your debriefs into a compounding, private journal.'}
+              ? 'Create an account and your saved conversations fold straight into your journal.'
+              : 'Start somewhere new — a quiet, private place to think.'}
           </p>
         </div>
         <Card className="p-8">
@@ -33,7 +33,7 @@ export default async function SignupPage({
           Already have an account?{' '}
           <Link
             href={safeNext !== '/' ? `/login?next=${encodeURIComponent(safeNext)}` : '/login'}
-            className="font-medium text-on-secondary-container underline underline-offset-2 hover:text-on-surface"
+            className="font-medium text-primary underline-offset-2 hover:text-on-surface"
           >
             Log in
           </Link>

@@ -49,8 +49,16 @@ const SHOTS = [
   {
     name: 'home',
     path: '/',
-    // the empty-greeting card — guest-first landing
-    wait: text('What is Voyo?', { exact: true }),
+    // Guest-first landing: wordmark + short invitation hero.
+    wait: text('Say it messily.'),
+  },
+  {
+    name: 'chat',
+    path: '/chat',
+    // The chat window — the product's core surface. The empty state shows the
+    // listener orb + persona cue + composer; the calendar-ish side is just the
+    // welcome. Prove the welcome drew before shooting.
+    wait: text("I'm here. How was your day?", { exact: false }),
   },
   {
     name: 'login',
@@ -80,6 +88,11 @@ const VIEWPORTS = [
 ]
 
 function parseFilter() {
+  const eq = process.argv.find((a) => a.startsWith('--filter='))
+  if (eq) {
+    const value = eq.slice('--filter='.length)
+    return value ? new Set(value.split(',').map((s) => s.trim()).filter(Boolean)) : null
+  }
   const flag = process.argv.indexOf('--filter')
   if (flag === -1) return null
   const value = process.argv[flag + 1]
@@ -87,7 +100,7 @@ function parseFilter() {
   return new Set(value.split(',').map((s) => s.trim()).filter(Boolean))
 }
 
-// Mint a signed guest token (vd_guest) so proxy.ts lets an anonymous browser
+// Mint a signed guest token (wim_guest) so proxy.ts lets an anonymous browser
 // reach the 404. Needs the app's AUTH_SECRET; shape/signing mirrors
 // src/lib/session-token.ts (guest:true claim, HS256, SESSION_ISSUER).
 async function guestCookie() {
@@ -95,7 +108,7 @@ async function guestCookie() {
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject('1') // the proxy never checks the id against the DB for the 404
     .setIssuedAt()
-    .setIssuer('voice-debrief')
+    .setIssuer('what-i-mean')
     .setExpirationTime('1d')
     .sign(new TextEncoder().encode(process.env.AUTH_SECRET ?? ''))
 }
@@ -134,7 +147,7 @@ async function main() {
         }
         await context.addCookies([
           {
-            name: 'vd_guest',
+            name: 'wim_guest',
             value: await guestCookie(),
             domain: new URL(BASE).hostname,
             httpOnly: true,
