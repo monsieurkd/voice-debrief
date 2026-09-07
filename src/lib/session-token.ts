@@ -8,17 +8,17 @@ import { SignJWT, jwtVerify } from 'jose'
  * from node:test, and safe to reuse inside proxy.ts if ever needed.
  */
 
-export const SESSION_COOKIE = 'vd_session'
+export const SESSION_COOKIE = 'wim_session'
 export const SESSION_TTL_DAYS = 30
 // Guest cookie: identities a debrief-first visitor so their anonymous sessions
 // can be adopted onto a real account later (deferred attribution). A guest is
 // just a users row with email/password NULL. Separate cookie so it can't be
 // confused with a real sign-in.
-export const GUEST_COOKIE = 'vd_guest'
+export const GUEST_COOKIE = 'wim_guest'
 export const GUEST_TTL_DAYS = 60
 // Exported for src/proxy.ts, which re-verifies tokens and must stay decoupled
 // from app modules (per the proxy docs); this pure module is its one exception.
-export const SESSION_ISSUER = 'voice-debrief'
+export const SESSION_ISSUER = 'what-i-mean'
 
 export interface SessionUser {
   id: number

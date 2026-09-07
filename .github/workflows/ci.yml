@@ -35,18 +35,18 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: voice
-          POSTGRES_PASSWORD: voice
-          POSTGRES_DB: voicedebrief
+          POSTGRES_USER: what_i_mean
+          POSTGRES_PASSWORD: what_i_mean
+          POSTGRES_DB: what_i_mean
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U voice -d voicedebrief"
+          --health-cmd "pg_isready -U what_i_mean -d what_i_mean"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
     env:
-      DATABASE_URL: postgres://voice:voice@localhost:5432/voicedebrief
+      DATABASE_URL: postgres://what_i_mean:what_i_mean@localhost:5432/what_i_mean
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

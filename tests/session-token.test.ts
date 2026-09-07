@@ -56,7 +56,7 @@ test('claims without a usable sub or email are rejected', async () => {
   const key = new TextEncoder().encode(authSecret())
   const noSub = await new SignJWT({ email: 'a@example.com' })
     .setProtectedHeader({ alg: 'HS256' })
-    .setIssuer('voice-debrief')
+    .setIssuer('what-i-mean')
     .setExpirationTime('1d')
     .sign(key)
   assert.equal(await verifySessionToken(noSub), null)

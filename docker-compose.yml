@@ -1,22 +1,22 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: voicedebrief-db
+    container_name: what-i-mean-db
     environment:
-      POSTGRES_USER: voice
+      POSTGRES_USER: what_i_mean
       # Local-only dev default; override for anything less ephemeral.
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voice}
-      POSTGRES_DB: voicedebrief
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-what_i_mean}
+      POSTGRES_DB: what_i_mean
     ports:
       # Loopback only, never expose password-authed Postgres to the network.
       - '127.0.0.1:5432:5432'
     volumes:
-      - voicedebrief_pgdata:/var/lib/postgresql/data
+      - what_i_mean_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U voice -d voicedebrief"]
+      test: ["CMD-SHELL", "pg_isready -U what_i_mean -d what_i_mean"]
       interval: 5s
       timeout: 3s
       retries: 10
 
 volumes:
-  voicedebrief_pgdata:
+  what_i_mean_pgdata:

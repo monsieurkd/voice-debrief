@@ -18,7 +18,7 @@ The sections below are the historical build log leading up to the pivot.
 
 ## History (pre-pivot: a structured-journal app)
 
-A daily debrief tool, going from single-user v1 to **multi-user SaaS**. Type your day (voice lands in Phase 2) → LLM extracts structured rows → an editable doc → browse entries + check off tomorrow's plan. Design reference: `~/Documents/job/CV/voice-debrief-design-spec.md`.
+A daily debrief tool, going from single-user v1 to **multi-user SaaS**. Type your day (voice lands in Phase 2) → LLM extracts structured rows → an editable doc → browse entries + check off tomorrow's plan. Design reference: `~/Documents/job/CV/what-i-mean-design-spec.md`.
 
 **Status (2026-08-24):** Phase 2's last commercial blocker, **server-side batch voice STT**, has shipped, so What I Mean supports voice in every browser. 78 unit tests + 6 DB suites are green, the production build is green, and the proxy auth gate is active. Next: Phase 3 (commercial launch: billing, legal, beta) with the remaining Phase-2 leftovers below. Earlier: a vigorous 3-track review on 2026-08-18 (correctness · security · product/market) set the target as **multi-user SaaS**. Phase 0 fixed the correctness/security-hygiene layer; the refinement package made the differentiator visible; Phase 1+2 now close the review's top blockers (auth, tenancy, voice, wait UX, archive/search, streak).
 
@@ -49,7 +49,7 @@ Note: no `proxy.ts`/middleware exists yet. The auth gate lands in Phase 1 (in Ne
 
 ## Stack & setup
 Next 16 (App Router, TS, Tailwind v4) · Postgres + Drizzle (node-postgres) · Zod v4 · openai v6 SDK.
-`cp .env.example .env.local`; fill `LLM_API_KEY`; `npm run db:migrate && npm run db:seed && npm run dev`. DB uses an isolated `voice` role + `voicedebrief` database on the local brew Postgres. Full details in `README.md`.
+`cp .env.example .env.local`; fill `LLM_API_KEY`; `npm run db:migrate && npm run db:seed && npm run dev`. DB uses an isolated `what_i_mean` role + `what_i_mean` database on the local brew Postgres. Full details in `README.md`.
 
 ## Models / provider
 Provider-neutral `LLM_*` env. Currently the **Z.ai Coding Plan** endpoint: `LLM_BASE_URL=https://api.z.ai/api/coding/paas/v4`, `LLM_MODEL=glm-4.6` (strong, thinking), `LLM_SMALL_MODEL=glm-4.5-air` (fast; overview + interview driver).

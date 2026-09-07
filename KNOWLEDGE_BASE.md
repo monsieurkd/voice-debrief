@@ -25,7 +25,7 @@ being whatever the conversation produced (the transcript + a title).
 **Guest-first onboarding (kept).** The chat sits in front of any auth wall. A
 brand-new visitor lands on `/` and can chat immediately: their first turn mints
 an anonymous **guest** user (a `users` row with `email`/`password_hash` NULL,
-identified by a signed `vd_guest` cookie). When they later sign up / log in,
+identified by a signed `wim_guest` cookie). When they later sign up / log in,
 their guest conversations are **adopted** onto the real account
 (`adoptGuestData` in `src/lib/adopt.ts`) and the guest row is deleted. Login is
 a quiet pill, never a gate.

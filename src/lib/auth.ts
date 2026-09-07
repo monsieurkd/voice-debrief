@@ -43,7 +43,7 @@ export class UnauthorizedError extends Error {
 }
 
 /**
- * The current guest user id from the signed `vd_guest` cookie, or null.
+ * The current guest user id from the signed `wim_guest` cookie, or null.
  * A guest is a users row with email/password NULL. Guests debrief first and
  * adopt their data onto a real account later (deferred attribution).
  */

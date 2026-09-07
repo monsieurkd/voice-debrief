@@ -28,7 +28,7 @@
 
 ## Push
 `git push -u origin main` published `cb4a953..444b42e` to
-`github.com/monsieurkd/voice-debrief`. Verified: local `main` == `origin/main`
+`github.com/monsieurkd/what-i-mean`. Verified: local `main` == `origin/main`
 == `444b42e`; `main` tracks `origin/main`; zero commits left unpushed.
 
 ## Also created today (not committed yet)

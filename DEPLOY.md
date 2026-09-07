@@ -7,7 +7,7 @@ session cookie/adoption keeps conversations per visitor.
 
 ## 1. Hosted Postgres (Neon free tier)
 
-1. Sign up at [neon.tech](https://neon.tech) → **Create project** (e.g. `voice-debrief-demo`).
+1. Sign up at [neon.tech](https://neon.tech) → **Create project** (e.g. `what-i-mean-demo`).
 2. Copy the **pooled** connection string (the one on the `-pooler` host), append
    `?sslmode=require`. It looks like:
    ```
@@ -38,7 +38,7 @@ after migrating: `DELETE FROM users WHERE email = 'you@example.com'`.)
 ## 3. Deploy on Vercel
 
 1. Push this repo to GitHub first (if you haven't).
-2. [vercel.com](https://vercel.com) → **Add New → Project** → import `voice-debrief`.
+2. [vercel.com](https://vercel.com) → **Add New → Project** → import `what-i-mean`.
 3. Environment Variables (Production + Preview):
    - `DATABASE_URL` = the same Neon pooled URL
    - `AUTH_SECRET` = a random 32-byte secret: `openssl rand -base64 32` (signs

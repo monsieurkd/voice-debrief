@@ -1,7 +1,7 @@
 # What I Mean
 
 [![Live demo](https://img.shields.io/badge/live-demo-2ea44f?style=flat-square)](#) <!-- replace # with the deployment URL; see DEPLOY.md -->
-[![CI](https://img.shields.io/github/actions/workflow/status/monsieurkd/voice-debrief/ci.yml?style=flat-square)](https://github.com/monsieurkd/voice-debrief/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/monsieurkd/what-i-mean/ci.yml?style=flat-square)](https://github.com/monsieurkd/what-i-mean/actions/workflows/ci.yml)
 
 > Talk it out. Whether you speak or type, a warm, attentive AI voice helps you
 > through your day, asks what matters, and speaks back. Past chats
@@ -57,8 +57,8 @@ and TTS.
 ## Quick start (bring your own API key)
 
 ```bash
-git clone https://github.com/monsieurkd/voice-debrief.git
-cd voice-debrief
+git clone https://github.com/monsieurkd/what-i-mean.git
+cd what-i-mean
 npm install
 cp .env.example .env.local      # fill in LLM_API_KEY + provider, and AUTH_SECRET:
 openssl rand -base64 32         # ← paste the output as AUTH_SECRET
@@ -68,8 +68,8 @@ One-time Postgres setup (run as a superuser; local dev only, and pick a real
 password for anything exposed beyond loopback):
 
 ```sql
-CREATE ROLE voice LOGIN PASSWORD 'voice';
-CREATE DATABASE voicedebrief OWNER voice;
+CREATE ROLE what_i_mean LOGIN PASSWORD 'what_i_mean';
+CREATE DATABASE what_i_mean OWNER what_i_mean;
 ```
 
 Then:
