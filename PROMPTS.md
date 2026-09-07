@@ -31,7 +31,9 @@ Verify (required; no change is done until this runs):
 - npm run typecheck && npm run lint && npm test
 - npm run build  (if this touches server components / routes / actions)
 - [UI screens:] capture + attach a screenshot of the changed screen, and state
-  how it meets the "Done when" outcome.
+  how it meets the "Done when" outcome. When a dev server + vision key are
+  available, run the UI-QA loop instead (see docs/ui-qa-loop.md):
+  npm run ui:shots && npm run ui:judge — attach the report and the shot.
 - Report each command's actual result. If anything can't run, name why.
 ```
 

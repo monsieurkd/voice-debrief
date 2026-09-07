@@ -44,6 +44,9 @@ next-env.d.ts
 # Local Claude Code artifacts (worktrees, plans)
 .claude/
 
+# UI QA loop artifacts (screenshots + reports are generated, never committed)
+/.ui-shots/
+
 # Reasonix local tool config
 reasonix.toml
 .reasonix/
