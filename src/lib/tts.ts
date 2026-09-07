@@ -48,6 +48,6 @@ export async function synthesizeSpeech(text: string): Promise<string | null> {
     const buf = Buffer.from(await res.arrayBuffer())
     return buf.toString('base64')
   } catch {
-    return null // voice is a nicety — never block the text reply over it
+    return null // Voice is a nicety; never block the text reply over it.
   }
 }

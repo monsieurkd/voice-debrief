@@ -4,16 +4,16 @@ import { env } from './env'
 /**
  * Provider-neutral batch speech-to-text, mirroring the `LLM_*` pattern for the
  * transcript pipeline so What I Mean works on EVERY browser (the recorder
- * path — the removed live-dictation mic was Chromium/Web-Speech-only).
+ * path; the removed live-dictation mic was Chromium/Web-Speech-only).
  *
  * Routing: `LLM_ASR_*` env wins when set; otherwise transcription falls back to
- * the same base URL + key + headers as the main LLM provider — so OpenAI / Z.ai /
+ * the same base URL + key + headers as the main LLM provider. OpenAI / Z.ai /
  * Gemini / OpenRouter works with ZERO extra configuration. The audio file never
  * leaves whatever endpoint this points at, which matters for the BYOK/privacy
  * wedge (the operator controls where ASR runs).
  *
  * Failure is surfaced as a typed error the action can map to a user-safe cause
- * (see summarizeAsrError) — never leaks provider internals to the client.
+ * (see summarizeAsrError) and never leaks provider internals to the client.
  */
 
 /** Something went wrong talking to the transcription endpoint. */
@@ -27,7 +27,7 @@ export class AsrError extends Error {
 /** The transcription endpoint isn't / can't be configured to run at all. */
 export class AsrUnconfiguredError extends AsrError {
   constructor() {
-    super("Speech-to-text isn't configured — add an LLM API key (or LLM_ASR_*) and try again.")
+    super("Speech-to-text isn't configured. Add an LLM API key (or LLM_ASR_*) and try again.")
     this.name = 'AsrUnconfiguredError'
   }
 }
@@ -89,7 +89,7 @@ function asrClient(): OpenAI {
 export async function transcribeAudio(audioBlob: Blob, filename: string): Promise<string> {
   if (!asrConfigured()) throw new AsrUnconfiguredError()
 
-  // Node 20+ exports `File` (a `Blob` subclass with a `name`) — the exact shape
+  // Node 20+ exports `File` (a `Blob` subclass with a `name`), which is the exact shape
   // the openai SDK's multipart upload accepts.
   const file =
     typeof File !== 'undefined' && audioBlob instanceof Blob && typeof File === 'function'
@@ -98,7 +98,7 @@ export async function transcribeAudio(audioBlob: Blob, filename: string): Promis
 
   // Groq free-tier is throttled hard; 429s are common. Retry transient failures
   // with exponential backoff so a busy moment doesn't silently kill a clip the
-  // user went to the trouble of recording (bounded — we never loop forever).
+  // user went to the trouble of recording. It is bounded, so we never loop forever.
   const TRANSPORT_ATTEMPTS = 3
   let transportTries = 0
 
@@ -119,10 +119,10 @@ export async function transcribeAudio(audioBlob: Blob, filename: string): Promis
       // endpoint configured as the default). That's an env problem, not retryable.
       if (cause.includes('404') || cause.includes('not found') || cause.includes('path')) {
         throw new AsrError(
-          'This provider does not expose a /transcriptions endpoint — set LLM_ASR_BASE_URL/LLM_ASR_API_KEY to a Whisper-capable ASR service.',
+          'This provider does not expose a /transcriptions endpoint. Set LLM_ASR_BASE_URL/LLM_ASR_API_KEY to a Whisper-capable ASR service.',
         )
       }
-      // A 429/5xx/timeout/connection hiccup is transient on free tiers — wait
+      // A 429/5xx/timeout/connection hiccup is transient on free tiers. Wait
       // and retry a bounded number of times before surfacing a typed failure.
       if (isRetryable(cause)) {
         transportTries++
@@ -141,7 +141,7 @@ export async function transcribeAudio(audioBlob: Blob, filename: string): Promis
     }
 
     const clean = text.trim()
-    if (!clean) throw new AsrError('Nothing could be heard in that recording — try again in a quiet spot.')
+    if (!clean) throw new AsrError('Nothing could be heard in that recording. Try again in a quiet spot.')
     return clean
   }
 }
@@ -152,17 +152,17 @@ export function summarizeAsrError(e: unknown): string {
   if (e instanceof AsrError) {
     const raw = (e as AsrError & { causeText?: string }).causeText ?? e.message.toLowerCase()
     if (raw.includes('401') || raw.includes('api key') || raw.includes('unauthorized')) {
-      return 'The speech-to-text key was rejected — check LLM_ASR_API_KEY.'
+      return 'The speech-to-text key was rejected. Check LLM_ASR_API_KEY.'
     }
     // A retried transient failure (still busy after backoffs): tell the user to
-    // nudge it, with the one hint they have control over — wait and retry.
+    // nudge it with the one option they control: wait and retry.
     if (e instanceof AsrTransientError) return e.message
     if (raw.includes('429') || raw.includes('rate limit')) {
-      return 'The speech-to-text service is rate-limited right now — wait a minute and try again.'
+      return 'The speech-to-text service is rate-limited right now. Wait a minute and try again.'
     }
-    if (raw.includes('timeout') || raw.includes('timed out')) return 'The transcription timed out — try again.'
-    if (raw.includes('file too large')) return 'That recording is too long — keep it under a couple of minutes.'
+    if (raw.includes('timeout') || raw.includes('timed out')) return 'The transcription timed out. Try again.'
+    if (raw.includes('file too large')) return 'That recording is too long. Keep it under a couple of minutes.'
     return e.message
   }
-  return 'Could not transcribe the recording — try again.'
+  return 'Could not transcribe the recording. Try again.'
 }

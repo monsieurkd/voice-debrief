@@ -34,7 +34,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   return row?.email != null ? { id: row.id, email: row.email } : null
 })
 
-/** Thrown by requireUser — actions catch it to map to a friendly result. */
+/** Thrown by requireUser; actions catch it to map to a friendly result. */
 export class UnauthorizedError extends Error {
   constructor() {
     super('Not signed in')
@@ -44,7 +44,7 @@ export class UnauthorizedError extends Error {
 
 /**
  * The current guest user id from the signed `vd_guest` cookie, or null.
- * A guest is a users row with email/password NULL — they debrief first and
+ * A guest is a users row with email/password NULL. Guests debrief first and
  * adopt their data onto a real account later (deferred attribution).
  */
 export const getGuestId = cache(async (): Promise<number | null> => {
@@ -60,7 +60,7 @@ export const getGuestId = cache(async (): Promise<number | null> => {
 /**
  * Resolve "who is acting": the signed-in real user if present, else ensure (and
  * return) an anonymous guest user. This is the seam that makes debrief-first
- * onboarding work — new visitors can debrief without logging in.
+ * onboarding work: new visitors can debrief without logging in.
  */
 export async function currentUserOrGuest(): Promise<{
   kind: 'user' | 'guest'
@@ -97,7 +97,7 @@ export async function clearGuestCookie(): Promise<void> {
 
 /**
  * Authorization primitive for server actions: every exported action calls
- * this (or getCurrentUser) before touching data — the proxy route gate is
+ * this (or getCurrentUser) before touching data. The proxy route gate is
  * optimistic only and cannot be relied on (Next's own data-security guide).
  */
 export async function requireUser(): Promise<CurrentUser> {

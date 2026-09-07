@@ -1,6 +1,6 @@
 /**
  * Map an LLM failure to a short, user-safe cause. Raw provider errors can
- * embed base URLs, request shapes, and internal details — never surface them
+ * embed base URLs, request shapes, and internal details. Never surface them
  * to the client; log the full error server-side and show one of these.
  */
 export function summarizeLlmError(e: unknown): string {

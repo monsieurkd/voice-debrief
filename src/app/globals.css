@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ──────────────────────────────────────────────────────────────────────
-   Digital Sanctuary — the original calm, light journal palette.
+   Digital Sanctuary, the original calm, light journal palette.
    ────────────────────────────────────────────────────────────────────── */
 @theme {
   /* Palette */
@@ -96,7 +96,7 @@ body {
   border-radius: 4px;
 }
 
-/* ── Ambient drift — barely-there light pools sliding over the canvas over
+/* ── Ambient drift, barely-there light pools sliding over the canvas over
    60s. Decorative only; the prefers-reduced-motion block below also matches
    *::before, so it freezes (and everything else animates) for those users. */
 body::before { display: none; }
@@ -162,32 +162,32 @@ body::before { display: none; }
 /* ── Motion contract ────────────────────────────────────────────────────
    Names + reference durations are stable; the chat/orb UI builds on these.
    Apply e.g. `animation: orb-breathe 4s ease-in-out infinite`. */
-/* Voice orb resting state — slow breath (4s). */
+/* Voice orb resting state, slow breath (4s). */
 @keyframes orb-breathe {
   0%, 100% { transform: scale(1); opacity: 0.85; }
   50% { transform: scale(1.06); opacity: 1; }
 }
-/* Voice orb "speaking" — an expanding ring that fades out. */
+/* Voice orb "speaking", an expanding ring that fades out. */
 @keyframes orb-ripple {
   from { transform: scale(0.85); opacity: 0.6; }
   to { transform: scale(1.6); opacity: 0; }
 }
-/* Voice orb ring decoration — slow rotation (12s linear). */
+/* Voice orb ring decoration, slow rotation (12s linear). */
 @keyframes orb-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-/* Voice orb while actively listening — quick pulse (1.2s). */
+/* Voice orb while actively listening, quick pulse (1.2s). */
 @keyframes orb-pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.12); }
 }
-/* Chat message entrance — fade + rise (320ms ease-out). */
+/* Chat message entrance, fade + rise (320ms ease-out). */
 @keyframes msg-in {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
-/* Equalizer bar for voice activity — stagger per bar via animation-delay. */
+/* Equalizer bar for voice activity, stagger per bar via animation-delay. */
 @keyframes wave-bar {
   0%, 100% { transform: scaleY(0.35); }
   50% { transform: scaleY(1); }
@@ -197,7 +197,7 @@ body::before { display: none; }
   from { transform: translateX(-100%); }
   to { transform: translateX(0); }
 }
-/* Popover/chip entrance — fade + settle (use ~160ms ease-out). */
+/* Popover/chip entrance, fade + settle (use ~160ms ease-out). */
 @keyframes chip-in {
   from { opacity: 0; transform: scale(0.92); }
   to { opacity: 1; transform: scale(1); }

@@ -107,7 +107,7 @@ spacing:
 
 ## Brand & Style
 
-The design system is a "Digital Sanctuary," a meditative environment meticulously engineered to lower cognitive load and foster deep, reflective thought. It targets a persona of "The Modern Thinker"—researchers, writers, and creative strategists who require a workspace that feels like an organic extension of their mind.
+The design system is a "Digital Sanctuary," a meditative environment meticulously engineered to lower cognitive load and foster deep, reflective thought. It targets a persona called "The Modern Thinker": researchers, writers, and creative strategists who require a workspace that feels like an organic extension of their mind.
 
 The aesthetic is a refined blend of **Minimalism** and **Glassmorphism**. It emphasizes "Intentional Friction," where transitions are liquid and paced to match human contemplation. The interface evokes a sense of weightlessness and breathability, utilizing extreme whitespace and soft, translucent layers to create a sanctuary-like atmosphere that is both protective and expansive.
 

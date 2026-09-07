@@ -1,7 +1,7 @@
 'use client'
 
 // Route-level error boundary. This Next version's convention passes `retry`
-// (renamed from `reset`) — it re-renders the failed segment; router.refresh()
+// (renamed from `reset`). It re-renders the failed segment; router.refresh()
 // re-fetches its server data too, since a stale RSC payload would re-throw.
 // Never render error.message: prod server errors are masked, but client
 // errors pass through verbatim and may leak internals.
@@ -31,7 +31,7 @@ export default function ErrorPage({
       <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col justify-center px-6 py-12">
         <h1 className="text-xl font-semibold tracking-tight text-on-surface">Something broke on our side</h1>
         <p className="mt-2 text-sm leading-6 text-on-surface-muted">
-          Your words are safe — debriefs are saved before anything downstream runs. Give it another
+          Your words are safe because debriefs are saved before anything downstream runs. Give it another
           moment and try again.
         </p>
         {error.digest && <p className="mt-1 text-xs text-on-surface-muted/80">ref: {error.digest}</p>}

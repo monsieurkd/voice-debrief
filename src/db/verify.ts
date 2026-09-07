@@ -5,7 +5,7 @@ import pg from 'pg'
 // DRY but explicit: the app tables the code reads/writes, mapped to the
 // columns each query needs. If the live DB is missing any of these, chat turns
 // and the sidebar fail at query time with code 42703 ("column ... does not
-// exist") — this check surfaces that condition up front so you know to run
+// exist"). This check surfaces that condition up front so you know to run
 // `npm run db:migrate` instead of debugging a wall of query text.
 const REQUIRED_COLUMNS: Record<string, string[]> = {
   users: ['id', 'email', 'password_hash', 'created_at'],

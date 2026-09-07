@@ -1,6 +1,6 @@
 // Session JWTs: sign/verify round-trip, and every way a token must fail
 // closed (tampered, wrong secret, expired, absent, malformed).
-// AUTH_SECRET is read lazily at call time — set before any assertion runs.
+// AUTH_SECRET is read lazily at call time. Set it before any assertion runs.
 process.env.AUTH_SECRET = 'test-secret-do-not-use-in-prod'
 
 import { test } from 'node:test'
@@ -38,7 +38,7 @@ test('absent / malformed input is rejected, not thrown', async () => {
 })
 
 test('expired tokens are rejected', async () => {
-  // Expiry is baked in at 30d — instead of waiting, forge an already-expired
+  // Expiry is baked in at 30d. Instead of waiting, forge an already-expired
   // token with the same claims shape the verifier expects.
   const { SignJWT } = await import('jose')
   const key = new TextEncoder().encode(authSecret())

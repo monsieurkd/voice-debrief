@@ -3,7 +3,7 @@ import { getConversation, getConversationMessages } from '@/lib/chat'
 import { buildExportPayload } from '@/lib/export'
 
 /**
- * GET /conversations/:id/export — download a conversation as JSON.
+ * GET /conversations/:id/export: download a conversation as JSON.
  *
  * Self-authorizes like every server action: the proxy gate is optimistic only.
  * currentUserOrGuest covers guests too (guests own their conversations until
@@ -12,7 +12,7 @@ import { buildExportPayload } from '@/lib/export'
  */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params // params is a Promise in this Next version
-  // Strict ASCII-digit check — Number() alone would accept '0x1f', '1e2', ' 7'.
+  // Strict ASCII-digit check because Number() alone would accept '0x1f', '1e2', ' 7'.
   const conversationId = Number(id)
   if (!/^\d+$/.test(id) || !Number.isSafeInteger(conversationId) || conversationId <= 0) {
     return Response.json({ error: 'Invalid conversation id.' }, { status: 400 })

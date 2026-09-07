@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 // Shown for notFound() throws (e.g. /session/<unknown-id>) and unmatched
-// routes. Server component — nothing interactive here.
+// routes. This is a server component with nothing interactive.
 export default function NotFound() {
   // The shell is height-locked, so this page scrolls itself on short screens.
   return (
@@ -9,10 +9,10 @@ export default function NotFound() {
       <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col justify-center px-6 py-12">
         <h1 className="text-xl font-semibold tracking-tight text-on-surface">That page isn&apos;t here</h1>
         <p className="mt-2 text-sm leading-6 text-on-surface-muted">
-          The entry may have been deleted — or the link never pointed at anything real.
+          The entry may have been deleted, or the link may never have pointed at anything real.
         </p>
         <div className="mt-6 flex items-center gap-4">
-          {/* Mirrors the Button primitive's azure-gradient pill — the only
+          {/* Mirrors the Button primitive's azure-gradient pill, which is the only
               primary action on this page is a link, not a button. */}
           <Link
             href="/"

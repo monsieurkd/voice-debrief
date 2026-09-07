@@ -45,7 +45,7 @@ test('personaById defaults to warm for null, undefined, and unknown ids', () => 
 
 test('every persona addon ends with the tone-only disclaimer', () => {
   for (const p of Object.values(PERSONAS)) {
-    assert.ok(p.promptAddon.endsWith('These adapt your tone — the rules above always win.'))
+    assert.ok(p.promptAddon.endsWith('These adapt your tone, but the rules above always win.'))
     assert.equal(p.id.length > 0, true)
   }
 })

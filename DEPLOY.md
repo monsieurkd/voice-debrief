@@ -2,7 +2,7 @@
 
 A public, clickable demo of the app. The app is **chat-first**: the landing `/`
 is a ChatGPT-style chat window (text + voice-in; optional voice-out via TTS).
-Guests can chat immediately — their first turn mints an anonymous user, and a
+Guests can chat immediately. Their first turn mints an anonymous user, and a
 session cookie/adoption keeps conversations per visitor.
 
 ## 1. Hosted Postgres (Neon free tier)
@@ -28,7 +28,7 @@ run it any time the app errors with `column does not exist` after a redeploy.)
 `devpassword`; on a public deploy set a strong `SEED_PASSWORD` or delete that row
 after migrating: `DELETE FROM users WHERE email = 'you@example.com'`.)
 
-> **Important — existing deployments:** the app's schema can grow between
+> **Important for existing deployments:** the app's schema can grow between
 > deploys (e.g. a new column like `conversations.persona`). Nothing in `build`/
 > `start` applies migrations, so **after pulling new code onto an existing
 > deployment, re-run `db:migrate`** (above) before expecting new features to
@@ -44,9 +44,9 @@ after migrating: `DELETE FROM users WHERE email = 'you@example.com'`.)
    - `AUTH_SECRET` = a random 32-byte secret: `openssl rand -base64 32` (signs
      session + guest cookies; rotating it logs everyone out)
    - `LLM_API_KEY` + `LLM_SMALL_MODEL` (the chat provider; without it the chat
-     returns a friendly "no API key" message — guests can still sign up/log in)
+     returns a friendly "no API key" message; guests can still sign up/log in)
    - Optional: `LLM_ASR_*` (voice-in) and `LLM_TTS_MODEL` (voice-out; e.g. `tts-1`)
-4. **Deploy** (the build needs no database — `/` renders dynamically).
+4. **Deploy** (the build needs no database because `/` renders dynamically).
 
 ## 4. Verify
 
@@ -69,13 +69,13 @@ From Neon's SQL editor (or psql): `TRUNCATE messages, conversations;` (keeps
 
 ## Providers (chat / ASR / TTS)
 
-All three are provider-neutral and swap by env — OpenAI, Z.ai (GLM), Google
+All three are provider-neutral and switch through environment variables. OpenAI, Z.ai (GLM), Google
 Gemini (OpenAI-compatible endpoint), OpenRouter, or a local Ollama model. The
 chat uses `LLM_SMALL_MODEL` (one fast model). ASR (`LLM_ASR_*`) and
 TTS (`LLM_TTS_*`) each fall back to the chat provider when their key/base are
 unset, and toggle off gracefully when no model is configured.
 
-Swapping provider later is just editing the same env vars — no code change.
+Swapping providers later only requires editing the same environment variables, with no code changes.
 
 ## Security notes
 

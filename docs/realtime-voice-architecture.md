@@ -238,21 +238,21 @@ APP_INTERNAL_URL
 
 ## Delivery phases
 
-### Phase 0 — measurement
+### Phase 0: measurement
 
 - Add timestamps for speech end, final transcript, first LLM token, first audio,
   playback start, and interruption stop.
 - Record aggregate latency and error metrics without recording raw audio.
 - Establish the current tap-to-record baseline.
 
-### Phase 1 — isolated proof of concept
+### Phase 1: isolated proof of concept
 
 - Create a development LiveKit project and TypeScript agent worker.
 - Join a room from a minimal development-only screen.
 - Prove two-way streaming audio, automatic turn detection, and interruption.
 - Use temporary in-memory history; do not modify the journal yet.
 
-### Phase 2 — product integration
+### Phase 2: product integration
 
 - Add the authenticated room-token endpoint.
 - Connect the existing chat screen and personas.
@@ -260,7 +260,7 @@ APP_INTERNAL_URL
 - Support typed messages inside the live session.
 - Preserve the current recorder as fallback.
 
-### Phase 3 — resilience and tuning
+### Phase 3: resilience and tuning
 
 - Add reconnect, worker-unavailable, provider-timeout, and partial-TTS handling.
 - Tune endpointing and interruptions using measured conversations.
@@ -268,7 +268,7 @@ APP_INTERNAL_URL
 - Test mobile Safari, Chrome, Firefox, headphones, speakers, noisy rooms, and
   network changes.
 
-### Phase 4 — provider experiments
+### Phase 4: provider experiments
 
 - Benchmark at least two options for each pipeline stage.
 - Compare cost, first-audio latency, transcription quality, emotional tone,

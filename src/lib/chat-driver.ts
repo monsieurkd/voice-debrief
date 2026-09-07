@@ -5,10 +5,10 @@ import type { PersonaId } from './personas'
 
 /**
  * One assistant chat turn: history + the user's latest message → a reply.
- * Uses the FAST model (small) — the product is now chat-first and wants
+ * Uses the FAST model (small) because the product is now chat-first and wants
  * responsive answers; the large thinking model has been removed.
  *
- * Plain text reply (no JSON), so no Zod round-trip — just a bounded, retried
+ * Plain text reply (no JSON) means no Zod round-trip, just a bounded, retried
  * chat call. Never throws raw provider errors to the client; the caller maps
  * via summarizeLlmError.
  */
@@ -23,7 +23,7 @@ export async function generateChatReply(
     res = await completeWithFallback({
       messages,
       model: env.LLM_SMALL_MODEL,
-      temperature: 0.9, // variety — the conversation should not feel repetitive
+      temperature: 0.9, // Add variety so the conversation does not feel repetitive.
       maxTokens: 400,
     })
   } catch (e) {

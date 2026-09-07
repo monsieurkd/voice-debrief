@@ -28,8 +28,8 @@ export type ChatTurnResult =
 
 /**
  * One chat turn. Self-authorizes (guest or user), rate-limits, persists both
- * sides of the exchange, and returns the assistant's reply plus — when TTS is
- * configured — the spoken audio as WAV base64 so the client can play it aloud.
+ * sides of the exchange, and returns the assistant's reply. When TTS is
+ * configured, it also returns spoken audio as WAV base64 for the client to play.
  *
  * The transcript is never lost: the user turn is persisted BEFORE the model
  * call, so even a model failure keeps their words.
@@ -49,7 +49,7 @@ export async function chatTurnAction(input: {
     { message: input.message, conversationId: input.conversationId, persona: input.persona },
     'chatTurn',
   )
-  // Persona is incidental here (a UI nicety) — junk silently falls back to the
+  // Persona is incidental here (a UI nicety), so junk silently falls back to the
   // default rather than rejecting an otherwise valid turn.
   const persona = isPersonaId(personaInput) ? personaInput : undefined
 
@@ -73,7 +73,7 @@ export async function chatTurnAction(input: {
       convPersona = persona
     } else {
       // Must own the conversation; a foreign id behaves like not-found. For an
-      // existing conversation the STORED persona is authoritative — a stale
+      // existing conversation, the STORED persona is authoritative. A stale
       // client-sent persona must never hijack the tone.
       const existing = await getConversation(actor.id, conv)
       if (existing == null) return { ok: false, error: 'That conversation was not found.' }
@@ -81,15 +81,15 @@ export async function chatTurnAction(input: {
     }
   } catch (e) {
     console.error('[chatTurn] conversation resolve/store failed:', e)
-    return { ok: false, error: 'Could not save the message — try again in a moment.' }
+    return { ok: false, error: 'Could not save the message. Try again in a moment.' }
   }
 
-  // Persist the user turn first — never lose their words.
+  // Persist the user turn first so their words are never lost.
   try {
     await appendMessage(conv, 'user', message)
   } catch (e) {
     console.error('[chatTurn] append user failed:', e)
-    return { ok: false, error: 'Could not save your message — try again.' }
+    return { ok: false, error: 'Could not save your message. Try again.' }
   }
 
   // Build history INCLUDING the just-saved user turn, then get the reply.
@@ -115,7 +115,7 @@ export async function chatTurnAction(input: {
   }
   revalidatePath('/')
 
-  // Optional voice out — never blocks the text reply.
+  // Optional voice output never blocks the text reply.
   let audio: string | null = null
   if (ttsConfigured()) {
     try {
@@ -177,7 +177,7 @@ export async function getConversationAction(conversationIdInput: number): Promis
 
 /**
  * Switch a conversation's persona (self-authorizing, ownership-gated). Takes
- * effect from the NEXT chat turn — the stored persona is what drives replies.
+ * effect from the NEXT chat turn because the stored persona drives replies.
  */
 export async function setConversationPersonaAction(input: {
   conversationId: number
@@ -189,7 +189,7 @@ export async function setConversationPersonaAction(input: {
     { conversationId: input.conversationId, persona: input.persona },
     'setConversationPersona',
   )
-  // Here the persona IS the request — an unknown id is a real error, unlike
+  // Here the persona IS the request, so an unknown id is a real error, unlike
   // chatTurnAction where it is incidental.
   if (!isPersonaId(persona)) return { ok: false, error: 'Unknown persona.' }
   try {

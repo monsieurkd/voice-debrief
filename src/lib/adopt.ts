@@ -8,7 +8,7 @@ import { conversations, users } from '@/db/schema'
  * just signed up / logged into, then delete the now-empty guest row.
  *
  * Called by the signup/login actions after the account is created. Safe to
- * re-run: no guest row → no-op. Adoption is best-effort — it must never block
+ * re-run: no guest row → no-op. Adoption is best-effort and must never block
  * a successful login, so the auth action catches any throw here.
  */
 export async function adoptGuestData(guestId: number, userId: number): Promise<void> {
@@ -16,7 +16,7 @@ export async function adoptGuestData(guestId: number, userId: number): Promise<v
   // share the `users` table, so this is a single owner flip in one update.
   await db.update(conversations).set({ user_id: userId }).where(eq(conversations.user_id, guestId))
 
-  // The guest is now an empty shell — drop it. Its FKs cascade nothing relevant:
+  // The guest is now an empty shell, so drop it. Its FKs cascade nothing relevant:
   // conversations already moved to the real user.
   await db.delete(users).where(eq(users.id, guestId))
 }

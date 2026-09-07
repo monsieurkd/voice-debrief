@@ -1,10 +1,10 @@
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto'
 
 /**
- * Password hashing with node's built-in scrypt (memory-hard KDF) — no external
+ * Password hashing with node's built-in scrypt (memory-hard KDF); no external
  * dependency, same threat model as bcrypt. Stored format:
  *   scrypt:<salt-hex>:<hash-hex>
- * Parameters are node's defaults (N=16384, r=8, p=1, 64-byte key) — ~50ms per
+ * Parameters are node's defaults (N=16384, r=8, p=1, 64-byte key), taking ~50ms per
  * hash, which is the point: costly to brute-force, cheap to verify per login.
  */
 
@@ -25,8 +25,8 @@ export async function hashPassword(password: string): Promise<string> {
 
 /**
  * Verify a password against a stored `scrypt:` hash. Returns false (never
- * throws) for a malformed stored value — a corrupt row must not take the
- * login path down — and uses timingSafeEqual on the comparison.
+ * throws) for a malformed stored value. A corrupt row must not take the
+ * login path down. The comparison uses timingSafeEqual.
  */
 export async function verifyPassword(password: string, stored: string): Promise<boolean> {
   const parts = stored.split(':')

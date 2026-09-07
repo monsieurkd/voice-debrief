@@ -1,6 +1,6 @@
 // Pins the voice/ASR slice's provider-neutral routing + error-mapping logic:
 //   1. ASR falls back to the main LLM provider (base URL + key) when no
-//      LLM_ASR_* is set, and overrides win when they are — so "voice works on
+//      LLM_ASR_* is set, and overrides win when present, so "voice works on
 //      every browser" needs zero extra config against an existing provider.
 //   2. ASR failures map to user-safe causes and never leak provider internals.
 import { test } from 'node:test'
@@ -75,13 +75,13 @@ test('summarizeAsrError maps an exhausted transient failure to a retryable nudge
 })
 
 test('isRetryable classifies transient vs permanent ASR failures', () => {
-  // transient — should retry
+  // Transient: should retry.
   assert.equal(isRetryable('Error: 429 Too Many Requests'), true)
   assert.equal(isRetryable('rate limit exceeded for whisper-free'), true)
   assert.equal(isRetryable('503 Service Unavailable'), true)
   assert.equal(isRetryable('ETIMEDOUT'), true)
   assert.equal(isRetryable('ECONNRESET'), true)
-  // permanent — must NOT be retried
+  // Permanent: must NOT be retried.
   assert.equal(isRetryable('401 api key invalid'), false)
   assert.equal(isRetryable('404 not found'), false)
   assert.equal(isRetryable('file too large'), false)

@@ -5,7 +5,7 @@ import { env } from './env'
 import { safeJsonParse, summarizeZodIssues } from './json'
 
 /**
- * Injectable completer — lets the retry loop be unit-tested without a key/network.
+ * Injectable completer that lets the retry loop be unit-tested without a key/network.
  * Receives the current token budget so truncation-escalation is observable.
  */
 export type Complete = (
@@ -20,7 +20,7 @@ export class LlmCallError extends Error {
   }
 }
 
-/** The HTTP call itself failed (timeout, 429, 401, connection reset) — the transient class. */
+/** The HTTP call itself failed (timeout, 429, 401, connection reset): the transient class. */
 export class LlmTransportError extends Error {
   constructor(message: string) {
     super(message)
@@ -28,7 +28,7 @@ export class LlmTransportError extends Error {
   }
 }
 
-/** The model hit max_tokens before finishing — retrying at the same budget cannot fix this. */
+/** The model hit max_tokens before finishing; retrying at the same budget cannot fix this. */
 export class LlmTruncatedError extends Error {
   constructor(message: string) {
     super(message)
@@ -42,7 +42,7 @@ const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
  * Call an OpenAI-compatible chat model, parse JSON, and validate with a Zod schema.
  *
  * Three failure classes, three strategies:
- * - Transport errors (timeout / 429 / connection): retried with exponential backoff —
+ * - Transport errors (timeout / 429 / connection): retried with exponential backoff;
  *   they're the transient class.
  * - Truncated output (finish_reason === 'length', common with thinking models whose
  *   reasoning eats the budget): the token budget is doubled once; if it truncates
@@ -119,12 +119,12 @@ export async function callJsonValidated<T>(args: {
         if (e instanceof LlmTruncatedError) {
           if (budgetEscalated) {
             throw new LlmCallError(
-              `Model output was truncated even at ${budget} tokens — the input may be too large to extract in one call.`,
+              `Model output was truncated even at ${budget} tokens. The input may be too large to extract in one call.`,
             )
           }
           budgetEscalated = true
           budget *= 2
-          continue // same attempt, bigger budget — truncation is a budget problem
+          continue // Same attempt, bigger budget; truncation is a budget problem.
         }
         if (e instanceof LlmCallError) throw e // config errors are not retryable
         transportTries++

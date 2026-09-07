@@ -1,7 +1,7 @@
 import { SignJWT, jwtVerify } from 'jose'
 
 /**
- * Stateless signed session token (JWT, HS256) — the pattern this Next version's
+ * Stateless signed session token (JWT, HS256), following the pattern this Next version's
  * own authentication guide documents. The cookie carries only {sub, email};
  * the database remains the source of truth for whether the user still exists
  * (checked in lib/auth.ts). No next/* imports here: pure crypto, unit-testable
@@ -17,7 +17,7 @@ export const SESSION_TTL_DAYS = 30
 export const GUEST_COOKIE = 'vd_guest'
 export const GUEST_TTL_DAYS = 60
 // Exported for src/proxy.ts, which re-verifies tokens and must stay decoupled
-// from app modules (per the proxy docs) — this pure module is its one exception.
+// from app modules (per the proxy docs); this pure module is its one exception.
 export const SESSION_ISSUER = 'voice-debrief'
 
 export interface SessionUser {
@@ -68,7 +68,7 @@ export async function verifySessionToken(token: string | undefined | null): Prom
 
 /**
  * Sign an opaque guest token: just the guest user id. The `guest: true` claim
- * distinguishes it from a real session token — guests are never signed-in users.
+ * distinguishes it from a real session token. Guests are never signed-in users.
  */
 export async function signGuestToken(userId: number): Promise<string> {
   return new SignJWT({ guest: true })

@@ -15,7 +15,7 @@ const PILL_BASE =
   'duration-[var(--dur-base)] ease-[var(--ease-standard)] active:scale-[0.97] '
 
 /* ──────────────────────────────────────────────────────────────────────
-   Inline-SVG icon primitives — hand-rolled, no icon dep. 24x24, stroke 2,
+   Hand-rolled inline SVG icon primitives with no icon dependency. 24x24, stroke 2,
    round caps/joins so they nest cleanly at any size.
    ────────────────────────────────────────────────────────────────────── */
 
@@ -28,7 +28,7 @@ const ICON_PROPS = {
   strokeLinejoin: 'round',
 } as const
 
-/** The `＋` replacement — a proper SVG plus. */
+/** A proper SVG replacement for `＋`. */
 export function IconPlus({ className }: { className?: string }) {
   return (
     <svg {...ICON_PROPS} className={className} aria-hidden>
@@ -37,7 +37,7 @@ export function IconPlus({ className }: { className?: string }) {
   )
 }
 
-/** Primary pill button (the "act" button — send, save, continue).
+/** Primary pill button (the "act" button for send, save, and continue).
     Carries the same azure gradient as the user chat bubble so the two
     "you act" affordances read as one voice; the glow lifts on hover. */
 export function Button({
@@ -122,7 +122,7 @@ export function Wordmark({ small = false }: { small?: boolean }) {
   )
 }
 
-/** Floating vibrancy card (glass panel over the canvas — see .float-card). */
+/** Floating vibrancy card (a glass panel over the canvas; see .float-card). */
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return <div className={`float-card ${className}`}>{children}</div>
 }
@@ -154,7 +154,7 @@ export function Field({
   )
 }
 
-/** Ghost loader — breathing azure lines replacing spinner icons. */
+/** Ghost loader with breathing azure lines instead of spinner icons. */
 export function GhostLoader({ bars = 3, className = '' }: { bars?: number; className?: string }) {
   return (
     <span className={`inline-flex items-end gap-1 ${className}`} aria-hidden>

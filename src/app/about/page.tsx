@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ButtonLink, Wordmark } from '@/components/ui'
 
 /**
- * About & mission — the pitch behind What I Mean. Reachable from the logo in the
+ * About and mission: the pitch behind What I Mean. Reachable from the logo in the
  * header. This page owns its own scrolling (the shell is height-locked).
  */
 export default function AboutPage() {
@@ -26,7 +26,7 @@ export default function AboutPage() {
             <p className="mt-3 text-[15px] leading-7 text-on-surface-muted">
               What I Mean turns thinking out loud into a simple habit: a short, honest
               conversation that clears the noise, catches what matters, and builds
-              resilience one check-in at a time. Consistency is the goal — not perfection.
+              resilience one check-in at a time. Consistency is the goal, not perfection.
             </p>
           </section>
 
@@ -36,14 +36,14 @@ export default function AboutPage() {
               <li className="rounded-2xl border border-glass-border bg-glass p-5 backdrop-blur-xl">
                 <p className="font-medium text-on-surface">Speak or type your day</p>
                 <p className="mt-1 text-sm leading-6 text-on-surface-muted">
-                  A warm voice listens and asks what matters. Just talk — no forms, no
+                  A warm voice listens and asks what matters. Just talk. No forms, no
                   screens full of fields.
                 </p>
               </li>
               <li className="rounded-2xl border border-glass-border bg-glass p-5 backdrop-blur-xl">
                 <p className="font-medium text-on-surface">Pick a voice that fits</p>
                 <p className="mt-1 text-sm leading-6 text-on-surface-muted">
-                  Warm listener, curious friend, or sharp coach — pick the energy you need
+                  Choose a warm listener, curious friend, or sharp coach to match the energy you need
                   that day.
                 </p>
               </li>
@@ -51,7 +51,7 @@ export default function AboutPage() {
                 <p className="font-medium text-on-surface">Back tomorrow</p>
                 <p className="mt-1 text-sm leading-6 text-on-surface-muted">
                   Your conversations stay private in your journal. Coming back is the whole
-                  point — that&apos;s how the compounding happens.
+                  point. That&apos;s how the compounding happens.
                 </p>
               </li>
             </ul>

@@ -17,12 +17,12 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      # env.ts validates DATABASE_URL at import; CI has no .env.local — a dummy
+      # env.ts validates DATABASE_URL at import. CI has no .env.local, so a dummy
       # URL satisfies validation and is never connected to by unit tests.
       - run: npm test
         env:
           DATABASE_URL: postgres://ci:ci@localhost:5432/ci
-      # Home is force-dynamic, so the build needs no reachable database —
+      # Home is force-dynamic, so the build needs no reachable database.
       # a dummy URL proves that stays true.
       - run: npm run build
         env:

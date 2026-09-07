@@ -4,7 +4,7 @@
  * The browser's MediaRecorder produces compressed containers (e.g.
  * `audio/webm;codecs=opus`, or `audio/mp4` on Safari). Groq (and several other
  * Whisper endpoints) reject WebM/Opus, so before upload we decode the recorded
- * clip to an AudioBuffer and re-encode it as 16-bit PCM WAV — a container every
+ * clip to an AudioBuffer and re-encode it as 16-bit PCM WAV, which is a container every
  * Whisper-compatible endpoint accepts.
  *
  * Pure browser API (AudioContext + OfflineAudioContext); no deps.
@@ -15,7 +15,7 @@
  *
  * The naive approach ("grab every Nth sample") aliases high frequencies into
  * the speech band and, when the mic captured the same voice on two channels
- * out of phase, sample-by-sample channel averaging phase-cancels the speech —
+ * out of phase, sample-by-sample channel averaging phase-cancels the speech.
  * both leave only a stray syllable (e.g. "you"). We avoid both:
  *
  * 1. Mix to mono FIRST, using the browser's own channel mixdown (a power-equal

@@ -16,7 +16,7 @@ import { RATE_WINDOW_MS } from '@/lib/constants'
 
 /**
  * Email + password auth actions. Public entry points (no session required),
- * so each one rate-limits by IP first — these are the unauthenticated attack
+ * so each one rate-limits by IP first. These are the unauthenticated attack
  * surface. Form results come back as { error } via useActionState instead of
  * thrown errors, so a mistyped password never trips an error boundary.
  */
@@ -41,7 +41,7 @@ function parseCreds(formData: FormData): z.infer<typeof credentialsSchema> | nul
   }
 }
 
-/** Only redirect to paths inside this app — never protocol-relative/external. */
+/** Only redirect to paths inside this app, never to protocol-relative or external URLs. */
 function safeNext(next: FormDataEntryValue | null): string {
   const s = typeof next === 'string' ? next : ''
   return s.startsWith('/') && !s.startsWith('//') ? s : '/'
@@ -59,22 +59,22 @@ export async function signupAction(_state: AuthFormState, formData: FormData): P
   if (!a) return { error: 'Enter a valid email and a password of at least 8 characters.' }
   if (!env.AUTH_SECRET) {
     console.error('[signup] AUTH_SECRET is not set')
-    return { error: 'Sign-up is disabled — the server is missing its AUTH_SECRET configuration.' }
+    return { error: 'Sign-up is disabled because the server is missing its AUTH_SECRET configuration.' }
   }
   if (!(await checkRateLimit(`signup:${await clientIp()}`, 5, RATE_WINDOW_MS))) {
-    return { error: 'Too many sign-up attempts from this network — try again in an hour.' }
+    return { error: 'Too many sign-up attempts from this network. Try again in an hour.' }
   }
 
   const password_hash = await hashPassword(a.password)
   let id: number
   try {
-    // users.id is `generated always as identity` — never insert an explicit id.
+    // users.id is `generated always as identity`; never insert an explicit id.
     const [u] = await db.insert(users).values({ email: a.email, password_hash }).returning({ id: users.id })
     id = u!.id
   } catch (e) {
-    if ((e as { code?: string }).code === '23505') return { error: 'That email is already registered — log in instead.' }
+    if ((e as { code?: string }).code === '23505') return { error: 'That email is already registered. Log in instead.' }
     console.error('[signup] insert failed:', e)
-    return { error: 'Could not create the account — please try again.' }
+    return { error: 'Could not create the account. Please try again.' }
   }
 
   // Deferred attribution: if this browser was debriefing as a guest, fold that
@@ -89,10 +89,10 @@ export async function loginAction(_state: AuthFormState, formData: FormData): Pr
   if (!a) return { error: 'Enter a valid email and a password of at least 8 characters.' }
   if (!env.AUTH_SECRET) {
     console.error('[login] AUTH_SECRET is not set')
-    return { error: 'Login is disabled — the server is missing its AUTH_SECRET configuration.' }
+    return { error: 'Login is disabled because the server is missing its AUTH_SECRET configuration.' }
   }
   if (!(await checkRateLimit(`login:${await clientIp()}`, 10, RATE_WINDOW_MS))) {
-    return { error: 'Too many attempts — wait an hour and try again.' }
+    return { error: 'Too many attempts. Wait an hour and try again.' }
   }
 
   const [u] = await db.select().from(users).where(eq(users.email, a.email))

@@ -14,11 +14,11 @@ async function main() {
     VALUES (1, 'you@example.com', ${await hashPassword(SEED_PASSWORD)})
     ON CONFLICT (id) DO NOTHING
   `)
-  // OVERRIDING does NOT advance the identity sequence — left alone, the first
+  // OVERRIDING does NOT advance the identity sequence. Left alone, the first
   // real signup would generate id=1 and collide with the pinned row. Re-sync
   // the sequence to the table's max id.
   await db.execute(sql`SELECT setval('users_id_seq', (SELECT max(id) FROM users))`)
-  // Only backfill a missing hash — re-seeding must never clobber a changed one.
+  // Only backfill a missing hash; re-seeding must never clobber a changed one.
   await db.execute(sql`
     UPDATE users SET password_hash = ${await hashPassword(SEED_PASSWORD)}
     WHERE id = 1 AND password_hash IS NULL

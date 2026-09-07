@@ -18,11 +18,11 @@ export interface ConversationSummary {
  * Selecting a conversation loads its transcript; "New chat" clears the window.
  *
  * The past-chat list is fetched AFTER mount (listConversationsAction) rather
- * than during the server render, so the chat window — the LCP content — paints
+ * than during the server render, so the chat window (the LCP content) paints
  * without waiting on a database round-trip.
  *
  * New chat opens a brand-new, unsaved draft. It is keyed by a monotonically
- * increasing session counter so every click forces a fresh ChatApp mount — the
+ * increasing session counter so every click forces a fresh ChatApp mount. The
  * previous window's in-memory messages/conversation are thrown away.
  */
 export function ChatWorkspace() {
@@ -35,7 +35,7 @@ export function ChatWorkspace() {
   // a fresh draft. State (not a ref) because it is read during render for the key.
   const [sessionId, setSessionId] = useState(0)
 
-  // Load the past-chat sidebar lazily — never on the critical first-paint path.
+  // Load the past-chat sidebar lazily, keeping it off the critical first-paint path.
   useEffect(() => {
     let alive = true
     listConversationsAction().then((res) => {
@@ -65,7 +65,7 @@ export function ChatWorkspace() {
         setMessages(res.messages)
       }
     } catch {
-      // ignore — an unloadable old conversation just doesn't open
+      // Ignore an unloadable old conversation instead of opening it.
     } finally {
       setLoading(false)
     }
@@ -151,7 +151,7 @@ export function ChatWorkspace() {
                   </span>
                   <span className="truncate">{c.title ?? personaById(c.persona).label}</span>
                 </Link>
-                {/* Export — downloads this conversation as JSON. */}
+                {/* Export downloads this conversation as JSON. */}
                 <a
                   href={`/conversations/${c.id}/export`}
                   title="Export this conversation as JSON"

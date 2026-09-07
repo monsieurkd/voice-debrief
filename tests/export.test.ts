@@ -1,5 +1,5 @@
 // Export payload builder: shape (app/version), ISO dates, chronological
-// message order, messageCount, and persona label resolution. Pure — no DB.
+// message order, messageCount, and persona label resolution. Pure; no DB.
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -78,7 +78,7 @@ test('string dates are accepted alongside Date objects', () => {
   assert.equal(p.conversation.messages[0]!.createdAt, '2026-08-30T00:00:01.000Z')
 })
 
-test('the builder is pure — inputs are not mutated', () => {
+test('the builder is pure: inputs are not mutated', () => {
   const shuffled = [msgs[1]!, msgs[0]!]
   buildExportPayload(conv, shuffled, exportedAt)
   assert.deepEqual(shuffled, [msgs[1]!, msgs[0]!])

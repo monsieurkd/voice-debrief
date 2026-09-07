@@ -14,7 +14,7 @@ import { env } from '@/lib/env'
  *
  * We pin it per-connection with a `SET search_path TO public`, run via the
  * pool's awaited `onConnect` hook. `onConnect` is resolved before the client
- * is ever handed to a query, so the SET always applies first — there is no
+ * is ever handed to a query, so the SET always applies first. There is no
  * race and no concurrent-query deprecation warning. A runtime `SET` is a
  * normal query, which both Neon pooled/unpooled and local Postgres accept.
  *

@@ -9,7 +9,7 @@ import { z } from 'zod'
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   // Signs session cookies (see lib/session-token.ts). Optional here so DB-only
-  // scripts/tests can boot without it — using auth without it fails loudly.
+  // scripts/tests can boot without it. Using auth without it fails loudly.
   AUTH_SECRET: z.string().default(''),
   LLM_API_KEY: z.string().default(''),
   LLM_BASE_URL: z.string().default('https://api.z.ai/api/coding/paas/v4'),
@@ -38,7 +38,7 @@ const envSchema = z.object({
   LLM_ASR_BASE_URL: z.string().default(''),
   LLM_ASR_API_KEY: z.string().default(''),
   // Whisper-family model names persist the input language, so no `language`
-  // field is hardcoded — the transcriptions api returns its own detected lang.
+  // field is hardcoded because the transcriptions API returns its own detected language.
   LLM_ASR_MODEL: z.string().default('whisper-1'),
 
   // ── Speech-to-text output (TTS), provider-neutral ────────────────────────

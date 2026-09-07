@@ -12,7 +12,7 @@ export interface ChatRow {
 }
 
 /**
- * The What I Mean chat window — the product's single surface.
+ * The What I Mean chat window: the product's single surface.
  *
  * One continuous conversation view on the deep-blue glass canvas: the assistant
  * carries an animated "listener" orb (pure CSS; the same orb-breathe/ripple
@@ -21,8 +21,8 @@ export interface ChatRow {
  * edge. Voice and send are two equal pill controls.
  *
  * Voice: the mic (VoiceRecorder) transcribes into the composer. When the server
- * returns TTS audio for a reply, it is played aloud automatically — like a real
- * conversation — and the orb "speaks" while it plays. No per-message replays.
+ * returns TTS audio for a reply, the client plays it automatically, like a real
+ * conversation, while the orb "speaks." No per-message replays.
  */
 export function ChatApp({
   initialMessages,
@@ -100,7 +100,7 @@ export function ChatApp({
           setError(res.error)
         }
       } catch {
-        setError('Could not reach the server — check your connection and try again.')
+        setError('Could not reach the server. Check your connection and try again.')
       } finally {
         setBusy(false)
       }
@@ -119,13 +119,13 @@ export function ChatApp({
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center gap-6 pt-10 text-center sm:pt-16">
-              {/* The listener — the "person on the other side". Pure CSS orb. */}
+              {/* The listener, the "person on the other side". Pure CSS orb. */}
               <ListenerOrb speaking={busy} />
               <div className="flex flex-col items-center gap-2">
                 <p className="font-display text-2xl text-on-surface">I&apos;m here. How was your day?</p>
                 <p className="max-w-md text-sm leading-6 text-on-surface-muted">
                   Speak it, or type it. I&apos;ll listen, ask what matters, and help you see your day more
-                  clearly — like a good friend who actually pays attention.
+                  clearly, just like a good friend who actually pays attention.
                 </p>
               </div>
             </div>
@@ -178,7 +178,7 @@ export function ChatApp({
         </div>
       </div>
 
-      {/* Composer — a floating-glass dock, not a cramped strip against the edge. */}
+      {/* Composer, a floating-glass dock, not a cramped strip against the edge. */}
       <div className="border-t border-glass-border bg-surface/70 px-4 pb-5 pt-3 backdrop-blur-xl sm:px-6">
         <div className="mx-auto w-full max-w-2xl rounded-3xl border border-glass-border bg-glass p-2 shadow-[0_18px_40px_-20px_rgba(2,8,24,0.8)] backdrop-blur-2xl">
           <div className="flex items-center justify-between gap-3 border-b border-glass-border px-2 pb-2 pt-0.5">
@@ -194,7 +194,7 @@ export function ChatApp({
               }}
               disabled={busy}
               aria-label="Conversation voice"
-              title={`${PERSONAS[initialPersona].tagline} — applies from the next message`}
+              title={`${PERSONAS[initialPersona].tagline}. Applies from the next message`}
               className="min-h-8 rounded-full border border-glass-border bg-surface-container-low px-3 py-1 text-xs font-medium text-on-surface outline-none transition hover:bg-glass-strong focus-visible:ring-2 focus-visible:ring-secondary-focus-ring disabled:opacity-50"
             >
               {Object.values(PERSONAS).map((persona) => (
@@ -242,7 +242,7 @@ export function ChatApp({
 }
 
 /**
- * The primary "listener" — a large, breathing, deep-blue gradient orb with a
+ * The primary "listener", a large, breathing, deep-blue gradient orb with a
  * soft rippling halo and a subtle ring. Pure CSS (uses the design-token
  * keyframes), so it is crisp at any size and needs no image asset.
  */
@@ -266,7 +266,7 @@ function ListenerOrb({ speaking = false }: { speaking?: boolean }) {
         className="grid h-24 w-24 place-items-center rounded-full bg-[radial-gradient(circle_at_32%_28%,#8fb3ff_0%,#3d7bff_45%,#1f4cc9_100%)] shadow-[0_18px_50px_-16px_rgba(61,123,255,0.9)]"
         style={{ animation: speaking ? 'orb-pulse 1.2s ease-in-out infinite' : 'orb-breathe 4s ease-in-out infinite' }}
       >
-        {/* Facial hint — two soft eyes so it reads as a "person talking". */}
+        {/* Facial hint, two soft eyes so it reads as a "person talking". */}
         <span className="flex items-center gap-3">
           <span className="h-2 w-2 rounded-full bg-white/95" />
           <span className="h-2 w-2 rounded-full bg-white/95" />

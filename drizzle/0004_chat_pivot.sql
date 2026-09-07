@@ -1,6 +1,6 @@
 -- The app pivoted from a structured-journal to a ChatGPT-style voice chat.
 -- Drop every structured-data table (sessions and its children, goals, tags,
--- insights, user_state) — they are no longer used — and create the chat model:
+-- insights, user_state), which are no longer used, and create the chat model:
 -- conversations + messages. users + rate_limits survive (auth + spend guards).
 
 --> statement-breakpoint

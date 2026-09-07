@@ -53,7 +53,7 @@ export function VoiceRecorder({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const lastMimeRef = useRef('')
 
-  // Cleanup on unmount — never leave a mic open.
+  // Clean up on unmount so the mic is never left open.
   const stopStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop())
     streamRef.current = null
@@ -88,7 +88,7 @@ export function VoiceRecorder({
   const upload = useCallback(
     async (chunks: Blob[], mime: string) => {
       if (!chunks.length) {
-        setError('Nothing was recorded — try again.')
+        setError('Nothing was recorded. Try again.')
         setStatus('idle')
         return
       }
@@ -110,7 +110,7 @@ export function VoiceRecorder({
           onTranscriptFailed?.(res.error)
         }
       } catch {
-        setError('Could not reach the server to transcribe — check your connection and try again.')
+        setError('Could not reach the server to transcribe. Check your connection and try again.')
         setStatus('idle')
         onTranscriptFailed?.('Could not reach the server.')
       }
@@ -145,7 +145,7 @@ export function VoiceRecorder({
         stopStream()
         clearTimer()
         setStatus('idle')
-        setError('Recording failed — try again.')
+        setError('Recording failed. Try again.')
       }
       mediaRecorderRef.current = rec
       rec.start()
@@ -154,7 +154,7 @@ export function VoiceRecorder({
       const startTime = Date.now()
       timerRef.current = setInterval(() => setElapsed(Math.floor((Date.now() - startTime) / 1000)), 250)
     } catch {
-      setError('Microphone permission denied — enable it in the browser and try again.')
+      setError('Microphone permission denied. Enable it in the browser and try again.')
       setStatus('idle')
     }
   }, [supported, stopStream, clearTimer, upload])
@@ -201,8 +201,8 @@ export function VoiceRecorder({
             type="button"
             onClick={start}
             disabled={disabled || isBusy}
-            aria-label="Record — click and speak"
-            title="Record — click and speak"
+            aria-label="Record: click and speak"
+            title="Record: click and speak"
             className={`flex shrink-0 items-center justify-center rounded-full border transition hover:border-outline hover:text-on-surface disabled:opacity-40 ${idleClass} ${outer}`}
           >
             <MicIcon />
@@ -268,7 +268,7 @@ function mmss(totalSeconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-/** Static microphone glyph — hoisted so it isn't redefined per render. */
+/** Static microphone glyph, hoisted to avoid redefining it on every render. */
 function MicIcon({ className = '' }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-4 w-4 ${className}`}>

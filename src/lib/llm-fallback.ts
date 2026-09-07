@@ -68,7 +68,7 @@ export async function completeWithFallback(args: {
     return await primary.chat.completions.create(body(model))
   } catch (e) {
     // No fallback configured, or the error isn't the transient class (config,
-    // auth, meaningful non-429 rejection, malformed request, etc.) — rethrow.
+    // auth, meaningful non-429 rejection, malformed request, etc.), then rethrow.
     if (!fallback || !isTransient(e)) throw e
     return await fallback.chat.completions.create(body(fallbackModel))
   }

@@ -18,7 +18,7 @@ const playwrite = Playwrite_DE_Grund({
 
 export const metadata: Metadata = {
   title: 'What I Mean',
-  description: 'Talk your way to what you really mean — speak or type, and find the thought underneath.',
+  description: 'Talk your way to what you really mean. Speak or type, and find the thought underneath.',
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },

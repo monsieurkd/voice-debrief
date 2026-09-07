@@ -1,6 +1,6 @@
 // Pins the retry semantics the 2026-08 review found broken:
 //   1. transport errors (the transient class) got ZERO retries while schema
-//      errors got 3 — inverted robustness
+//      errors got 3: inverted robustness
 //   2. truncated thinking-model output (finish_reason === 'length') was retried
 //      at the SAME budget, truncating identically 3× then failing
 //   3. the retry loop mutated the caller's messages array

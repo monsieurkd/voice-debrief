@@ -31,7 +31,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <Link href={`/signup${safeNext !== '/' ? `?next=${encodeURIComponent(safeNext)}` : ''}`} className="font-medium text-on-secondary-container underline underline-offset-2 hover:text-on-surface">
             Create an account
           </Link>{' '}
-          — your saved debriefs come with you.
+          to bring your saved debriefs with you.
         </p>
       </div>
     </main>

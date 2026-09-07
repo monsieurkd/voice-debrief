@@ -5,7 +5,7 @@ import type { PersonaId } from '@/lib/personas'
 
 /**
  * Chat data layer for the pivot: conversations + messages per user. This is the
- * whole persistence of the product now — the structured journal is gone.
+ * whole persistence layer of the product now that the structured journal is gone.
  */
 
 export interface ChatMessage {
@@ -32,7 +32,7 @@ export async function createConversation(userId: number, persona?: PersonaId): P
   return row!.id
 }
 
-/** The user's conversations, newest first — for the sidebar. */
+/** The user's conversations for the sidebar, newest first. */
 export async function listConversations(userId: number): Promise<Conversation[]> {
   const rows = await db
     .select({
@@ -115,7 +115,7 @@ export async function touchConversation(conversationId: number, title?: string):
 /**
  * Switch a conversation's persona. The UPDATE itself is unscoped by id (like
  * appendMessage/touchConversation), so ownership is verified FIRST via the
- * getConversation gate — a foreign conversation id returns false instead of
+ * getConversation gate: a foreign conversation id returns false instead of
  * writing. Returns true when the persona was stored.
  */
 export async function setConversationPersona(

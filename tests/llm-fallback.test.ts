@@ -97,7 +97,7 @@ test('fallbackModelOverride lets the fallback use a different model', async () =
     messages,
     model: 'glm-4.5-air',
     fallbackModelOverride: 'gemini-3.1-flash-lite',
-    // No pinned deps fallbackModel — let the override resolve.
+    // No pinned deps fallbackModel; let the override resolve.
     deps: { primary: failingPrimary as never, fallback: fallback as never },
   })
   assert.equal(usedModel, 'gemini-3.1-flash-lite')

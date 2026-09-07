@@ -1,7 +1,7 @@
 import { personaById } from './personas'
 
 /**
- * Pure JSON-export builder — no DB, no request types, so it stays trivially
+ * Pure JSON-export builder with no DB or request types, so it stays trivially
  * unit-testable. The route handler owns auth/ownership; this only shapes data:
  * plain types, ISO-8601 dates, messages in chronological order.
  */
@@ -50,7 +50,7 @@ export function buildExportPayload(
     conversation: {
       id: conversation.id,
       title: conversation.title,
-      // Resolve to the display label ('warm' → 'Warm listener') — unknown/null
+      // Resolve to the display label ('warm' → 'Warm listener'), unknown/null
       // ids export as the default persona, matching how chat renders them.
       persona: personaById(conversation.persona).label,
       createdAt: new Date(conversation.createdAt).toISOString(),

@@ -1,5 +1,5 @@
 // scrypt password hashing: round-trip, uniqueness (per-user salt), wrong
-// password, and malformed stored values. Pure node:crypto — no DB, no Next.
+// password, and malformed stored values. Pure node:crypto; no DB or Next.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { hashPassword, verifyPassword } from '../src/lib/passwd'
