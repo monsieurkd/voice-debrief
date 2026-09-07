@@ -10,7 +10,13 @@ export default function AboutPage() {
     <main className="flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-2xl px-6 py-12 sm:py-16">
         <div className="mb-10 flex flex-col items-center gap-4 text-center">
-          <Wordmark />
+          <Link
+            href="/"
+            aria-label="Go to home"
+            className="rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4"
+          >
+            <Wordmark />
+          </Link>
           <p className="max-w-lg text-base leading-relaxed text-on-surface-muted">
             Talk your way to what you really mean.
           </p>
