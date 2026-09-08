@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { chatTurnAction } from '@/actions/chat'
 import { VoiceRecorder } from '@/components/VoiceRecorder'
 import { GhostLoader } from '@/components/ui'
@@ -116,7 +116,7 @@ export function ChatApp({
     <main className="flex h-full flex-col">
       {/* Message view */}
       <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-1">
           {messages.length === 0 && (
             <div className="flex flex-col items-center gap-6 pt-10 text-center sm:pt-16">
               {/* The listener, the "person on the other side". Pure CSS orb. */}
@@ -132,40 +132,53 @@ export function ChatApp({
             </div>
           )}
 
-          {messages.map((m, i) => (
-            <div
-              key={i}
-              className={`group flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}
-              style={{ animation: 'msg-in 320ms cubic-bezier(0.4,0,0.2,1)' }}
-            >
-              {/* Avatar column */}
-              {m.role === 'assistant' && (
-                <div className="mt-1 shrink-0">
-                  <ListenerOrbMini persona={initialPersona} speaking={i === messages.length - 1 && speaking} />
+          {messages.map((m, i) => {
+            const isUser = m.role === 'user'
+            const newSpeaker = i === 0 || messages[i - 1].role !== m.role
+            const assistantEntry = !isUser && newSpeaker && i > 0
+            return (
+              <Fragment key={i}>
+                {/* Journal divider: opens each new listener entry the way a
+                    session marker opens a new page, instead of a hard row line
+                    between bubbles. Quiet, editorial, never a loud border. */}
+                {assistantEntry && (
+                  <div aria-hidden className="mx-auto my-2 flex w-40 items-center gap-3">
+                    <span className="h-px flex-1 bg-gradient-to-r from-transparent to-outline-variant/70" />
+                    <span className="h-1 w-1 rounded-full bg-outline-variant/80" />
+                    <span className="h-px flex-1 bg-gradient-to-l from-transparent to-outline-variant/70" />
+                  </div>
+                )}
+                <div
+                  role={isUser ? 'User message' : 'Assistant message'}
+                  style={{ animation: 'msg-in 320ms cubic-bezier(0.4,0,0.2,1)' }}
+                  className={`flex items-start gap-3 ${isUser ? 'mt-4' : 'mt-1'}`}
+                >
+                  {/* The listener is a person, not a column of bot bubbles: its
+                      small orb sits with the words, not as chat chrome. */}
+                  {!isUser && (
+                    <ListenerOrbMini persona={initialPersona} speaking={i === messages.length - 1 && speaking} className="mt-1" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    {isUser && (
+                      <p className="mb-0.5 text-xs font-medium uppercase tracking-[0.16em] text-on-surface-muted/80">
+                        You
+                      </p>
+                    )}
+                    <p className="whitespace-pre-line text-[15px] leading-7 text-on-surface">
+                      {m.content}
+                    </p>
+                  </div>
                 </div>
-              )}
-
-              {/* Bubble */}
-              <div
-                role={m.role === 'user' ? 'User message' : 'Assistant message'}
-                className={
-                  m.role === 'user'
-                    ? 'max-w-[76%] whitespace-pre-line rounded-3xl rounded-tr-md bg-primary px-4 py-2.5 text-[15px] leading-6 text-on-primary shadow-[0_12px_28px_-16px_rgba(40,67,89,0.5)]'
-                    : 'max-w-[85%] whitespace-pre-line rounded-3xl rounded-tl-md border border-glass-border bg-glass px-4 py-2.5 text-[15px] leading-6 text-on-surface backdrop-blur-xl'
-                }
-              >
-                {m.content}
-              </div>
-            </div>
-          ))}
+              </Fragment>
+            )
+          })}
 
           {busy && (
-            <div className="flex gap-3">
-              <div className="mt-1 shrink-0">
-                <ListenerOrbMini persona={initialPersona} speaking />
-              </div>
-              <div className="flex items-center gap-2 rounded-3xl rounded-tl-md border border-glass-border bg-glass px-4 py-3 text-on-surface-muted backdrop-blur-xl">
+            <div className="mt-2 flex items-start gap-3">
+              <ListenerOrbMini persona={initialPersona} speaking className="mt-0.5" />
+              <div className="flex items-center gap-2 pt-2 text-sm text-on-surface-muted">
                 <GhostLoader bars={3} />
+                <span className="ml-1">listening…</span>
               </div>
             </div>
           )}
@@ -293,15 +306,23 @@ function ListenerOrb({ persona = 'warm', speaking = false }: { persona?: Persona
   )
 }
 
-/** The compact orb shown beside each assistant bubble (and loading state). */
-function ListenerOrbMini({ persona = 'warm', speaking = false }: { persona?: PersonaId; speaking?: boolean }) {
+/** The compact orb shown beside each assistant message (and loading state). */
+function ListenerOrbMini({
+  persona = 'warm',
+  speaking = false,
+  className = '',
+}: {
+  persona?: PersonaId
+  speaking?: boolean
+  className?: string
+}) {
   const label = PERSONAS[persona].label
   return (
     <span
       role="img"
       aria-label={label}
       title={label}
-      className="grid h-8 w-8 place-items-center rounded-full shadow-[0_4px_12px_-6px_rgba(2,8,24,0.3)]"
+      className={`grid h-8 w-8 shrink-0 place-items-center rounded-full shadow-[0_4px_12px_-6px_rgba(2,8,24,0.3)] ${className}`}
       style={{
         background: PERSONAS[persona].aura,
         animation: speaking ? 'orb-pulse 1s ease-in-out infinite' : 'none',
