@@ -66,11 +66,16 @@ Judge each screenshot on all seven axes, weighted by severity:
    that is technically clean but reads emotionally cold/stressful should score
    below its otherwise-solid technical marks on this axis.
 
-Then fold them into the single `**Overall: n/10**`:
+Then fold them into the single `**Overall: n/10**` (severity-weighted):
 
-- 9-10: ships as-is. 7-8: good; only `[low]` polish. 5-6: `[med]` issues —
-  fix before calling the screen done. 1-4: broken or clearly off-contract
-  (`[high]`) — fix before anything else ships.
+- **10**: issue-free — truly ships as-is.
+- **9**: only `[low]` polish notes; no `[med]`/`[high]`. A screen with nothing
+  more than cosmetic nits is a near-perfect screen.
+- **6-8**: has `[med]` issues (drop a point or two per `[med]`), or a stack of
+  `[low]`s that add up. Fix `[med]`s before calling the screen done.
+- **1-4**: broken or clearly off-contract (`[high]`) — fix before anything else
+  ships.
+
 
 ## Rules of the judge (non-negotiable, they keep the loop converging)
 

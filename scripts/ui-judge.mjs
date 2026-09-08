@@ -147,15 +147,34 @@ async function judge(shot, rubric) {
   throw new Error(`judge API failed after 2 attempts: ${lastError}`)
 }
 
-function summarize(verdict) {
-  const score = Number(/Overall:\s*(\d+)\s*\/\s*10/i.exec(verdict)?.[1])
-  const count = (re) => (verdict.match(re) ?? []).length
-  return {
-    score: Number.isFinite(score) ? score : null,
-    high: count(/\[high\]/gi),
-    med: count(/\[med\]/gi),
-    low: count(/\[low\]/gi),
+// Severity-weighted score per docs/ui-rubric.md. The model's free-text
+// `Overall` can contradict its own issue list (it will print 8 with "only
+// polish notes"), so we resolve any contradiction deterministically from the
+// counted severities — the rubric's number is the one the loop commits to.
+//
+//   high        -> <=4
+//   meds        -> <=8 ; 1 med ~= 8, more meds drop further
+//   only paint  -> >=9 (a screen with no [med]/[high] and just polish notes
+//                       is a near-perfect screen)
+function resoluteScore(raw, high, med, low) {
+  const base = Number.isFinite(raw) ? raw : 8
+  if (high > 0) return Math.min(base, 4)
+  if (med > 0) {
+    const cap = Math.max(6, 8 - (med - 1) * 1)
+    return Math.max(6, Math.min(base, cap))
   }
+  // No blocking issues: sanitise the floor so a stray low can't sink a clean screen.
+  return Math.max(9, Math.min(base, 9 + (low === 0 ? 1 : 0)))
+}
+
+function summarize(verdict) {
+  const parsed = Number(/Overall:\s*(\d+)\s*\/\s*10/i.exec(verdict)?.[1])
+  const raw = Number.isFinite(parsed) ? parsed : null
+  const count = (re) => (verdict.match(re) ?? []).length
+  const high = count(/\[high\]/gi)
+  const med = count(/\[med\]/gi)
+  const low = count(/\[low\]/gi)
+  return { raw, score: resoluteScore(raw, high, med, low), high, med, low }
 }
 
 async function main() {

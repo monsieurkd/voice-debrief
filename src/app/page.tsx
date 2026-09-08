@@ -26,7 +26,7 @@ export default async function Home() {
 
   return (
     <main className="relative flex-1 overflow-y-auto">
-      <div className="mx-auto flex min-h-full w-full max-w-[560px] flex-col justify-center px-5 py-12 sm:py-16">
+      <div className="relative mx-auto flex min-h-full w-full max-w-[560px] flex-col justify-center px-5 py-12 sm:py-16">
         <section className="text-center">
           <h1>
             <Wordmark />
@@ -35,7 +35,7 @@ export default async function Home() {
             A quiet place to think out loud.
           </p>
 
-          <h2 className="mt-9 font-display text-3xl leading-tight text-on-surface sm:text-4xl">
+          <h2 className="mt-12 font-display text-3xl leading-tight text-on-surface sm:text-4xl">
             Say it messily.<br />Find what matters.
           </h2>
           <p className="mx-auto mt-6 max-w-md text-[15px] leading-7 text-on-surface-variant">
@@ -44,12 +44,14 @@ export default async function Home() {
           </p>
         </section>
 
-        <Card className="mt-8 p-3 sm:p-4">
-          <div className="rounded-[1.1rem] bg-surface-container-low px-5 py-5 text-center sm:px-7">
-            <p className="text-sm leading-6 text-on-surface-variant">
+        <Card className="mt-9 p-1.5">
+          <div className="px-6 py-5 text-center sm:px-7">
+            <p className="mx-auto max-w-xs text-sm leading-6 text-on-surface-variant">
               No forms. No need to be polished. Start wherever you are.
             </p>
-            <ButtonLink href="/chat" className="mt-5 w-full">Start talking</ButtonLink>
+            <div className="mt-5 flex justify-center">
+              <ButtonLink href="/chat" className="px-6">Start talking</ButtonLink>
+            </div>
           </div>
         </Card>
 

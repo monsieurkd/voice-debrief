@@ -50,7 +50,6 @@ export function Button({
     <button
       {...rest}
       className={`${PILL_BASE} bg-primary text-on-primary font-semibold
-        shadow-[0_12px_28px_-14px_rgba(51,81,107,0.55)]
         hover:bg-primary-focus active:bg-primary-active
         focus-visible:ring-2 focus-visible:ring-primary-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface
         disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
@@ -72,7 +71,7 @@ export function ButtonLink({
   className?: string
 }) {
   const look = variant === 'primary'
-    ? 'bg-primary text-on-primary font-semibold shadow-[0_12px_28px_-14px_rgba(51,81,107,0.55)] hover:bg-primary-focus active:bg-primary-active'
+    ? 'bg-primary text-on-primary font-semibold hover:bg-primary-focus active:bg-primary-active'
     : 'border border-surface-container-high bg-primary-container/60 text-on-secondary-container backdrop-blur-xl hover:bg-glass-strong hover:text-on-surface'
   return <Link href={href} className={`${PILL_BASE} ${look} ${className}`}>{children}</Link>
 }
@@ -114,7 +113,7 @@ export function BrandMark({ className = '' }: { className?: string }) {
 /** The journal-like What I Mean wordmark and meaning mark lockup. */
 export function Wordmark({ small = false }: { small?: boolean }) {
   return (
-    <span className={`inline-flex items-center text-primary ${small ? 'gap-2' : 'gap-3'}`}>
+    <span className={`inline-flex items-center text-on-surface ${small ? 'gap-2' : 'gap-3'}`}>
       <BrandMark className={small ? 'h-7 w-7' : 'h-11 w-11'} />
       <span className={`font-display tracking-tight text-on-surface ${small ? 'text-lg' : 'text-3xl leading-tight'}`}>
         What I Mean
