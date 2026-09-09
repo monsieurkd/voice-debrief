@@ -1,6 +1,9 @@
+import { VietBrosFooter } from '@/components/VietBrosFooter'
+
 /**
  * App-wide Digital Sanctuary frame. Pages own their identity and controls;
- * the shared shell deliberately adds no navigation chrome.
+ * the shared shell deliberately adds no navigation chrome beyond the small
+ * VietBrosInAus signature.
  *
  * A faint ambient wash (lavender / sky / sage) sits behind every page so the
  * translucent `glass` panels actually read as glass — without it, translucent
@@ -17,6 +20,7 @@ export function SanctuaryShell({ children }: { children: React.ReactNode }) {
         <span className="absolute bottom-[-6rem] left-1/3 h-80 w-80 rounded-full bg-[radial-gradient(circle_at_center,rgba(196,222,237,0.42),transparent_68%)]" />
       </div>
       <div className="relative flex min-h-0 flex-1 flex-col">{children}</div>
+      <VietBrosFooter />
     </div>
   )
 }
