@@ -3,7 +3,7 @@ import { VietBrosFooter } from '@/components/VietBrosFooter'
 /**
  * App-wide Digital Sanctuary frame. Pages own their identity and controls;
  * the shared shell deliberately adds no navigation chrome beyond the small
- * VietBrosInAus signature.
+ * viciousbuilders signature.
  *
  * A faint ambient wash (lavender / sky / sage) sits behind every page so the
  * translucent `glass` panels actually read as glass — without it, translucent

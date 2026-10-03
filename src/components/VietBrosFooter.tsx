@@ -1,4 +1,4 @@
-/** The shared VietBrosInAus signature shown across the app. */
+/** The shared viciousbuilders signature shown across the app. */
 export function VietBrosFooter() {
   return (
     <footer className="shrink-0 border-t border-glass-border bg-surface/80 px-5 py-3 backdrop-blur-xl">
@@ -26,7 +26,7 @@ export function VietBrosFooter() {
           href="https://vietbrosinaus.com"
           className="font-semibold text-on-secondary-container underline decoration-outline-variant underline-offset-2 transition hover:text-on-surface"
         >
-          vietbrosinaus
+          viciousbuilders
         </a>
       </p>
     </footer>
