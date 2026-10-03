@@ -23,7 +23,7 @@ export function VietBrosFooter() {
         <span className="sr-only">love</span>
         <span>by</span>
         <a
-          href="https://vietbrosinaus.com"
+          href="https://viciousbuilders.com"
           className="font-semibold text-on-secondary-container underline decoration-outline-variant underline-offset-2 transition hover:text-on-surface"
         >
           viciousbuilders
